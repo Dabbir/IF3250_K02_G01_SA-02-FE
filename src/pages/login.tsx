@@ -1,8 +1,7 @@
 const Login = () => {
     return (
-        <>
-        </>
-    )
+        <div>test ini login</div>
+    );
 
 };
 
