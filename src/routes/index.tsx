@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ManajemenAkun from "@/pages/manajemenakun";
 import Layout from "@/components/layout/layout";
 
 const AppRoutes = () => (
@@ -11,7 +12,7 @@ const AppRoutes = () => (
       <Route path="/" element={<Layout />}>
         <Route index element={<div className="p-4">Dashboard Content</div>} />
         <Route path="/dashboard" element={<div className="p-4">Dashboard Content</div>} />
-        <Route path="/akun-manajemen" element={<div className="p-4">Akun Content</div>} />
+        <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<div className="p-4">Data Program Content</div>} />
         <Route path="/publikasi" element={<div className="p-4">Publikasi Content</div>} />
         <Route path="/kegiatan" element={<div className="p-4">Kegiatan Content</div>} />
