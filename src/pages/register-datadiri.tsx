@@ -1,4 +1,5 @@
 import { FileText } from 'lucide-react';
+import DashboardDisplay from "@/assets/dashboard-display.png";
 
 const RegisterDataDiri = () => {
     return (
@@ -91,7 +92,12 @@ const RegisterDataDiri = () => {
             ></div>
             
             {/* Content area */}
-            <div className="h-full w-full bg-[#E7DECD] flex flex-col items-center justify-start pt-12 px-8">
+            <div className="h-full w-full bg-[#E7DECD] flex flex-col items-center justify-center pt-12 px-8">
+              <img src="/logo-green.svg" className='w-70'/>
+
+              <div className='py-8'>
+                <img src={DashboardDisplay}/>
+              </div>
             </div>
           </div>
         </div>

@@ -1,3 +1,5 @@
+import DashboardDisplay from "@/assets/dashboard-display.png";
+
 const Register = () => {
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white" >
@@ -84,7 +86,12 @@ const Register = () => {
             ></div>
             
             {/* Content area */}
-            <div className="h-full w-full bg-[#E7DECD] flex flex-col items-center justify-start pt-12 px-8">
+            <div className="h-full w-full bg-[#E7DECD] flex flex-col items-center justify-center pt-12 px-8">
+              <img src="/logo-green.svg" className='w-70'/>
+
+              <div className='py-8'>
+                <img src={DashboardDisplay}/>
+              </div>
             </div>
           </div>
         </div>
