@@ -1,39 +1,196 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import { Image, Pencil, Trash2, User } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Image, Pencil, Trash2, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
+
+interface UserData {
+    namaDepan: string
+    namaBelakang: string
+    email: string
+    alasanBergabung: string
+    bio: string
+    profileImage?: string
+}
 
 export default function ManajemenAkun() {
     const [isEditing, setIsEditing] = useState(false)
-    const [userData, setUserData] = useState({
-        namaDepan: "Mirwandi",
-        namaBelakang: "Maizori",
-        email: "MirMai@salman.sustain.org.id",
-        alasanBergabung: "Memakmurkan masjid",
-        bio: "Hidup bermanfaat untuk siapa saja",
+    const [isLoading, setIsLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
+    const [userData, setUserData] = useState<UserData>({
+        namaDepan: "",
+        namaBelakang: "",
+        email: "",
+        alasanBergabung: "",
+        bio: "",
+        profileImage: "",
     })
+    const [newProfileImage, setNewProfileImage] = useState<File | null>(null)
+    const [previewImage, setPreviewImage] = useState<string | null>(null)
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+    // Fetch user profile data
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                setIsLoading(true)
+                const response = await fetch("/viewprofile")
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch profile data")
+                }
+
+                const data = await response.json()
+                setUserData(data)
+            } catch (error) {
+                console.error("Error fetching profile:", error)
+                toast.error("Gagal memuat data profil")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchUserProfile()
+    }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
         setUserData((prev) => ({ ...prev, [name]: value }))
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            setNewProfileImage(file)
+
+            // Create preview URL
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setPreviewImage(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsEditing(false)
-        // integration later
+        setIsSaving(true)
+
+        try {
+            const formData = new FormData()
+
+            // Append user data
+            Object.entries(userData).forEach(([key, value]) => {
+                if (key !== "profileImage") {
+                    formData.append(key, value)
+                }
+            })
+
+            // Append new profile image if exists
+            if (newProfileImage) {
+                formData.append("profileImage", newProfileImage)
+            }
+
+            const response = await fetch("/updateprofile", {
+                method: "POST",
+                body: formData,
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to update profile")
+            }
+
+            const updatedData = await response.json()
+            setUserData(updatedData)
+            setNewProfileImage(null)
+            setPreviewImage(null)
+            setIsEditing(false)
+
+            toast.success("Profil berhasil diperbarui")
+        } catch (error) {
+            console.error("Error updating profile:", error)
+            toast.error("Gagal memperbarui profil")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const handleDeletePhoto = async () => {
+        setShowDeleteDialog(false)
+
+        try {
+            const response = await fetch("/updateprofile", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    ...userData,
+                    profileImage: null,
+                    deletePhoto: true,
+                }),
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to delete profile photo")
+            }
+
+            const updatedData = await response.json()
+            setUserData(updatedData)
+            setPreviewImage(null)
+
+            toast.success("Foto profil berhasil dihapus")
+        } catch (error) {
+            console.error("Error deleting photo:", error)
+            toast.error("Gagal menghapus foto profil")
+        }
     }
 
     const handleCancel = () => {
         setIsEditing(false)
-        // integration later
+        setNewProfileImage(null)
+        setPreviewImage(null)
+        // Reset to original data from server
+        const fetchUserProfile = async () => {
+            try {
+                const response = await fetch("/viewprofile")
+                if (response.ok) {
+                    const data = await response.json()
+                    setUserData(data)
+                }
+            } catch (error) {
+                console.error("Error fetching profile:", error)
+            }
+        }
+        fetchUserProfile()
+    }
+
+    const handleImageUpload = () => {
+        const fileInput = document.getElementById("profile-upload") as HTMLInputElement
+        fileInput.click()
+    }
+
+    if (isLoading) {
+        return (
+            <div className="m-5 flex justify-center items-center h-[calc(85vh)]">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+            </div>
+        )
     }
 
     return (
@@ -51,7 +208,7 @@ export default function ManajemenAkun() {
                             <div className="flex items-center relative gap-10">
                                 <div className="w-36 h-36">
                                     <Avatar className="w-full h-full rounded-full bg-slate-200">
-                                        <AvatarImage src="/path-to-profile.jpg" alt="User Profile" />
+                                        <AvatarImage src={previewImage || userData.profileImage || ""} alt="User Profile" />
                                         <AvatarFallback className="flex items-center justify-center text-slate-400 text-4xl">
                                             <div className="w-36 h-36 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden">
                                                 <svg
@@ -72,16 +229,57 @@ export default function ManajemenAkun() {
                                         </AvatarFallback>
                                     </Avatar>
                                 </div>
-                                <div className="flex flex-col space-y-6 mt-4 justify-center md:justify-start">
-                                    <Button variant="outline" size="sm" className="border-slate-300 text-slate-700">
-                                        <Image className="h-4 w-4 mr-2" />
-                                        Ubah
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="border-slate-300 text-slate-700">
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Hapus
-                                    </Button>
-                                </div>
+                                {isEditing && (
+                                    <div className="flex flex-col space-y-6 mt-4 justify-center md:justify-start">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-slate-300 text-slate-700"
+                                            onClick={handleImageUpload}
+                                            disabled={!isEditing}
+                                        >
+                                            <Image className="h-4 w-4 mr-2" />
+                                            Ubah
+                                        </Button>
+                                        <input
+                                            id="profile-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleImageChange}
+                                            disabled={!isEditing}
+                                        />
+                                        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                                            <DialogTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="border-slate-300 text-slate-700"
+                                                    disabled={!isEditing || (!userData.profileImage && !previewImage)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Hapus
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="sm:max-w-md">
+                                                <DialogHeader>
+                                                    <DialogTitle>Hapus Foto Profil</DialogTitle>
+                                                    <DialogDescription>
+                                                        Apakah Anda yakin ingin menghapus foto profil?
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <DialogFooter className="flex justify-between sm:justify-between mt-4">
+                                                    <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                                                        Batal
+                                                    </Button>
+                                                    <Button type="button" variant="destructive" onClick={handleDeletePhoto}>
+                                                        Hapus Foto
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -92,12 +290,7 @@ export default function ManajemenAkun() {
                     </div>
                     <div className="flex justify-end mt-4">
                         {!isEditing && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-slate-300"
-                                onClick={() => setIsEditing(true)}
-                            >
+                            <Button variant="outline" size="sm" className="border-slate-300" onClick={() => setIsEditing(true)}>
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit
                             </Button>
@@ -181,11 +374,24 @@ export default function ManajemenAkun() {
 
                         {isEditing && (
                             <div className="flex justify-center space-x-2 mt-6">
-                                <Button type="button" variant="outline" onClick={handleCancel} className="border-slate-300">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleCancel}
+                                    className="border-slate-300"
+                                    disabled={isSaving}
+                                >
                                     Batal
                                 </Button>
-                                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                                    Simpan
+                                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={isSaving}>
+                                    {isSaving ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        "Simpan"
+                                    )}
                                 </Button>
                             </div>
                         )}
