@@ -17,7 +17,7 @@ const DashboardHeader = () => {
   
           <div className="h-10 w-px bg-black mx-2"></div>
   
-          <button className="bg-gray-100 px-3 py-2 rounded-md font-medium flex items-center">
+          <button className="bg-gray-100 px-3 py-2 rounded-md font-medium flex items-center transition-colors duration-200 hover:bg-gray-200 hover:shadow-md">
             <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="4" y1="6" x2="20" y2="6" />
               <line x1="6" y1="12" x2="18" y2="12" />
