@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import RegisterDataDiri from "@/pages/register-datadiri";
+import WaitVerification from "@/pages/menunggu-verifikasi";
 import ManajemenAkun from "@/pages/manajemenakun";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
@@ -25,6 +27,8 @@ const AppRoutes = () => (
         <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
       </Route>
+      <Route path="/register-datadiri" element={<RegisterDataDiri />}></Route>
+      <Route path="/wait-verification" element={<WaitVerification />}/>
     </Routes>
   </BrowserRouter>
 );
