@@ -1,8 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -11,6 +11,7 @@ import {
 
 
 const WaitVerification = () => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col justify-center items-center h-screen w-screen bg-[#E7DECD] gap-8">
         <img className="w-50" src="/logo-green.svg" alt="logo-salman"/>
@@ -21,7 +22,9 @@ const WaitVerification = () => {
                 <CardDescription className='text-sm md:text-base'>Dokumen anda telah berhasil di unggah. Menunggu verifikasi oleh pihak SSR.</CardDescription>
             </CardHeader>
             <CardFooter>
-                <Button className='w-full mt-4 bg-[#3A786D] hover:bg-black text-[#FBFAF8]'>KEMBALI</Button>
+              <Button className="w-full mt-4 bg-[#3A786D] hover:bg-black text-[#FBFAF8]" onClick={() => navigate('/login')}>
+                KEMBALI
+              </Button>
             </CardFooter>
         </Card>
     </div>

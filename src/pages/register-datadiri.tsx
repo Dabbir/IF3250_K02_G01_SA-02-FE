@@ -1,10 +1,11 @@
 import { FileText } from 'lucide-react';
 import DashboardDisplay from "@/assets/dashboard-display.png";
+import { Button } from "@/components/ui/button"
 
 const RegisterDataDiri = () => {
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white" >
-          {/* Left Side - Register Data Diri */}
+          {/* Left Side */}
           <div className="w-1/2 z-10 flex flex-col justify-start p-12 overflow-y-auto no-scrollbar">
             <div className="max-w-[430px] w-full self-center">
             <h1 className="text-[48px] font-semibold font-cooper text-[#3A786D] tracking-[-1px] mb-8">Data Diri</h1>
@@ -72,16 +73,15 @@ const RegisterDataDiri = () => {
                     </div>
                 </div>
                 
-                <button className="w-full btn-[#3A786D] hover:btn-black text-white py-2 rounded-md transition-colors">
+                <Button className="w-full bg-[#3A786D] hover:bg-black text-[#FBFAF8] py-2 rounded-md transition-colors">
                     Daftar
-                </button>
+                </Button>
             </form>
             </div>
           </div>
           
-          {/* Right Side - Dashboard Preview */}
+          {/* Right Side */}
           <div className="relative w-1/2 h-full">
-            {/* Angled divider */}
             <div 
               className="absolute top-0 bottom-0 left-0 w-24 bg-white" 
               style={{
@@ -91,7 +91,6 @@ const RegisterDataDiri = () => {
               }}
             ></div>
             
-            {/* Content area */}
             <div className="h-full w-full bg-[#E7DECD] flex flex-col items-center justify-center pt-12 px-8">
               <img src="/logo-green.svg" className='w-70'/>
 
