@@ -66,13 +66,14 @@ export default function ManajemenAkun() {
             try {
                 setIsLoading(true)
 
-                const token = document.cookie.split("token=")[1]
+                const token = localStorage.getItem("token");
                 const response = await fetch(`${API_URL}/api/users`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                     },
-                })
+                });
+
 
                 if (!response.ok) {
                     throw new Error("Failed to fetch profile data")
@@ -149,7 +150,7 @@ export default function ManajemenAkun() {
 
         try {
             const nama = `${userData.namaDepan} ${userData.namaBelakang}`.trim()
-            const token = document.cookie.split("token=")[1]
+            const token = localStorage.getItem("token");
 
             const formData = new FormData()
             formData.append("nama", nama)
@@ -221,7 +222,7 @@ export default function ManajemenAkun() {
         // Reset to original data from server
         const fetchUserProfile = async () => {
             try {
-                const token = document.cookie.split("token=")[1]
+                const token = localStorage.getItem("token");
                 const response = await fetch(`${API_URL}/api/users`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -474,8 +475,8 @@ export default function ManajemenAkun() {
                                         className={`border ${errors.alasanBergabung ? "border-red-500" : "border-[var(--green)]"}`}
                                     />
                                     <div className="flex flex-row">
-                                    {errors.alasanBergabung && <span className="text-red-500 text-xs">{errors.alasanBergabung}</span>}
-                                    <p className="text-xs text-gray-500 ml-auto">{alasanLength}/100</p>
+                                        {errors.alasanBergabung && <span className="text-red-500 text-xs">{errors.alasanBergabung}</span>}
+                                        <p className="text-xs text-gray-500 ml-auto">{alasanLength}/100</p>
                                     </div>
                                 </div>
 
