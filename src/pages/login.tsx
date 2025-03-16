@@ -3,12 +3,14 @@ const API_URL = import.meta.env.VITE_HOST_NAME;
 import axios from "axios";
 import DashboardDisplay from "@/assets/dashboard-display.png";
 import Google from "@/assets/Google.svg";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isChecked, setIsChecked] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,17 +57,20 @@ const Login = () => {
               />
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-cooper mb-2">Kata Sandi</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan kata sandi Anda"
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
-                required
-              />
-            </div>
+            <div className="mb-4 relative">
+                <label className="block text-sm font-cooper mb-2">Kata Sandi</label>
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Masukkan kata sandi Anda" 
+                  className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button type="button" className="absolute right-3 top-[70%] transform -translate-y-1/2 text-gray-500" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
 
             {error && <p className="text-red-500 mb-4">{error}</p>}
 

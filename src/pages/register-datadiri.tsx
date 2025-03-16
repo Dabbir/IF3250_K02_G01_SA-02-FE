@@ -44,7 +44,7 @@ const RegisterDataDiri = () => {
     
             if (response.ok) {
                 toast.success("Registrasi berhasil!");
-                navigate("/");
+                navigate("/wait-verification");
             } else {
                 toast.error("Registrasi gagal. Silakan coba lagi.");
             }
