@@ -2,8 +2,34 @@ import { Menu, Search, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { SidebarTrigger } from "../ui/sidebar";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function Header() {
+    const handleLogout = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("Token tidak ditemukan");
+                return;
+            }
+
+            await axios.post(`${API_URL}/api/auth/logout`,{},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+        } catch (error) {
+            console.error("Logout gagal:", error);
+        }
+    };
+
     return (
         <>
             <header className="fixed z-100 flex h-16 w-full items-center justify-between border-b px-4 bg-white">
@@ -17,12 +43,17 @@ export default function Header() {
                     </div>
                 </div>
                 <div className="fixed right-9 flex items-center">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-2 text-slate-600 hover:bg-gray-100">
-                        <span className="text-sm">Keluar</span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 text-slate-600 hover:bg-gray-100"
+                        onClick={handleLogout}
+                    >
+                        <span className="text-sm">Keluarrrr</span>
                         <LogOut className="h-4 w-4" />
                     </Button>
                 </div>
             </header>
         </>
-    )
+    );
 }

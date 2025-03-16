@@ -22,6 +22,7 @@ const Login = () => {
 
       if (response.data.success) {
         alert("Login berhasil!");
+        localStorage.setItem("token", response.data.token); 
         window.location.href = "/dashboard";
       } else {
         setError(response.data.message);
