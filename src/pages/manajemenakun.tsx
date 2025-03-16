@@ -52,25 +52,48 @@ export default function ManajemenAkun() {
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
-                setIsLoading(true)
-                const response = await fetch("/viewprofile")
+                setIsLoading(true);
+
+                const token = document.cookie.split("token=")[1];
+                const response = await fetch(`http://localhost:3000/api/users/1`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch profile data")
+                    throw new Error("Failed to fetch profile data");
                 }
 
-                const data = await response.json()
-                setUserData(data)
-            } catch (error) {
-                console.error("Error fetching profile:", error)
-                toast.error("Gagal memuat data profil")
-            } finally {
-                setIsLoading(false)
-            }
-        }
+                const data = await response.json();
 
-        fetchUserProfile()
-    }, [])
+                if (data.success && data.user) {
+                    const fullName = data.user.nama?.trim() || "";
+                    const [namaDepan, ...restNama] = fullName.split(" ");
+                    const namaBelakang = restNama.join(" ") || "";
+
+                    setUserData({
+                        namaDepan,
+                        namaBelakang,
+                        email: data.user.email,
+                        alasanBergabung: data.user.alasan_bergabung || "",
+                        bio: data.user.short_bio || "",
+                        profileImage: data.user.foto_profil || "",
+                        namaMasjid: data.user.nama_masjid || "",
+                        alamatMasjid: data.user.alamat_masjid || "",
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching profile:", error);
+                toast.error("Gagal memuat data profil");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -92,47 +115,66 @@ export default function ManajemenAkun() {
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsSaving(true)
-
+        e.preventDefault();
+        setIsSaving(true);
+    
         try {
-            const formData = new FormData()
-
-            // Append user data
-            Object.entries(userData).forEach(([key, value]) => {
-                if (key !== "profileImage") {
-                    formData.append(key, value)
-                }
-            })
-
-            // Append new profile image if exists
+            const nama = `${userData.namaDepan} ${userData.namaBelakang}`.trim();
+            const token = document.cookie.split("token=")[1];
+            const userId = 1;
+    
+            const formData = new FormData();
+            formData.append("nama", nama);
+            formData.append("email", userData.email);
+            formData.append("short_bio", userData.bio);
+            formData.append("alasan_bergabung", userData.alasanBergabung);
+    
             if (newProfileImage) {
-                formData.append("profileImage", newProfileImage)
+                formData.append("fotoProfil", newProfileImage);
             }
-
-            const response = await fetch("/updateprofile", {
-                method: "POST",
+    
+            const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
                 body: formData,
-            })
-
+            });
+    
             if (!response.ok) {
-                throw new Error("Failed to update profile")
+                throw new Error("Failed to update profile");
             }
-
-            const updatedData = await response.json()
-            setUserData(updatedData)
-            setNewProfileImage(null)
-            setPreviewImage(null)
-            setIsEditing(false)
-
-            toast.success("Profil berhasil diperbarui")
+    
+            const updatedData = await response.json();
+    
+            if (updatedData.success && updatedData.user) {
+                const fullName = updatedData.user.nama?.trim() || "";
+                const [namaDepan, ...restNama] = fullName.split(" ");
+                const namaBelakang = restNama.join(" ") || "";
+    
+                setUserData({
+                    ...userData,
+                    namaDepan,
+                    namaBelakang,
+                    email: updatedData.user.email,
+                    alasanBergabung: updatedData.user.alasan_bergabung || "",
+                    bio: updatedData.user.short_bio || "",
+                    profileImage: updatedData.user.foto_profil || "",
+                });
+            }
+    
+            setNewProfileImage(null);
+            setPreviewImage(null);
+            setIsEditing(false);
+    
+            toast.success("Profil berhasil diperbarui");
         } catch (error) {
-            console.error("Error updating profile:", error)
-            toast.error("Gagal memperbarui profil")
+            console.error("Error updating profile:", error);
+            toast.error("Gagal memperbarui profil");
         } finally {
-            setIsSaving(false)
+            setIsSaving(false);
         }
-    }
+    };    
 
     const handleDeletePhoto = async () => {
         setShowDeleteDialog(false)
