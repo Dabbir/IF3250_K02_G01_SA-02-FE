@@ -1,31 +1,84 @@
 import { FileText } from 'lucide-react';
 import DashboardDisplay from "@/assets/dashboard-display.png";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const RegisterDataDiri = () => {
+    const navigate = useNavigate();
+    const [nama_masjid, setAsalMasjid] = useState("");
+    const [alasan_bergabung, setAlasanBergabung] = useState("");
+    const [short_bio, setBio] = useState("");
+
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    
+    const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        
+        const registerData = localStorage.getItem("registerData");
+        if (!registerData) {
+            toast.error("Silakan isi formulir pertama terlebih dahulu.");
+            navigate("/register");
+            return;
+        }
+    
+        const { email, password } = JSON.parse(registerData);
+        const finalData = {
+            email,
+            password,
+            nama: `${firstName} ${lastName}`,
+            nama_masjid,
+            alasan_bergabung,
+            short_bio
+        };
+    
+        try {
+            const response = await fetch("http://10.5.107.110:3000/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(finalData),
+            });
+    
+            if (response.ok) {
+                toast.success("Registrasi berhasil!");
+                navigate("/");
+            } else {
+                toast.error("Registrasi gagal. Silakan coba lagi.");
+            }
+        } catch (error) {
+            toast.error("Terjadi kesalahan. Coba lagi nanti.");
+        }
+    };  
+
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white" >
-          {/* Left Side */}
           <div className="w-1/2 z-10 flex flex-col justify-start p-12 overflow-y-auto no-scrollbar">
             <div className="max-w-[430px] w-full self-center">
             <h1 className="text-[48px] font-semibold font-cooper text-[#3A786D] tracking-[-1px] mb-8">Data Diri</h1>
             
-            <form className="">
+            <form onSubmit={handleRegister} className="">
                 <div className="flex flex-col md:flex-row md:justify-between ">
                     <div className="mb-4">
                         <label className="block text-sm font-cooper mb-2">Nama Depan</label>
                         <input 
-                        type="email" 
+                        type="text" 
                         placeholder="Masukkan nama depan" 
                         className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
                         />
                     </div>
                     <div className="mb-4">
                         <label className="block text-sm font-cooper mb-2">Nama Belakang</label>
                         <input 
-                        type="email" 
+                        type="text" 
                         placeholder="Masukkan nama belakang" 
                         className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
                         />
                     </div>
                 </div>
@@ -33,27 +86,35 @@ const RegisterDataDiri = () => {
                 <div className="mb-4">
                     <label className="block text-sm font-cooper mb-2">Asal Masjid</label>
                     <input 
-                    type="email" 
-                    placeholder="Masukkan alamat email Anda" 
-                    className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      type="text" 
+                      placeholder="Masukkan alamat email Anda" 
+                      className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      value={nama_masjid}
+                      onChange={(e) => setAsalMasjid(e.target.value)}
                     />
                 </div>
                 
                 <div className="mb-4">
                     <label className="block text-sm font-cooper mb-2">Alasan Bergabung</label>
                     <input 
-                    type="password" 
-                    placeholder="Masukkan kata sandi Anda" 
-                    className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      type="text" 
+                      placeholder="Masukkan kata sandi Anda" 
+                      className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      value={alasan_bergabung}
+                      onChange={(e) => setAlasanBergabung(e.target.value)}
+                      required
                     />
                 </div>
 
                 <div className="mb-4">
                     <label className="block text-sm font-cooper mb-2">Bio</label>
                     <input 
-                    type="email" 
-                    placeholder="Masukkan kata sandi Anda" 
-                    className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      type="textarea" 
+                      placeholder="Masukkan kata sandi Anda" 
+                      className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      value={short_bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      required
                     />
                 </div>
 
