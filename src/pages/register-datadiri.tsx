@@ -73,7 +73,7 @@ const RegisterDataDiri = () => {
                     </div>
                 </div>
                 
-                <Button className="w-full bg-[#3A786D] hover:bg-black text-[#FBFAF8] py-2 rounded-md transition-colors">
+                <Button className="w-full bg-teal-700 hover:bg-teal-800 text-[#FBFAF8] py-2 rounded-md transition-colors">
                     Daftar
                 </Button>
             </form>
