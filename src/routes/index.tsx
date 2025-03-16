@@ -10,6 +10,8 @@ import Dashboard from "@/pages/dashboard.tsx";
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
+      <Route path="/register-datadiri" element={<RegisterDataDiri />}></Route>
+      <Route path="/wait-verification" element={<WaitVerification />}/>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/" element={<Layout />}>
@@ -27,8 +29,6 @@ const AppRoutes = () => (
         <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
       </Route>
-      <Route path="/register-datadiri" element={<RegisterDataDiri />}></Route>
-      <Route path="/wait-verification" element={<WaitVerification />}/>
     </Routes>
   </BrowserRouter>
 );

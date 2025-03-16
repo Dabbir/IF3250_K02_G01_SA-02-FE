@@ -22,7 +22,7 @@ const WaitVerification = () => {
                 <CardDescription className='text-sm md:text-base'>Dokumen anda telah berhasil di unggah. Menunggu verifikasi oleh pihak SSR.</CardDescription>
             </CardHeader>
             <CardFooter>
-              <Button className="w-full mt-4 bg-[#3A786D] hover:bg-black text-[#FBFAF8]" onClick={() => navigate('/login')}>
+              <Button className="w-full mt-4 bg-teal-700 hover:bg-teal-800 text-[#FBFAF8]" onClick={() => navigate('/login')}>
                 KEMBALI
               </Button>
             </CardFooter>
