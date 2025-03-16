@@ -17,7 +17,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { toast } from "sonner"
+import { ToastContainer, toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 interface UserData {
     namaDepan: string
@@ -398,7 +399,7 @@ export default function ManajemenAkun() {
                     </form>
                 </CardContent>
             </Card>
+            <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme="colored" />
         </div>
     )
 }
-

@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const API_URL = import.meta.env.VITE_HOST_NAME;
+
 const RegisterDataDiri = () => {
     const navigate = useNavigate();
     const [nama_masjid, setAsalMasjid] = useState("");
@@ -36,10 +38,10 @@ const RegisterDataDiri = () => {
         };
     
         try {
-            const response = await fetch("http://10.5.107.110:3000/api/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(finalData),
+            const response = await fetch(`${API_URL}/api/auth/register`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(finalData),
             });
     
             if (response.ok) {
