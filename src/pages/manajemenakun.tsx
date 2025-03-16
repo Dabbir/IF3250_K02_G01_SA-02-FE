@@ -19,6 +19,12 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 
+interface FormErrors {
+    namaDepan?: string;
+    email?: string;
+    alasanBergabung?: string;
+}
+
 interface UserData {
     namaDepan: string
     namaBelakang: string
@@ -29,6 +35,8 @@ interface UserData {
     namaMasjid: string
     alamatMasjid: string
 }
+
+const API_URL = import.meta.env.VITE_HOST_NAME
 
 export default function ManajemenAkun() {
     const [isEditing, setIsEditing] = useState(false)
@@ -44,34 +52,37 @@ export default function ManajemenAkun() {
         namaMasjid: "",
         alamatMasjid: "",
     })
+
     const [newProfileImage, setNewProfileImage] = useState<File | null>(null)
     const [previewImage, setPreviewImage] = useState<string | null>(null)
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    // Add a state to track if the profile image should be deleted
+    const [shouldDeleteImage, setShouldDeleteImage] = useState(false)
 
     // Fetch user profile data
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
-                setIsLoading(true);
+                setIsLoading(true)
 
-                const token = document.cookie.split("token=")[1];
-                const response = await fetch(`http://localhost:3000/api/users/1`, {
+                const token = document.cookie.split("token=")[1]
+                const response = await fetch(`${API_URL}/api/users`, {
                     headers: {
-                        "Authorization": `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                     },
-                });
+                })
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch profile data");
+                    throw new Error("Failed to fetch profile data")
                 }
 
-                const data = await response.json();
+                const data = await response.json()
 
                 if (data.success && data.user) {
-                    const fullName = data.user.nama?.trim() || "";
-                    const [namaDepan, ...restNama] = fullName.split(" ");
-                    const namaBelakang = restNama.join(" ") || "";
+                    const fullName = data.user.nama?.trim() || ""
+                    const [namaDepan, ...restNama] = fullName.split(" ")
+                    const namaBelakang = restNama.join(" ") || ""
 
                     setUserData({
                         namaDepan,
@@ -82,18 +93,18 @@ export default function ManajemenAkun() {
                         profileImage: data.user.foto_profil || "",
                         namaMasjid: data.user.nama_masjid || "",
                         alamatMasjid: data.user.alamat_masjid || "",
-                    });
+                    })
                 }
             } catch (error) {
-                console.error("Error fetching profile:", error);
-                toast.error("Gagal memuat data profil");
+                console.error("Error fetching profile:", error)
+                toast.error("Gagal memuat data profil")
             } finally {
-                setIsLoading(false);
+                setIsLoading(false)
             }
-        };
+        }
 
-        fetchUserProfile();
-    }, []);
+        fetchUserProfile()
+    }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -102,56 +113,79 @@ export default function ManajemenAkun() {
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0]
-            setNewProfileImage(file)
+            const file = e.target.files[0];
 
-            // Create preview URL
-            const reader = new FileReader()
-            reader.onloadend = () => {
-                setPreviewImage(reader.result as string)
+            // Validasi ukuran file (maksimum 2MB)
+            const maxSize = 2 * 1024 * 1024; // 2MB
+            if (file.size > maxSize) {
+                toast.error("Ukuran foto tidak boleh lebih dari 2MB");
+                return;
             }
-            reader.readAsDataURL(file)
+
+            setNewProfileImage(file);
+
+            // Buat preview URL
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
+    };
+
+    // Add the handleDeletePhoto function after the handleImageChange function
+    const handleDeletePhoto = () => {
+        setPreviewImage(null)
+        setNewProfileImage(null)
+        setShouldDeleteImage(true)
+        setShowDeleteDialog(false)
     }
 
+    // Modify the handleSubmit function to include the image deletion flag
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSaving(true);
-    
+        e.preventDefault()
+        setIsSaving(true)
+
         try {
-            const nama = `${userData.namaDepan} ${userData.namaBelakang}`.trim();
-            const token = document.cookie.split("token=")[1];
-            const userId = 1;
-    
-            const formData = new FormData();
-            formData.append("nama", nama);
-            formData.append("email", userData.email);
-            formData.append("short_bio", userData.bio);
-            formData.append("alasan_bergabung", userData.alasanBergabung);
-    
+            const nama = `${userData.namaDepan} ${userData.namaBelakang}`.trim()
+            const token = document.cookie.split("token=")[1]
+
+            const formData = new FormData()
+            formData.append("nama", nama)
+            formData.append("email", userData.email)
+            formData.append("short_bio", userData.bio)
+            formData.append("alasan_bergabung", userData.alasanBergabung)
+
             if (newProfileImage) {
-                formData.append("fotoProfil", newProfileImage);
+                formData.append("fotoProfil", newProfileImage)
             }
-    
-            const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
+
+            // Add a flag to indicate if the image should be deleted
+            if (shouldDeleteImage) {
+                formData.append("deleteProfileImage", "true")
+            } else {
+                formData.append("deleteProfileImage", "false")
+            }
+
+            const response = await fetch(`${API_URL}/api/users`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
                 body: formData,
-            });
-    
+            })
+
             if (!response.ok) {
-                throw new Error("Failed to update profile");
+                throw new Error("Failed to update profile")
             }
-    
-            const updatedData = await response.json();
-    
+
+            const updatedData = await response.json()
+
             if (updatedData.success && updatedData.user) {
-                const fullName = updatedData.user.nama?.trim() || "";
-                const [namaDepan, ...restNama] = fullName.split(" ");
-                const namaBelakang = restNama.join(" ") || "";
-    
+                const fullName = updatedData.user.nama?.trim() || ""
+                const [namaDepan, ...restNama] = fullName.split(" ")
+                const namaBelakang = restNama.join(" ") || ""
+
                 setUserData({
                     ...userData,
                     namaDepan,
@@ -160,64 +194,58 @@ export default function ManajemenAkun() {
                     alasanBergabung: updatedData.user.alasan_bergabung || "",
                     bio: updatedData.user.short_bio || "",
                     profileImage: updatedData.user.foto_profil || "",
-                });
-            }
-    
-            setNewProfileImage(null);
-            setPreviewImage(null);
-            setIsEditing(false);
-    
-            toast.success("Profil berhasil diperbarui");
-        } catch (error) {
-            console.error("Error updating profile:", error);
-            toast.error("Gagal memperbarui profil");
-        } finally {
-            setIsSaving(false);
-        }
-    };    
-
-    const handleDeletePhoto = async () => {
-        setShowDeleteDialog(false)
-
-        try {
-            const response = await fetch("/updateprofile", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    ...userData,
-                    profileImage: null,
-                    deletePhoto: true,
-                }),
-            })
-
-            if (!response.ok) {
-                throw new Error("Failed to delete profile photo")
+                })
             }
 
-            const updatedData = await response.json()
-            setUserData(updatedData)
+            setNewProfileImage(null)
             setPreviewImage(null)
+            setShouldDeleteImage(false)
+            setIsEditing(false)
 
-            toast.success("Foto profil berhasil dihapus")
+            toast.success("Profil berhasil diperbarui")
         } catch (error) {
-            console.error("Error deleting photo:", error)
-            toast.error("Gagal menghapus foto profil")
+            console.error("Error updating profile:", error)
+            toast.error("Gagal memperbarui profil")
+        } finally {
+            setIsSaving(false)
         }
     }
 
+    // Modify the handleCancel function to reset the shouldDeleteImage state
     const handleCancel = () => {
         setIsEditing(false)
         setNewProfileImage(null)
         setPreviewImage(null)
+        setShouldDeleteImage(false)
         // Reset to original data from server
         const fetchUserProfile = async () => {
             try {
-                const response = await fetch("/viewprofile")
+                const token = document.cookie.split("token=")[1]
+                const response = await fetch(`${API_URL}/api/users`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                })
+
                 if (response.ok) {
                     const data = await response.json()
-                    setUserData(data)
+                    if (data.success && data.user) {
+                        const fullName = data.user.nama?.trim() || ""
+                        const [namaDepan, ...restNama] = fullName.split(" ")
+                        const namaBelakang = restNama.join(" ") || ""
+
+                        setUserData({
+                            namaDepan,
+                            namaBelakang,
+                            email: data.user.email,
+                            alasanBergabung: data.user.alasan_bergabung || "",
+                            bio: data.user.short_bio || "",
+                            profileImage: data.user.foto_profil || "",
+                            namaMasjid: data.user.nama_masjid || "",
+                            alamatMasjid: data.user.alamat_masjid || "",
+                        })
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error)
@@ -230,6 +258,38 @@ export default function ManajemenAkun() {
         const fileInput = document.getElementById("profile-upload") as HTMLInputElement
         fileInput.click()
     }
+
+    const [errors, setErrors] = useState<FormErrors>({});
+    const validate = () => {
+        const newErrors: FormErrors = {}
+        if (!userData.namaDepan.trim()) newErrors.namaDepan = "Nama depan tidak boleh kosong!"
+        if (!userData.email.trim()) {
+            newErrors.email = "Email tidak boleh kosong!";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.email)) {
+            newErrors.email = "Format email tidak valid!";
+        }
+        if (!userData.alasanBergabung.trim()) newErrors.alasanBergabung = "Nama depan tidak boleh kosong!"
+        if (userData.alasanBergabung.length < 8) newErrors.alasanBergabung = "Minimal 8 karakter!"
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleBlur = () => {
+        validate();
+    };
+
+    const [alasanLength, setAlasanLength] = useState(userData.alasanBergabung.length || 0);
+    const [bioLength, setBioLength] = useState(userData.bio.length || 0);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (e.target.name === "alasanBergabung" && e.target.value.length > 100) return;
+        if (e.target.name === "bio" && e.target.value.length > 300) return;
+
+        handleChange(e);
+
+        if (e.target.name === "alasanBergabung") setAlasanLength(e.target.value.length);
+        if (e.target.name === "bio") setBioLength(e.target.value.length);
+    };
 
     if (isLoading) {
         return (
@@ -311,9 +371,7 @@ export default function ManajemenAkun() {
                                             <DialogContent className="sm:max-w-md">
                                                 <DialogHeader>
                                                     <DialogTitle>Hapus Foto Profil</DialogTitle>
-                                                    <DialogDescription>
-                                                        Apakah Anda yakin ingin menghapus foto profil?
-                                                    </DialogDescription>
+                                                    <DialogDescription>Apakah Anda yakin ingin menghapus foto profil?</DialogDescription>
                                                 </DialogHeader>
                                                 <DialogFooter className="flex justify-between sm:justify-between mt-4">
                                                     <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
@@ -352,7 +410,6 @@ export default function ManajemenAkun() {
 
                     <form onSubmit={handleSubmit} className="mt-4 sm:mt-8 space-y-4 sm:space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                            {/* First column on desktop */}
                             <div className="space-y-4 order-1">
                                 <div className="space-y-2">
                                     <label htmlFor="namaDepan" className="block text-sm font-medium text-slate-700">
@@ -363,9 +420,11 @@ export default function ManajemenAkun() {
                                         name="namaDepan"
                                         value={userData.namaDepan}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
                                         disabled={!isEditing}
-                                        className="border-[var(--green)]"
+                                        className={`border ${errors.namaDepan ? "border-red-500" : "border-[var(--green)]"}`}
                                     />
+                                    {errors.namaDepan && <span className="text-red-500 text-xs">{errors.namaDepan}</span>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -389,29 +448,34 @@ export default function ManajemenAkun() {
                                     <Input
                                         id="email"
                                         name="email"
-                                        type="email"
                                         value={userData.email}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
                                         disabled={!isEditing}
-                                        className="border-[var(--green)]"
+                                        className={`border ${errors.email ? "border-red-500" : "border-[var(--green)]"}`}
                                     />
+                                    {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
                                 </div>
                             </div>
 
-                            {/* Second column on desktop */}
-                            <div className="space-y-4 order-2">
+                            <div className="space-y-1 order-2">
                                 <div className="space-y-2">
                                     <label htmlFor="alasanBergabung" className="block text-sm font-medium text-slate-700">
                                         Alasan Bergabung
                                     </label>
-                                    <Input
+                                    <Textarea
                                         id="alasanBergabung"
                                         name="alasanBergabung"
                                         value={userData.alasanBergabung}
-                                        onChange={handleChange}
+                                        onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         disabled={!isEditing}
-                                        className="border-[var(--green)]"
+                                        className={`border ${errors.alasanBergabung ? "border-red-500" : "border-[var(--green)]"}`}
                                     />
+                                    <div className="flex flex-row">
+                                    {errors.alasanBergabung && <span className="text-red-500 text-xs">{errors.alasanBergabung}</span>}
+                                    <p className="text-xs text-gray-500 ml-auto">{alasanLength}/100</p>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
@@ -422,10 +486,11 @@ export default function ManajemenAkun() {
                                         id="bio"
                                         name="bio"
                                         value={userData.bio}
-                                        onChange={handleChange}
+                                        onChange={handleInputChange}
                                         disabled={!isEditing}
-                                        className="h-29 border-[var(--green)]"
+                                        className="h-19 border-[var(--green)]"
                                     />
+                                    <p className="text-end text-xs text-gray-500">{bioLength}/300</p>
                                 </div>
                             </div>
                         </div>
