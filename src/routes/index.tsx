@@ -1,11 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-import Layout from "@/components/layout/layout";
-import Dashboard from "@/pages/dashboard.tsx";
 import RegisterDataDiri from "@/pages/register-datadiri";
 import WaitVerification from "@/pages/menunggu-verifikasi";
-
+import ManajemenAkun from "@/pages/manajemenakun";
+import Layout from "@/components/layout/layout";
+import Dashboard from "@/pages/dashboard.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -17,7 +17,7 @@ const AppRoutes = () => (
       <Route path="/" element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/akun-manajemen" element={<div className="p-4">Akun Content</div>} />
+        <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<div className="p-4">Data Program Content</div>} />
         <Route path="/publikasi" element={<div className="p-4">Publikasi Content</div>} />
         <Route path="/kegiatan" element={<div className="p-4">Kegiatan Content</div>} />
