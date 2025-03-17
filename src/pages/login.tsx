@@ -14,9 +14,9 @@ const Login = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
-    if (localStorage.getItem("showSuccessToast") === "true") {
-      toast.success("Login berhasil!");
-      localStorage.removeItem("showSuccessToast");
+    if (localStorage.getItem("showSuccessLogoutToast") === "true") {
+      toast.success("Logout berhasil!");
+      localStorage.removeItem("showSuccessLogoutToast");
     }
   }, []);
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -44,7 +44,7 @@ const Login = () => {
       if (response.ok) {
 
         localStorage.setItem("token", data.token);
-        localStorage.setItem("showSuccessToast", "true");
+        localStorage.setItem("showSuccessLoginToast", "true");
         window.location.href = "/dashboard";
 
       } else {

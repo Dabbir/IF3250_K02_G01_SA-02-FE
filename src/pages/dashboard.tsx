@@ -9,9 +9,9 @@ import { toast } from "react-toastify";
 
 const Dashboard = () => {
     useEffect(() => {
-        if (localStorage.getItem("showSuccessToast") === "true") {
+        if (localStorage.getItem("showSuccessLoginToast") === "true") {
             setTimeout(() => {
-                localStorage.removeItem("showSuccessToast");
+                localStorage.removeItem("showSuccessLoginToast");
                 toast.success("Login berhasil!");
             }, 100);
         }

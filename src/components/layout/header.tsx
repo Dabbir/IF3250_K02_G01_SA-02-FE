@@ -9,6 +9,7 @@ export default function Header() {
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem("token");
+            localStorage.setItem("showSuccessLogoutToast", "true");
             if (!token) {
                 console.error("Token tidak ditemukan");
                 return;
