@@ -7,6 +7,7 @@ import WaitVerification from "@/pages/menunggu-verifikasi";
 import ManajemenAkun from "@/pages/manajemenakun";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
+import GoogleCallback from "@/pages/googlecallback.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -15,6 +16,7 @@ const AppRoutes = () => (
       <Route path="/wait-verification" element={<WaitVerification />}/>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/auth/callback" element={<GoogleCallback />} />
       <Route
         path="/"
         element={

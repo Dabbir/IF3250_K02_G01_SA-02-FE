@@ -62,6 +62,10 @@ const Register = () => {
       }
   }; 
 
+    const handleGoogleSignup = () => {
+      window.location.href = `${import.meta.env.VITE_HOST_NAME}/api/auth/google`;
+    };
+
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white" >
           {/*Left Side*/}
@@ -159,6 +163,7 @@ const Register = () => {
               </div>
               
               <button 
+                onClick={handleGoogleSignup}
                 type="button" 
                 className="w-full flex items-center justify-center border border-gray-300 py-3 rounded hover:bg-gray-50 transition"
               >

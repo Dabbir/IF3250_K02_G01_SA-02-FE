@@ -59,6 +59,10 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${API_URL}/api/auth/google`;
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-white">
       {/* <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme="colored" /> */}
@@ -124,7 +128,7 @@ const Login = () => {
             <div className="flex-grow h-px bg-[#3A786D]"></div>
           </div>
 
-          <button className="w-full flex items-center justify-center border border-gray-300 py-3 rounded hover:bg-gray-50 transition">
+          <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center border border-gray-300 py-3 rounded hover:bg-gray-50 transition">
             <img src={Google} alt="Google Logo" className="w-6 h-6" />
             <span className="ml-2">Masuk dengan Akun Google</span>
           </button>
