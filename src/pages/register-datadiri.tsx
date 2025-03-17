@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { useLocation } from "react-router-dom";
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
 const RegisterDataDiri = () => {
@@ -13,35 +13,21 @@ const RegisterDataDiri = () => {
     const [nama_masjid, setAsalMasjid] = useState("");
     const [alasan_bergabung, setAlasanBergabung] = useState("");
     const [short_bio, setBio] = useState("");
-
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    
+    const location = useLocation();
+    const userId = location.state?.userId;
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        const registerData = localStorage.getItem("registerData");
-        if (!registerData) {
-            toast.error("Silakan isi formulir pertama terlebih dahulu.");
-            navigate("/register");
-            return;
-        }
-    
-        const { email, password } = JSON.parse(registerData);
-        const finalData = {
-            email,
-            password,
-            nama: `${firstName} ${lastName}`,
-            nama_masjid,
-            alasan_bergabung,
-            short_bio
-        };
-    
+
         try {
-            const response = await fetch(`${API_URL}/api/auth/register`, {
-              method: "POST",
+            const response = await fetch(`${API_URL}/api/users/${userId}`, {
+              method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(finalData),
+              body: JSON.stringify({
+                nama_masjid,
+                alasan_bergabung,
+                short_bio
+            }),
             });
     
             if (response.ok) {
@@ -62,29 +48,6 @@ const RegisterDataDiri = () => {
             <h1 className="text-[48px] font-semibold font-cooper text-[#3A786D] tracking-[-1px] mb-8">Data Diri</h1>
             
             <form onSubmit={handleRegister} className="">
-                <div className="flex flex-col md:flex-row md:justify-between ">
-                    <div className="mb-4">
-                        <label className="block text-sm font-cooper mb-2">Nama Depan</label>
-                        <input 
-                        type="text" 
-                        placeholder="Masukkan nama depan" 
-                        className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
-                        onChange={(e) => setFirstName(e.target.value)}
-                        required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label className="block text-sm font-cooper mb-2">Nama Belakang</label>
-                        <input 
-                        type="text" 
-                        placeholder="Masukkan nama belakang" 
-                        className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
-                        onChange={(e) => setLastName(e.target.value)}
-                        required
-                        />
-                    </div>
-                </div>
-
                 <div className="mb-4">
                     <label className="block text-sm font-cooper mb-2">Asal Masjid</label>
                     <input 

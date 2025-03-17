@@ -5,8 +5,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { Eye, EyeOff } from "lucide-react";
 import DashboardDisplay from "@/assets/dashboard-display.png";
 import Google from "@/assets/Google.svg";
-
 const Register = () => {
+    const API_URL = import.meta.env.VITE_HOST_NAME;
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -14,35 +14,87 @@ const Register = () => {
     const [termsAccepted, setTermsAccepted] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
 
-    const handleNext = (e: { preventDefault: () => void }) => {
-        e.preventDefault();
-        if (!termsAccepted) {
-            toast.error("Anda harus menyetujui Syarat & Ketentuan.");
-            return;
-        }
-        if (password.length < 6) {
+    const handleNext = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!termsAccepted) {
+          toast.error("Anda harus menyetujui Syarat & Ketentuan.");
+          return;
+      }
+      if (password.length < 6) {
           toast.error("Kata sandi harus memiliki minimal 6 karakter.");
           return;
+      }
+      if (password !== confirmPassword) {
+          toast.error("Konfirmasi kata sandi tidak cocok.");
+          return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/register`, {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+              email: email,
+              password: password,
+              nama: `${firstName} ${lastName}`,
+          }),
+        });
+      
+
+        const data = await response.json();
+        if (!response.ok) {
+          toast.error(data.message || "Pendaftaran gagal. Silakan coba lagi.");
+          return;
         }
-        if (password !== confirmPassword) {
-            toast.error("Konfirmasi kata sandi tidak cocok.");
-            return;
+
+        navigate("/register-datadiri", { state: { userId: data.user.id } });
+      } catch (err) {
+        if (err instanceof Error) {
+          toast.error(err.message);
+        } else {
+          toast.error("Login gagal. Silakan coba lagi.");
         }
-        localStorage.setItem("registerData", JSON.stringify({ email, password }));
-        navigate("/register-datadiri");
-    };  
+      }
+  }; 
 
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white" >
           {/*Left Side*/}
-          {/* <ToastContainer position="top-center" autoClose={3000} /> */}
-          <div className="w-1/2 z-10 flex flex-col justify-center p-12">
+
+          <div className="w-1/2 z-10 flex flex-col justify-start p-12 overflow-y-auto no-scrollbar">
             <div className="max-w-[430px] w-full self-center">
             <h1 className="text-[48px] font-semibold font-cooper text-[#3A786D] tracking-[-1px] mb-8">Daftar</h1>
             
             <form onSubmit={handleNext} className="">
-              <div className="mb-4">
+            <div className="flex flex-col md:flex-row md:justify-between ">
+                    <div className="mb-4">
+                        <label className="block text-sm font-cooper mb-2">Nama Depan</label>
+                        <input 
+                        type="text" 
+                        placeholder="Masukkan nama depan" 
+                        className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block text-sm font-cooper mb-2">Nama Belakang</label>
+                        <input 
+                        type="text" 
+                        placeholder="Masukkan nama belakang" 
+                        className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                        />
+                    </div>
+                </div>
+                
+                <div className="mb-4">
                 <label className="block text-sm font-cooper mb-2">Alamat Email</label>
                 <input 
                   type="email" 
