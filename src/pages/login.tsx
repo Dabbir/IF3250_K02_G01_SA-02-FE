@@ -11,10 +11,8 @@ const API_URL = import.meta.env.VITE_HOST_NAME;
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isChecked, setIsChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [termsError, setTermsError] = useState("");
   useEffect(() => {
     if (localStorage.getItem("showSuccessToast") === "true") {
       toast.success("Login berhasil!");
@@ -23,11 +21,9 @@ const Login = () => {
   }, []);
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    setTermsError("");
 
     if (!isChecked) {
-      setTermsError("Anda harus menyetujui syarat & ketentuan.");
+      toast.error("Anda harus menyetujui syarat & ketentuan.");
       return;
     }
 
@@ -52,13 +48,13 @@ const Login = () => {
         window.location.href = "/dashboard";
 
       } else {
-          setError(data.message || "Login gagal. Silakan coba lagi.");
+          toast.error(data.message || "Login gagal. Silakan coba lagi.");
       }
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
+        toast.error(err.message);
       } else {
-        setError("Login gagal. Silakan coba lagi.");
+        toast.error("Login gagal. Silakan coba lagi.");
       }
     }
   };
@@ -99,8 +95,6 @@ const Login = () => {
               </button>
             </div>
 
-            {error && <p className="text-red-500 mb-4">{error}</p>}
-
             {/* Checkbox Terms & Conditions */}
             <div className="mb-6">
               <div className="flex items-center">
@@ -115,7 +109,6 @@ const Login = () => {
                   Saya menyetujui Syarat & Ketentuan aplikasi
                 </label>
               </div>
-              {termsError && <p className="text-red-500 text-sm mt-1">{termsError}</p>}
             </div>
 
             <button

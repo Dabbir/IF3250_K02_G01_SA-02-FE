@@ -21,6 +21,10 @@ const Register = () => {
             toast.error("Anda harus menyetujui Syarat & Ketentuan.");
             return;
         }
+        if (password.length < 6) {
+          toast.error("Kata sandi harus memiliki minimal 6 karakter.");
+          return;
+        }
         if (password !== confirmPassword) {
             toast.error("Konfirmasi kata sandi tidak cocok.");
             return;
@@ -87,7 +91,6 @@ const Register = () => {
                   className="mr-2" 
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
-                  required
                 />
                 <label htmlFor="terms" className="text-sm">Saya menyetujui Syarat & Ketentuan aplikasi</label>
               </div>
