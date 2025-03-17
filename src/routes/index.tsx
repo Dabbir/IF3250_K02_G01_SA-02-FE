@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "../utils/auth.tsx"
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RegisterDataDiri from "@/pages/register-datadiri";
@@ -11,12 +12,19 @@ import AuthCallback from "@/pages/AuthCallback";
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
-      <Route path="/register-datadiri" element={<RegisterDataDiri />}></Route>
+      <Route path="/register-datadiri" element={<RegisterDataDiri />} />
       <Route path="/wait-verification" element={<WaitVerification />}/>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/" element={<Layout />}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
