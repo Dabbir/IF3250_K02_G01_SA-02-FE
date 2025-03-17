@@ -6,6 +6,7 @@ import WaitVerification from "@/pages/menunggu-verifikasi";
 import ManajemenAkun from "@/pages/manajemenakun";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
+import AuthCallback from "@/pages/AuthCallback";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -14,6 +15,7 @@ const AppRoutes = () => (
       <Route path="/wait-verification" element={<WaitVerification />}/>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
