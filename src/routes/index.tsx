@@ -1,5 +1,4 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import ProtectedRoute from "../utils/auth.tsx"
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RegisterDataDiri from "@/pages/register-datadiri";
@@ -8,21 +7,51 @@ import ManajemenAkun from "@/pages/manajemenakun";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
 import AuthCallback from "@/pages/AuthCallback";
+import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute} from "../utils/auth.tsx"
 
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
-      <Route path="/register-datadiri" element={<RegisterDataDiri />} />
-      <Route path="/wait-verification" element={<WaitVerification />}/>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route 
+        path="/register-datadiri" 
+        element={ 
+        <AuthenticatedProtectedRoute>
+          <RegisterDataDiri />
+        </AuthenticatedProtectedRoute>} 
+      />
+
+      <Route 
+        path="/wait-verification" 
+        element={ 
+        <AuthenticatedProtectedRoute>
+          <WaitVerification />
+        </AuthenticatedProtectedRoute>}
+      />
+
+      <Route 
+        path="/login" 
+        element={ 
+        <AuthenticatedProtectedRoute>
+          <Login />
+        </AuthenticatedProtectedRoute>} 
+      />
+
+      <Route 
+        path="/register" 
+        element={
+        <AuthenticatedProtectedRoute>
+          <Register />
+        </AuthenticatedProtectedRoute>} 
+      />
+      
       <Route path="/auth/callback" element={<AuthCallback />} />
+      
       <Route
         path="/"
         element={
-          <ProtectedRoute>
+          <UnauthenticatedProtectedRoute>
             <Layout />
-          </ProtectedRoute>
+          </UnauthenticatedProtectedRoute>
         }
       >
         <Route index element={<Dashboard />} />
