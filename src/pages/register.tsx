@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Eye, EyeOff } from "lucide-react";
 import DashboardDisplay from "@/assets/dashboard-display.png";
@@ -32,7 +32,7 @@ const Register = () => {
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white" >
           {/*Left Side*/}
-          <ToastContainer position="top-center" autoClose={3000} />
+          {/* <ToastContainer position="top-center" autoClose={3000} /> */}
           <div className="w-1/2 z-10 flex flex-col justify-center p-12">
             <div className="max-w-[430px] w-full self-center">
             <h1 className="text-[48px] font-semibold font-cooper text-[#3A786D] tracking-[-1px] mb-8">Daftar</h1>

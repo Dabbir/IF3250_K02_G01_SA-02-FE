@@ -4,9 +4,20 @@ import BudgetTopPrograms from "@/components/dashboard/budgettopprograms";
 import NewsPublication from "@/components/dashboard/newspublication";
 import Awards from "@/components/dashboard/awards";
 import mapImage from "@/assets/map.svg";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
 
 const Dashboard = () => {
+    useEffect(() => {
+        if (localStorage.getItem("showSuccessToast") === "true") {
+            setTimeout(() => {
+                localStorage.removeItem("showSuccessToast");
+                toast.success("Login berhasil!");
+            }, 100);
+        }
+    }, []);
     return (
+        
         <div
             className="relative p-6 bg-gradient-to-b from-[#96D4E7] to-[#EEEEEE]"
         >

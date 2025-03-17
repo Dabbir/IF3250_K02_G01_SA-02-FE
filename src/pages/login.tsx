@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Eye, EyeOff} from "lucide-react";
 import DashboardDisplay from "@/assets/dashboard-display.png";
 import Google from "@/assets/Google.svg";
+import { useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -14,7 +15,12 @@ const Login = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [termsError, setTermsError] = useState("");
-
+  useEffect(() => {
+    if (localStorage.getItem("showSuccessToast") === "true") {
+      toast.success("Login berhasil!");
+      localStorage.removeItem("showSuccessToast");
+    }
+  }, []);
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -40,13 +46,11 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-          toast.success("Login berhasil!");
 
-          localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("showSuccessToast", "true");
+        window.location.href = "/dashboard";
 
-          setTimeout(() => {
-              window.location.href = "/dashboard";
-          }, 3000);
       } else {
           setError(data.message || "Login gagal. Silakan coba lagi.");
       }
@@ -61,7 +65,7 @@ const Login = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-white">
-      <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme="colored" />
+      {/* <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme="colored" /> */}
 
       <div className="w-1/2 z-10 flex flex-col justify-center p-12">
         <div className="max-w-[430px] w-full self-center">
