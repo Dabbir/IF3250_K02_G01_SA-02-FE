@@ -1,35 +1,58 @@
-// src/pages/GoogleCallback.jsx
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {jwtDecode} from "jwt-decode";
+
+interface DecodedToken {
+  id: number;
+  email: string;
+  peran: string;
+  masjid_id: number | null;
+  iat: number;
+  exp: number;
+}
+
 
 const GoogleCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // Fungsi untuk memproses token
     const processToken = () => {
       const params = new URLSearchParams(location.search);
       const token = params.get('token');
-      
+
       console.log("Token received:", token ? "Yes (hidden)" : "No");
-      
+
       if (!token) {
         toast.error("Login gagal: Token tidak ditemukan");
         navigate('/login');
         return;
       }
-      
+
       localStorage.setItem('token', token);
       toast.success("Login berhasil!");
 
-      setTimeout(() => {
-        navigate('/register-datadiri');
-      }, 2000);
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        console.log("Decoded Token:", decoded);
+        const userId = decoded.id;
+
+
+        if (!userId) {
+          throw new Error("User ID tidak ditemukan dalam token");
+        }
+
+        setTimeout(() => {
+          navigate("/register-datadiri", { state: { userId } });
+        }, 2000);
+      } catch (error) {
+        toast.error("Login gagal: Token tidak valid");
+        navigate('/login');
+      }
     };
-    
+
     processToken();
   }, [location, navigate]);
 
