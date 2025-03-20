@@ -8,6 +8,7 @@ import ManajemenAkun from "@/pages/manajemenakun";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
 import GoogleCallback from "@/pages/googlecallback.tsx";
+import Publikasi from "@/pages/publikasi.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -29,7 +30,7 @@ const AppRoutes = () => (
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<div className="p-4">Data Program Content</div>} />
-        <Route path="/publikasi" element={<div className="p-4">Publikasi Content</div>} />
+        <Route path="/publikasi" element={<Publikasi />} />
         <Route path="/kegiatan" element={<div className="p-4">Kegiatan Content</div>} />
         <Route path="/stakeholder" element={<div className="p-4">Stakeholder Content</div>} />
         <Route path="/penerima-manfaat" element={<div className="p-4">Penerima Manfaat Content</div>} />
