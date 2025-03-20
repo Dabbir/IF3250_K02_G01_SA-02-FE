@@ -17,7 +17,10 @@ const RegisterDataDiri = () => {
     const userId = location.state?.userId;
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
+        if (alasan_bergabung.length < 8) {
+          toast.error("Alasan bergabung harus lebih dari 8 karakter.");
+          return;
+        }
 
         try {
             const response = await fetch(`${API_URL}/api/users/${userId}`, {
