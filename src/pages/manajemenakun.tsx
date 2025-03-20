@@ -136,6 +136,7 @@ export default function ManajemenAkun() {
     // Add the handleDeletePhoto function after the handleImageChange function
     const handleDeletePhoto = () => {
         setPreviewImage(null)
+        userData.profileImage = "";
         setNewProfileImage(null)
         setShouldDeleteImage(true)
         setShowDeleteDialog(false)
@@ -178,25 +179,8 @@ export default function ManajemenAkun() {
             if (!response.ok) {
                 throw new Error("Failed to update profile")
             }
-
-            const updatedData = await response.json()
-
-            if (updatedData.success && updatedData.user) {
-                const fullName = updatedData.user.nama?.trim() || ""
-                const [namaDepan, ...restNama] = fullName.split(" ")
-                const namaBelakang = restNama.join(" ") || ""
-
-                setUserData({
-                    ...userData,
-                    namaDepan,
-                    namaBelakang,
-                    email: updatedData.user.email,
-                    alasanBergabung: updatedData.user.alasan_bergabung || "",
-                    bio: updatedData.user.short_bio || "",
-                    profileImage: updatedData.user.foto_profil || "",
-                })
-            }
-
+            
+            setTimeout(() => window.location.reload(), 500)
             setNewProfileImage(null)
             setPreviewImage(null)
             setShouldDeleteImage(false)
