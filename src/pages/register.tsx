@@ -63,7 +63,7 @@ const Register = () => {
   }; 
 
     const handleGoogleSignup = () => {
-      window.location.href = `${import.meta.env.VITE_HOST_NAME}/api/auth/google`;
+      window.location.href = `${import.meta.env.VITE_HOST_NAME}/api/auth/google?source=register`;
     };
 
     return (
