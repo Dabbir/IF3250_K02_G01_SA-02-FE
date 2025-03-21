@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search, ArrowUpDown, Download, Upload, Pencil, Trash2,  BookOpen } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface Publikasi {
   judul: string;
@@ -28,6 +29,15 @@ const ITEMS_PER_PAGE = 20;
 export default function PublikasiPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const [newPublikasi, setNewPublikasi] = useState<Publikasi>({
+    judul: "",
+    tanggal: "",
+    link: "",
+    perusahaan: "",
+    media: "",
+  });
 
   const filteredPublikasi = dataPublikasi.filter((item) =>
     item.judul.toLowerCase().includes(search.toLowerCase())
@@ -38,6 +48,10 @@ export default function PublikasiPage() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPublikasi({ ...newPublikasi, [e.target.name]: e.target.value });
+  }; 
 
   return (
     <Card className="mx-auto mt-6 max-w-[70rem] p-6">
@@ -65,7 +79,9 @@ export default function PublikasiPage() {
           <div className="flex items-center gap-2">
             <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Download Template</Button>
             <Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
-            <Button className="bg-[#3A786D] text-white">Tambah Publikasi</Button>
+            <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
+                Tambah Publikasi
+            </Button>
           </div>
         </div>
         
@@ -132,6 +148,24 @@ export default function PublikasiPage() {
             Next
           </Button>
         </div>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Tambah Publikasi</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input name="judul" placeholder="Judul Publikasi" value={newPublikasi.judul} onChange={handleInputChange} />
+              <Input name="tanggal" type="date" value={newPublikasi.tanggal} onChange={handleInputChange} />
+              <Input name="link" placeholder="Link Publikasi" value={newPublikasi.link} onChange={handleInputChange} />
+              <Input name="perusahaan" placeholder="Perusahaan Media" value={newPublikasi.perusahaan} onChange={handleInputChange} />
+              <Input name="media" placeholder="Media Publikasi" value={newPublikasi.media} onChange={handleInputChange} />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsOpen(false)}>Batal</Button>
+              <Button className="bg-[#3A786D] text-white">Simpan</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
