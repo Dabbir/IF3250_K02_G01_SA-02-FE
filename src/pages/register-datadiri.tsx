@@ -78,7 +78,7 @@ const RegisterDataDiri = () => {
                     <label className="block text-sm font-cooper mb-2">Bio</label>
                     <input 
                       type="textarea" 
-                      placeholder="Masukkan kata sandi Anda" 
+                      placeholder="Masukkan bio Anda" 
                       className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500"
                       value={short_bio}
                       onChange={(e) => setBio(e.target.value)}
