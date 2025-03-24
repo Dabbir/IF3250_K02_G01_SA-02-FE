@@ -181,7 +181,7 @@ export default function ManajemenAkun() {
             if (!response.ok) {
                 throw new Error("Failed to update profile")
             }
-            
+
             setTimeout(() => window.location.reload(), 500)
             setNewProfileImage(null)
             setPreviewImage(null)
@@ -337,7 +337,7 @@ export default function ManajemenAkun() {
                                         <input
                                             id="profile-upload"
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/jpeg, image/png, image/gif, image/webp, image/svg+xml"
                                             className="hidden"
                                             onChange={handleImageChange}
                                             disabled={!isEditing}
@@ -456,11 +456,11 @@ export default function ManajemenAkun() {
                                         onChange={handleInputChange}
                                         onBlur={handleBlur}
                                         disabled={!isEditing}
-                                        className={`border ${errors.alasanBergabung ? "border-red-500" : "border-[var(--green)]"}`}
+                                        className={`isEditing? h-15 : h-18 border ${errors.alasanBergabung ? "border-red-500" : "border-[var(--green)]"}`}
                                     />
                                     <div className="flex flex-row">
                                         {errors.alasanBergabung && <span className="text-red-500 text-xs">{errors.alasanBergabung}</span>}
-                                        <p className="text-xs text-gray-500 ml-auto">{alasanLength}/100</p>
+                                        {isEditing && <p className="text-xs text-gray-500 ml-auto">{alasanLength}/100</p>}
                                     </div>
                                 </div>
 
@@ -474,9 +474,9 @@ export default function ManajemenAkun() {
                                         value={userData.bio}
                                         onChange={handleInputChange}
                                         disabled={!isEditing}
-                                        className="h-19 border-[var(--green)]"
+                                        className="isEditing? h-19 : h-21 border-[var(--green)]"
                                     />
-                                    <p className="text-end text-xs text-gray-500">{bioLength}/300</p>
+                                    {isEditing && <p className="text-end text-xs text-gray-500">{bioLength}/300</p>}
                                 </div>
                             </div>
                         </div>
