@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { jwtDecode } from "jwt-decode";
 
@@ -53,7 +53,9 @@ const GoogleCallback = () => {
             const data = await response.json();
             
             if (response.ok) {
-              if (data.user && data.user.short_bio) {
+              console.log(data)
+              if (data.user.nama_masjid) {
+                console.log("test")
                 toast.success("Login berhasil!");
                 setTimeout(() => {
                   navigate("/dashboard");

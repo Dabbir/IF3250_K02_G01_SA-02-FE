@@ -13,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isChecked, setIsChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
   useEffect(() => {
     if (localStorage.getItem("showSuccessLogoutToast") === "true") {
       toast.success("Logout berhasil!");
@@ -23,7 +24,7 @@ const Login = () => {
     e.preventDefault();
 
     if (!isChecked) {
-      toast.error("Anda harus menyetujui syarat & ketentuan.");
+      setError("Anda harus menyetujui syarat & ketentuan.");
       return;
     }
 
@@ -48,7 +49,7 @@ const Login = () => {
         window.location.href = "/dashboard";
 
       } else {
-          toast.error(data.message || "Login gagal. Silakan coba lagi.");
+          setError(data.message || "Login gagal. Silakan coba lagi.");
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -60,7 +61,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/api/auth/google?source=login`;
+    window.location.href = `${import.meta.env.VITE_HOST_NAME}/api/auth/google?source=login`;
   };
 
   return (
@@ -113,6 +114,7 @@ const Login = () => {
                   Saya menyetujui Syarat & Ketentuan aplikasi
                 </label>
               </div>
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
 
             <button

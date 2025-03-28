@@ -16,19 +16,20 @@ const Register = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [error, setError] = useState("");
 
     const handleNext = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (!termsAccepted) {
-          toast.error("Anda harus menyetujui Syarat & Ketentuan.");
+          setError("Anda harus menyetujui Syarat & Ketentuan.");
           return;
       }
       if (password.length < 6) {
-          toast.error("Kata sandi harus memiliki minimal 6 karakter.");
+          setError("Kata sandi harus memiliki minimal 6 karakter.");
           return;
       }
       if (password !== confirmPassword) {
-          toast.error("Konfirmasi kata sandi tidak cocok.");
+          setError("Konfirmasi kata sandi tidak cocok.");
           return;
       }
 
@@ -48,7 +49,7 @@ const Register = () => {
 
         const data = await response.json();
         if (!response.ok) {
-          toast.error(data.message || "Pendaftaran gagal. Silakan coba lagi.");
+          setError(data.message || "Pendaftaran gagal. Silakan coba lagi.");
           return;
         }
 
@@ -57,7 +58,7 @@ const Register = () => {
         if (err instanceof Error) {
           toast.error(err.message);
         } else {
-          toast.error("Login gagal. Silakan coba lagi.");
+          toast.error("Pendaftaran gagal. Silakan coba lagi.");
         }
       }
   }; 
@@ -140,17 +141,22 @@ const Register = () => {
                 </button>
               </div>
               
-              <div className="flex items-center mb-6">
-                <input 
-                  type="checkbox" 
-                  id="terms" 
-                  className="mr-2" 
+              <div className="mb-6">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  className="mr-2"
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
                 />
-                <label htmlFor="terms" className="text-sm">Saya menyetujui Syarat & Ketentuan aplikasi</label>
+                <label htmlFor="terms" className="text-sm">
+                  Saya menyetujui Syarat & Ketentuan aplikasi
+                </label>
               </div>
-              
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+            </div>
+
               <button className="w-full bg-teal-700 hover:bg-teal-800 text-white py-2 rounded-md transition-colors">
                 Lanjut
               </button>
