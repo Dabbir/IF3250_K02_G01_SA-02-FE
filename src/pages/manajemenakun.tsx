@@ -456,7 +456,8 @@ export default function ManajemenAkun() {
                                         onChange={handleInputChange}
                                         onBlur={handleBlur}
                                         disabled={!isEditing}
-                                        className={`isEditing? h-15 : h-18 border ${errors.alasanBergabung ? "border-red-500" : "border-[var(--green)]"}`}
+                                        className={`${isEditing ? "h-15" : "h-18"} border ${errors.alasanBergabung ? "border-red-500" : "border-[var(--green)]"}`}
+
                                     />
                                     <div className="flex flex-row">
                                         {errors.alasanBergabung && <span className="text-red-500 text-xs">{errors.alasanBergabung}</span>}
@@ -474,7 +475,7 @@ export default function ManajemenAkun() {
                                         value={userData.bio}
                                         onChange={handleInputChange}
                                         disabled={!isEditing}
-                                        className="isEditing? h-19 : h-21 border-[var(--green)]"
+                                        className={`${isEditing ? "h-19" : "h-21"} border-[var(--green)]`}
                                     />
                                     {isEditing && <p className="text-end text-xs text-gray-500">{bioLength}/300</p>}
                                 </div>
