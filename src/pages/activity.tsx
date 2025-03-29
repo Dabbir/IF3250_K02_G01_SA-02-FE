@@ -99,6 +99,9 @@ export default function KegiatanPage() {
                 <TableRow
                   key={index}
                   className="border-b cursor-pointer hover:bg-gray-100 transition"
+                  onClick={() => {
+                    navigate(`/kegiatan/1`);
+                  }}
                 >
                   <TableCell className="pl-7 truncate max-w-[180px]">{item.namaKegiatan}</TableCell>
                   <TableCell className="text-center truncate">{item.tanggalMulai}</TableCell>
@@ -113,7 +116,7 @@ export default function KegiatanPage() {
                         className="hover:bg-gray-200 transition cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/`);
+                          navigate(`/kegiatan/1`);
                         }}
                       >
                         <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
