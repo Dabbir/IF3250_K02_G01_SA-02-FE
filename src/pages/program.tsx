@@ -26,6 +26,7 @@ interface Program {
     status_program: "Berjalan" | "Selesai";
     masjid_id: number;
     created_by: string;
+    created_at: string;
     updated_at: string;
 }
 
@@ -51,7 +52,7 @@ const pilarOptions = [
 
 const dataProgram: Program[] = Array.from({ length: 20 }, (_, i) => ({
     id: i,
-    nama_program: `Program`,
+    nama_program: 'Penyediaan Buka Puasa Gratis',
     deskripsi_program: 'Program buka puasa bersama yang diselenggarakan selama bulan Ramadhan tahun 2025',
     pilar_program: [1, 2, 3],
     kriteria_program: "Program Berbagi",
@@ -62,6 +63,7 @@ const dataProgram: Program[] = Array.from({ length: 20 }, (_, i) => ({
     status_program: "Berjalan",
     masjid_id: i,
     created_by: "2024-09-09",
+    created_at: "2025-01-01",
     updated_at: "2025-01-01"
 }));
 
@@ -86,6 +88,7 @@ const Program = () => {
         status_program: "Berjalan",
         masjid_id: 0,
         created_by: "",
+        created_at:"",
         updated_at: ""
     });
 
@@ -143,6 +146,7 @@ const Program = () => {
             status_program: "Berjalan",
             masjid_id: 0,
             created_by: "",
+            created_at:"",
             updated_at: ""
         });
         setSelectedPilars([]);

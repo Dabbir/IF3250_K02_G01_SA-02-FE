@@ -32,7 +32,7 @@ interface CardProgramProps {
 
 const CardProgram: React.FC<CardProgramProps> = ({ program }) => {
     return (
-        <div className="flex justify-between">
+        <div className="flex justify-between hover:scale-101">
             <div className="group flex flex-col h-full bg-white border border-gray-200 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70">
                 
                 <div className="h-52 flex justify-center items-center">
@@ -43,20 +43,19 @@ const CardProgram: React.FC<CardProgramProps> = ({ program }) => {
                     />
                 </div>
                 <div className="p-6 md:p-8">
-                    <div className="flex justify-between">
-                        <div>
+                    <div>
+
                             <p className="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-blue-500">
                                 {formatDate(program.waktu_mulai)} - {formatDate(program.waktu_selesai)}
                             </p>
                             <h3 className="text-2xl font-semibold text-gray-800 dark:text-neutral-300 dark:hover:text-white">
                                 {program.nama_program}
                             </h3>
-                        </div>
-                        <div className={`mt-2 flex justify-center items-center font-semibold w-20 h-8 rounded-2xl text-sm text-white ${
-                            program.status_program === "Berjalan" ? "bg-[#ECA72C]" : "bg-green-500"
-                        }`}>
-                            {program.status_program}
-                        </div>
+                            <div className={`mt-2 flex justify-center items-center font-semibold w-20 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${
+                                program.status_program === "Berjalan" ? "bg-[#ECA72C]" : "bg-[#3A786D]"
+                            }`}>
+                                {program.status_program}
+                            </div>
                     </div>
 
                     <p className="mt-2 text-gray-500 dark:text-neutral-500">
@@ -65,10 +64,12 @@ const CardProgram: React.FC<CardProgramProps> = ({ program }) => {
                 </div>
 
                 <div className="mt-auto flex border-t border-gray-200 divide-x divide-gray-200 dark:border-neutral-700 dark:divide-neutral-700">
-                    <a className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-xl bg-white text-gray-800 shadow-2xs hover:text-green-950 hover:font-bold focus:outline-hidden disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800 "
-                        href="#">
-                        Lihat Detail Program
-                    </a>
+                    <button className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-es-xl bg-white text-[#3A786D] shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800 dark:focus:bg-neutral-800">
+                    Ubah
+                    </button>
+                    <button className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-ee-xl bg-white text-[#804E49] shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800 dark:focus:bg-neutral-800">
+                    Hapus
+                    </button>
                 </div>
             </div>
         </div>
