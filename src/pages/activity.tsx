@@ -1,70 +1,206 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Leaf, Pencil, Trash2 } from "lucide-react";
+import { Search, Leaf, Pencil, Trash2, Loader2, Menu } from "lucide-react";
 import AddActivityDialog from "@/components/activity/addactivity";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface Kegiatan {
-  idKegiatan: string;
-  namaKegiatan: string;
-  tanggalMulai: string;
-  tanggalSelesai: string;
+  id: string;
+  nama_aktivitas: string;
+  tanggal_mulai: string;
+  tanggal_selesai: string;
   status: string;
-  biayaImplementasi: string;
+  biaya_implementasi: number;
   deskripsi: string;
-  dokumentasi: File[];
+  dokumentasi?: string;
 }
 
-const dataKegiatan: Kegiatan[] = Array.from({ length: 100 }, (_, i) => ({
-  idKegiatan: `1`,
-  namaKegiatan: `Kegiatan ${i + 1}`,
-  tanggalMulai: "20-03-2025",
-  tanggalSelesai: "20-03-2025",
-  status: "selesai",
-  biayaImplementasi: "1000000000000000",
-  deskripsi: "",
-  dokumentasi: [],
-}));
-
 const ITEMS_PER_PAGE = 20;
+const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function KegiatanPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Kegiatan | null>(null);
+  const [activities, setActivities] = useState<Kegiatan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
-  const totalPages = Math.ceil(dataKegiatan.length / ITEMS_PER_PAGE);
-  const displayedKegiatan = dataKegiatan.slice(
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Fetch activities from API
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        
+        if (!token) {
+          throw new Error("Authentication token not found");
+        }
+
+        const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch activities: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setActivities(data.activity || []);
+        } else {
+          throw new Error(data.message || "Failed to fetch activities");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        toast.error("Failed to load activities");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
+  }, []);
+
+  const filteredActivities = activities.filter(activity => 
+    activity.nama_aktivitas && activity.nama_aktivitas.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE);
+  const displayedActivities = filteredActivities.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleDeleteActivity = (id: string | undefined) => {
+  const handleDeleteActivity = async (id: string | undefined) => {
     if (!id) return;
-    console.log(`Activity deleted: ${id}`);
-    setShowDeleteDialog(false);
+    
+    try {
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(`${API_URL}/api/activity/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete activity: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setActivities(activities.filter(activity => activity.id !== id));
+        toast.success("Activity deleted successfully");
+      } else {
+        throw new Error(data.message || "Failed to delete activity");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete activity");
+    } finally {
+      setShowDeleteDialog(false);
+    }
   };  
 
-  const [isOpen, setIsOpen] = useState(false);
+  const getStatusBadge = (status: string) => {
+    let color = "bg-gray-200 text-gray-800";
+    
+    switch (status.toLowerCase()) {
+      case "unstarted":
+        color = "bg-blue-100 text-blue-800";
+        break;
+      case "ongoing":
+        color = "bg-yellow-100 text-yellow-800";
+        break;
+      case "finished":
+        color = "bg-green-100 text-green-800";
+        break;
+      default:
+        color = "bg-gray-200 text-gray-800";
+    }
+    
+    return (
+      <Badge className={`px-2 py-1 text-xs font-medium rounded-full ${color}`}>
+        {status}
+      </Badge>
+    );
+  };
+
+  if (loading) {
+    return (
+      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
+        <CardContent className="flex justify-center items-center h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
+        <CardContent className="flex justify-center items-center h-[400px]">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="bg-[#3A786D] text-white"
+            >
+              Try Again
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="mx-auto mt-6 max-w-[70rem] p-6">
-      <CardHeader>
+    <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
+      <CardHeader className="p-3 md:p-6">
         <div className="flex items-center space-x-2">
-          <Leaf className="h-6 w-6 text-slate-700" />
-          <h2 className="text-xl font-medium text-[var(--blue)]">Kegiatan</h2>
+          <Leaf className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
+          <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Kegiatan</h2>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex justify-between mb-4 items-center">
-          <div className="flex relative w-2/5 gap-2">
+      <CardContent className="p-3 md:p-6">
+        <div className="flex flex-col md:flex-row justify-between mb-4 gap-4 md:items-center">
+          <div className="flex relative w-full md:w-2/5 gap-2">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
             <Input
               type="text"
@@ -75,119 +211,218 @@ export default function KegiatanPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
+            <Button className="bg-[#3A786D] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
               Tambah Kegiatan
             </Button>
           </div>
         </div>
 
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-100">
-                <TableHead className="pl-7 w-[200px]">Nama Kegiatan</TableHead>
-                <TableHead className="w-[120px] text-center">Tanggal Mulai</TableHead>
-                <TableHead className="w-[120px] text-center">Tanggal Selesai</TableHead>
-                <TableHead className="w-[120px] text-center">Status</TableHead>
-                <TableHead className="w-[180px]">Biaya Implementasi</TableHead>
-                <TableHead className="w-[100px] text-right pr-9">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {displayedKegiatan.map((item, index) => (
-                <TableRow
-                  key={index}
-                  className="border-b cursor-pointer hover:bg-gray-100 transition"
-                  onClick={() => {
-                    navigate(`/kegiatan/1`);
-                  }}
-                >
-                  <TableCell className="pl-7 truncate max-w-[180px]">{item.namaKegiatan}</TableCell>
-                  <TableCell className="text-center truncate">{item.tanggalMulai}</TableCell>
-                  <TableCell className="text-center truncate">{item.tanggalSelesai}</TableCell>
-                  <TableCell className="text-center truncate">{item.status}</TableCell>
-                  <TableCell className="text-left truncate max-w-[180px]">Rp. {item.biayaImplementasi}</TableCell>
-                  <TableCell className="pr-5 text-right">
-                    <div className="flex gap-2 justify-end">
+        {activities.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No activities found</p>
+          </div>
+        ) : isMobileView ? (
+          // Mobile card view
+          <div className="space-y-4">
+            {displayedActivities.map((item) => (
+              <div 
+                key={item.id} 
+                className="border rounded-lg p-4 space-y-3 bg-white"
+                onClick={() => navigate(`/kegiatan/${item.id}`)}
+              >
+                <div className="flex justify-between items-start">
+                  <h3 className="font-medium text-[var(--blue)] truncate pr-2">{item.nama_aktivitas}</h3>
+                  <Sheet>
+                    <SheetTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="hover:bg-gray-200 transition cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/kegiatan/1`);
-                        }}
+                        className="h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
+                        <Menu className="h-4 w-4" />
                       </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="hover:bg-red-100 transition cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedActivity(item);
-                          setShowDeleteDialog(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600 hover:text-red-800" />
-                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-auto max-h-[30vh] rounded-t-xl">
+                      <div className="grid gap-4 py-4">
+                        <Button 
+                          className="w-full flex justify-start items-center space-x-2 bg-transparent text-blue-500 hover:bg-blue-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/kegiatan/${item.id}`);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          <span>Edit Kegiatan</span>
+                        </Button>
+                        <Button 
+                          className="w-full flex justify-start items-center space-x-2 bg-transparent text-red-500 hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedActivity(item);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Hapus Kegiatan</span>
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="space-y-2">
+                    <div>
+                      <span className="block text-gray-500 text-xs">Tanggal Mulai</span>
+                      <span>{new Date(item.tanggal_mulai).toLocaleDateString('id-ID')}</span>
                     </div>
-                  </TableCell>
+                    <div>
+                      <span className="block text-gray-500 text-xs">Status</span>
+                      {getStatusBadge(item.status)}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div>
+                      <span className="block text-gray-500 text-xs">Tanggal Selesai</span>
+                      <span>{new Date(item.tanggal_selesai).toLocaleDateString('id-ID')}</span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500 text-xs">Biaya Implementasi</span>
+                      <span className="font-medium">Rp {item.biaya_implementasi.toLocaleString('id-ID')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Desktop table view
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead className="pl-7 w-[200px]">Nama Kegiatan</TableHead>
+                  <TableHead className="w-[120px] text-center">Tanggal Mulai</TableHead>
+                  <TableHead className="w-[120px] text-center">Tanggal Selesai</TableHead>
+                  <TableHead className="w-[120px] text-center">Status</TableHead>
+                  <TableHead className="w-[180px]">Biaya Implementasi</TableHead>
+                  <TableHead className="w-[100px] text-right pr-9">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
+              </TableHeader>
 
-            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Hapus Kegiatan</DialogTitle>
-                  <DialogDescription>
-                    Apakah Anda yakin ingin menghapus kegiatan?
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="flex justify-between sm:justify-between mt-4">
-                  <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                    Batal
-                  </Button>
-                  <Button type="button" variant="destructive" onClick={() => handleDeleteActivity(selectedActivity?.idKegiatan)}>
-                    Hapus
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+              <TableBody>
+                {displayedActivities.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    className="border-b cursor-pointer hover:bg-gray-100 transition"
+                    onClick={() => {
+                      navigate(`/kegiatan/${item.id}`);
+                    }}
+                  >
+                    <TableCell className="pl-7 truncate max-w-[180px]">{item.nama_aktivitas}</TableCell>
+                    <TableCell className="text-center truncate">
+                      {new Date(item.tanggal_mulai).toLocaleDateString('id-ID')}
+                    </TableCell>
+                    <TableCell className="text-center truncate">
+                      {new Date(item.tanggal_selesai).toLocaleDateString('id-ID')}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {getStatusBadge(item.status)}
+                    </TableCell>
+                    <TableCell className="text-left truncate max-w-[180px]">
+                      Rp {item.biaya_implementasi.toLocaleString('id-ID')}
+                    </TableCell>
+                    <TableCell className="pr-5 text-right">
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-gray-200 transition cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/kegiatan/${item.id}`);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
+                        </Button>
 
-          </Table>
-        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-red-100 transition cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedActivity(item);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600 hover:text-red-800" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
-        <div className="flex justify-center mt-4 space-x-2">
-          <Button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
-            className="bg-[#3A786D] text-white"
-          >
-            Previous
-          </Button>
-          {Array.from({ length: totalPages }, (_, i) => (
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Hapus Kegiatan</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus kegiatan "{selectedActivity?.nama_aktivitas}"?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex justify-between sm:justify-between mt-4">
+              <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                Batal
+              </Button>
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => handleDeleteActivity(selectedActivity?.id)}
+              >
+                Hapus
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {totalPages > 1 && (
+          <div className="flex flex-wrap justify-center mt-4 gap-2">
             <Button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`${currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                }`}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className="bg-[#3A786D] text-white h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm"
             >
-              {i + 1}
+              Previous
             </Button>
-          ))}
-          <Button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
-            className="bg-[#3A786D] text-white"
-          >
-            Next
-          </Button>
-        </div>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${
+                  currentPage === i + 1 
+                  ? "bg-[#3A786D] text-white" 
+                  : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                }`}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="bg-[#3A786D] text-white h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm"
+            >
+              Next
+            </Button>
+          </div>
+        )}
         <AddActivityDialog
           isOpen={isOpen}
           setIsOpen={setIsOpen}
