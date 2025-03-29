@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CardProgram from "@/components/ui/card-program";
 import { Database } from "lucide-react";
@@ -51,7 +52,7 @@ const pilarOptions = [
 ];
 
 const dataProgram: Program[] = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
+    id: i+1,
     nama_program: 'Penyediaan Buka Puasa Gratis',
     deskripsi_program: 'Program buka puasa bersama yang diselenggarakan selama bulan Ramadhan tahun 2025',
     pilar_program: [1, 2, 3],
@@ -74,9 +75,10 @@ const Program = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isOpen, setIsOpen] = useState(false);
     const [selectedPilars, setSelectedPilars] = useState<number[]>([]);
+    const navigate = useNavigate();
 
     const [newProgram, setNewProgram] = useState<Program>({
-        id: 0,
+        id: 1,
         nama_program: "",
         deskripsi_program: "",
         pilar_program: [],
@@ -193,7 +195,11 @@ const Program = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {displayedProgram.map((program) => (
-                        <CardProgram key={program.id} program={program} />
+                        <CardProgram 
+                        key={program.id} 
+                        program={program} 
+                        onClick={() => navigate(`/data-program/${program.id}`)} 
+                    />
                     ))}
                 </div>
 

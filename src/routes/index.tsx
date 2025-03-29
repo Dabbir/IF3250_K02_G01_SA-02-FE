@@ -12,6 +12,7 @@ import Kegiatan from "@/pages/activity.tsx";
 import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute} from "../utils/auth.tsx"
 import DetailKegiatan from "@/pages/detailactivity.tsx";
 import Program from "@/pages/program.tsx";
+import DetailProgram from "@/pages/detail-program.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -62,6 +63,7 @@ const AppRoutes = () => (
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<Program/>} />
+        <Route path="/data-program/:id" element={<DetailProgram />} />
         <Route path="/publikasi" element={<Publikasi />} />
         <Route path="/kegiatan" element={<Kegiatan />} />
         <Route path="/kegiatan/:id" element={<DetailKegiatan />} />

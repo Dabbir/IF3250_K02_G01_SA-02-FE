@@ -1,3 +1,8 @@
+interface CardProgramProps {
+    program: Program;
+    onClick: () => void;
+}
+
 interface Program {
     id: number;
     nama_program: string;
@@ -30,9 +35,9 @@ interface CardProgramProps {
     program: Program;
 }
 
-const CardProgram: React.FC<CardProgramProps> = ({ program }) => {
+const CardProgram: React.FC<CardProgramProps> = ({ program, onClick }) => {
     return (
-        <div className="flex justify-between hover:scale-101">
+        <div className="flex justify-between hover:scale-101" onClick={onClick}>
             <div className="group flex flex-col h-full bg-white border border-gray-200 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70">
                 
                 <div className="h-52 flex justify-center items-center">
