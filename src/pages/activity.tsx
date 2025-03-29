@@ -88,7 +88,7 @@ export default function KegiatanPage() {
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
-        toast.error("Failed to load activities");
+        toast.error("Kegiatan gagal dimuat!");
       } finally {
         setLoading(false);
       }
