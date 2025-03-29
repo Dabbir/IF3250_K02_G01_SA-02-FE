@@ -21,20 +21,25 @@ interface Publikasi {
   tanggal: string;
   link: string;
   prValue: number;
+  nama_program?: string;
+  nama_aktivitas?: string;
+  tone: "Positif" | "Netral" | "Negatif";
 }
+
+interface Program {
+  id: string;
+  nama_program: string;
+}
+
+interface Aktivitas {
+  id: string;
+  nama_aktivitas: string;
+}
+
 
 const formatRupiah = (value: number) => {
   return `Rp ${value.toLocaleString("id-ID")}`;
 };
-
-// const dataPublikasi: Publikasi[] = Array.from({ length: 100 }, (_, i) => ({
-//   judul: `Publikasi ${i + 1}`,
-//   media: "Media Online",
-//   perusahaan: "MediaCorp",
-//   tanggal: "20-03-2025",
-//   link: "example.com",
-//   prValue: Math.floor(Math.random() * 1000000),
-// }));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -42,23 +47,39 @@ export default function PublikasiPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
-  // const [selectedPublikasi, setSelectedPublikasi] = useState<Publikasi | null>(null);
   const [publikasiList, setPublikasiList] = useState<Publikasi[]>([]);
+  const [programList, setProgramList] = useState<Program[]>([]);
+  const [aktivitasList, setAktivitasList] = useState<Aktivitas[]>([]);
 
   useEffect(() => {
-    fetchPublikasi().then(setPublikasiList);
+    const loadData = async () => {
+      const publikasiData = await fetchPublikasi();
+      setPublikasiList(publikasiData);
+      
+      const programData = await fetchProgram();
+      setProgramList(programData);
+
+      const aktivitasData = await fetchAktivitas();
+      setAktivitasList(aktivitasData);
+    };
+    
+    loadData();
   }, []);
 
   const [newPublikasi, setNewPublikasi] = useState<Partial<Publikasi>>({
     judul: "",
     media: "Media Online",
     perusahaan: "",
+    tanggal: new Date().toISOString(),
     link: "",
     prValue: 0,
+    nama_program: "",
+    nama_aktivitas: "",
+    tone: "Netral",
   });
 
   const filteredPublikasi = publikasiList.filter((item) =>
-    item.judul.toLowerCase().includes(search.toLowerCase())
+    item.judul?.toLowerCase().includes(search.toLowerCase()) ?? false
   );
   
   const totalPages = Math.ceil(filteredPublikasi.length / ITEMS_PER_PAGE);
@@ -68,18 +89,104 @@ export default function PublikasiPage() {
   );
 
   // GET
-  const fetchPublikasi = async () => {
+  const fetchPublikasi = async (): Promise<Publikasi[]> => {
     try {
       const response = await fetch(`${API_URL}/api/publikasi`);
       const data = await response.json();
       
       if (response.ok) {
-        return data;
+        const formattedData: Publikasi[] = data.map((item: any) => ({
+          id: item.id || "",
+          judul: item.judul_publikasi || "",
+          media: item.media_publikasi || "Media Online",
+          perusahaan: item.nama_perusahaan_media || "",
+          tanggal: item.tanggal_publikasi || "",
+          link: item.url_publikasi || "",
+          prValue: item.pr_value || 0,
+          nama_program: item.nama_program || "",
+          nama_aktivitas: item.nama_aktivitas || "",
+          tone: item.tone || "Netral",
+        }));
+        return formattedData;
       } else {
         throw new Error(data.message || "Gagal mengambil publikasi.");
       }
     } catch (error) {
       console.error("Error fetching publikasi:", error);
+      return [];
+    }
+  };
+
+  const fetchProgram = async (): Promise<Program[]> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/program`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Gagal mengambil program: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log("Program Data:", data);
+  
+      if (data && Array.isArray(data)) {
+        const formattedData: Program[] = data.map((item: any) => ({
+          id: item.id || "",
+          nama_program: item.nama_program || "",
+        }));
+        return formattedData;
+      } else {
+        console.warn("Format data program tidak sesuai:", data);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching program:", error);
+      return [];
+    }
+  }
+
+  const fetchAktivitas = async (): Promise<Aktivitas[]> => {
+    try {
+      const token = localStorage.getItem("token");
+    
+      if (!token) {
+        console.warn("Token tidak ditemukan, mencoba tanpa token...");
+        return [];
+      }
+    
+      const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+    
+      if (!response.ok) {
+        throw new Error(`Gagal mengambil aktivitas: ${response.status}`);
+      }
+    
+      const data = await response.json();
+      console.log("Aktivitas Data:", data);
+      
+      if (data && data.activity && Array.isArray(data.activity)) {
+        const formattedData: Aktivitas[] = data.activity.map((item: any) => ({
+          id: item.id || "",
+          nama_aktivitas: item.nama_aktivitas || "",
+        }));
+        return formattedData;
+      } else {
+        console.warn("Format data aktivitas tidak sesuai:", data);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching aktivitas:", error);
       return [];
     }
   };
@@ -95,35 +202,69 @@ export default function PublikasiPage() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("id-ID", { 
+        day: "2-digit",
+        month: "long", 
+        year: "numeric" 
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
   // POST
-  const addPublikasi = async (publikasi: Publikasi) => {
+  const addPublikasi = async (publikasi: Partial<Publikasi>): Promise<Publikasi | null> => {
     try {
       const token = localStorage.getItem("token");
+      
+      if (!publikasi.judul || !publikasi.perusahaan || !publikasi.link) {
+        throw new Error("Data tidak lengkap");
+      }
   
       const response = await fetch(`${API_URL}/api/publikasi`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token || ""}`,
         },
         body: JSON.stringify({
           judul_publikasi: publikasi.judul,
           media_publikasi: publikasi.media,
           nama_perusahaan_media: publikasi.perusahaan,
+          tanggal_publikasi: publikasi.tanggal,
           url_publikasi: publikasi.link,
           pr_value: publikasi.prValue,
+          nama_program: publikasi.nama_program || "",
+          nama_aktivitas: publikasi.nama_aktivitas,
+          tone: publikasi.tone || "Netral",
         }),
       });
   
       const data = await response.json();
   
       if (response.ok) {
-        return data;
+        return {
+          id: data.id || "",
+          judul: data.judul_publikasi || "",
+          media: data.media_publikasi || "Media Online",
+          perusahaan: data.nama_perusahaan_media || "",
+          tanggal: data.tanggal_publikasi || "",
+          link: data.url_publikasi || "",
+          prValue: data.pr_value || 0,
+          nama_program: data.nama_program || "",
+          nama_aktivitas: data.nama_aktivitas || "",
+          tone: data.tone || "Netral",
+        };
       } else {
         throw new Error(data.message || "Gagal menambahkan publikasi.");
       }
     } catch (error) {
       console.error("Error adding publikasi:", error);
+      return null;
     }
   };  
 
@@ -133,15 +274,28 @@ export default function PublikasiPage() {
       return;
     }
   
-    const added = await addPublikasi(newPublikasi as Publikasi);
+    const added = await addPublikasi(newPublikasi);
     if (added) {
-      setPublikasiList([...publikasiList, added]);
+      const refreshedData = await fetchPublikasi();
+      setPublikasiList(refreshedData);
       setIsOpen(false);
+      
+      setNewPublikasi({
+        judul: "",
+        media: "Media Online",
+        perusahaan: "",
+        tanggal: new Date().toISOString().split("T")[0],
+        link: "",
+        prValue: 0,
+        nama_program: "",
+        nama_aktivitas: "",
+        tone: "Netral",
+      });
     }
   };  
 
   // PUT
-  const updatePublikasi = async (id: string, publikasi: Publikasi) => {
+  const updatePublikasi = async (id: string, publikasi: Partial<Publikasi>): Promise<Publikasi | null> => {
     try {
       const token = localStorage.getItem("token");
   
@@ -149,51 +303,86 @@ export default function PublikasiPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token || ""}`,
         },
         body: JSON.stringify({
           judul_publikasi: publikasi.judul,
           media_publikasi: publikasi.media,
           nama_perusahaan_media: publikasi.perusahaan,
+          tanggal_publikasi: publikasi.tanggal,
           url_publikasi: publikasi.link,
           pr_value: publikasi.prValue,
+          nama_program: publikasi.nama_program,
+          nama_aktivitas: publikasi.nama_aktivitas,
+          tone: publikasi.tone || "Netral"
         }),
       });
   
       const data = await response.json();
   
       if (response.ok) {
-        return data;
+        return {
+          id: data.id || id,
+          judul: data.judul_publikasi || "",
+          media: data.media_publikasi || "Media Online",
+          perusahaan: data.nama_perusahaan_media || "",
+          tanggal: data.tanggal_publikasi || "",
+          link: data.url_publikasi || "",
+          prValue: data.pr_value || 0,
+          nama_program: data.nama_program || "",
+          nama_aktivitas: data.nama_aktivitas || "",
+          tone: data.tone || "Netral",
+        };
       } else {
         throw new Error(data.message || "Gagal memperbarui publikasi.");
       }
     } catch (error) {
       console.error("Error updating publikasi:", error);
+      return null;
     }
   };
 
   const handleUpdatePublikasi = async (id: string) => {
-    const updated = await updatePublikasi(id, newPublikasi as Publikasi);
+    if (!newPublikasi.judul || !newPublikasi.perusahaan) {
+      alert("Data tidak lengkap");
+      return;
+    }
+    
+    const updated = await updatePublikasi(id, newPublikasi);
     if (updated) {
-      setPublikasiList(publikasiList.map((item) => (item.id === id ? updated : item)));
+      const refreshedData = await fetchPublikasi();
+      setPublikasiList(refreshedData);
+      // setPublikasiList(publikasiList.map((item) => (item.id === id ? updated : item)));
       setIsOpen(false);
+      
+      setNewPublikasi({
+        judul: "",
+        media: "Media Online",
+        perusahaan: "",
+        tanggal: new Date().toISOString(),
+        link: "",
+        prValue: 0,
+        nama_program: "",
+        nama_aktivitas: "",
+      });
     }
   };  
 
   // DELETE
-  const deletePublikasi = async (id: string) => {
+  const deletePublikasi = async (id: string): Promise<boolean> => {
     try {
       const token = localStorage.getItem("token");
   
       const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token || ""}`,
         },
       });
   
       if (!response.ok) {
-        throw new Error("Gagal menghapus publikasi.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Gagal menghapus publikasi.");
       }
   
       return true;
@@ -207,14 +396,18 @@ export default function PublikasiPage() {
     if (confirm("Apakah Anda yakin ingin menghapus publikasi ini?")) {
       const deleted = await deletePublikasi(id);
       if (deleted) {
-        setPublikasiList(publikasiList.filter((item) => item.id !== id));
+        const refreshedData = await fetchPublikasi();
+        setPublikasiList(refreshedData);
+        // setPublikasiList(publikasiList.filter((item) => item.id !== id));
+      } else {
+        alert("Gagal menghapus publikasi. Silakan coba lagi.");
       }
     }
   };  
 
   const downloadTemplate = () => {
     const worksheetData = [
-      ["judul", "media", "perusahaan", "tanggal", "link", "prValue"], 
+      ["judul", "media", "perusahaan", "tanggal", "link", "prValue", "nama_program", "nama_aktivitas"], 
     ];
   
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -246,7 +439,8 @@ export default function PublikasiPage() {
         event.target.value = ""; 
       } else {
         console.log("File valid:", file.name);
-        // Proses olah file nanti
+        // Proses upload file
+        // ...implementasi upload file nanti
       }
     }
   };
@@ -300,71 +494,108 @@ export default function PublikasiPage() {
                 <TableHead>Tanggal Publikasi</TableHead>
                 <TableHead>Link Publikasi</TableHead>
                 <TableHead>PR Value</TableHead>
+                <TableHead>Nama Program</TableHead>
+                <TableHead>Nama Aktivitas</TableHead>
+                <TableHead>Tone</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayedPublikasi.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.judul}</TableCell>
-                  <TableCell>{item.media}</TableCell>
-                  <TableCell>{item.perusahaan}</TableCell>
-                  <TableCell>{item.tanggal}</TableCell>
-                  <TableCell>
-                    <a href={item.link} target="_blank" className="text-blue-600 underline">
-                      {item.link}
-                    </a>
-                  </TableCell>
-                  <TableCell>{formatRupiah(item.prValue)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleUpdatePublikasi(item.id)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDeletePublikasi(item.id)}><Trash2 className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-blue-600"><Share2 className="w-4 h-4" /></Button>
-                    </div>
+              {displayedPublikasi.length > 0 ? (
+                displayedPublikasi.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.judul}</TableCell>
+                    <TableCell>{item.media}</TableCell>
+                    <TableCell>{item.perusahaan}</TableCell>
+                    <TableCell>{formatDate(item.tanggal)}</TableCell>
+                    <TableCell>
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                        {item.link}
+                      </a>
+                    </TableCell>
+                    <TableCell>{formatRupiah(item.prValue)}</TableCell>
+                    <TableCell>{item.nama_program}</TableCell>
+                    <TableCell>{item.nama_aktivitas}</TableCell>
+                    <TableCell>{item.tone}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          setNewPublikasi({
+                            judul: item.judul,
+                            media: item.media,
+                            perusahaan: item.perusahaan,
+                            link: item.link,
+                            prValue: item.prValue,
+                            nama_program: item.nama_program,
+                            nama_aktivitas: item.nama_aktivitas,
+                            tone: item.tone,
+                          });
+                          setIsOpen(true);
+                        }}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDeletePublikasi(item.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-blue-600">
+                          <Share2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    Tidak ada data publikasi
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
 
-        <div className="flex justify-center mt-4 space-x-2">
-          <Button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
-            className="bg-[#3A786D] text-white"
-          >
-            Previous
-          </Button>
-          {Array.from({ length: totalPages }, (_, i) => (
+        {totalPages > 0 && (
+          <div className="flex justify-center mt-4 space-x-2">
             <Button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`${
-                currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-              }`}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className="bg-[#3A786D] text-white"
             >
-              {i + 1}
+              Previous
             </Button>
-          ))}
-          <Button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
-            className="bg-[#3A786D] text-white"
-          >
-            Next
-          </Button>
-        </div>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`${
+                  currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                }`}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="bg-[#3A786D] text-white"
+            >
+              Next
+            </Button>
+          </div>
+        )}
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Tambah Publikasi</DialogTitle>
+              <DialogTitle>{newPublikasi.id ? "Edit Publikasi" : "Tambah Publikasi"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <Input name="judul" placeholder="Judul Publikasi" value={newPublikasi.judul} onChange={handleInputChange} />
-              <Select onValueChange={(value: string) => setNewPublikasi({ ...newPublikasi, media: value as Publikasi["media"] })}>
+              <Select 
+                value={newPublikasi.media}
+                onValueChange={(value: string) => setNewPublikasi({ ...newPublikasi, media: value as Publikasi["media"] })}
+              >
                 <SelectTrigger><SelectValue placeholder="Pilih Media Publikasi" /></SelectTrigger>
                 <SelectContent>
                   {["Televisi", "Koran", "Radio", "Media Online", "Sosial Media", "Lainnya"].map((type) => (
@@ -372,7 +603,76 @@ export default function PublikasiPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select 
+                value={newPublikasi.nama_aktivitas}
+                onValueChange={(value: string) => {
+                  const selectedAktivitas = aktivitasList.find(
+                    (aktivitas) => aktivitas.nama_aktivitas === value
+                  );
+                  setNewPublikasi((prev) => ({
+                    ...prev,
+                    nama_aktivitas: value,
+                    aktivitas_id: selectedAktivitas?.id || "",
+                  }));
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Pilih Aktivitas" /></SelectTrigger>
+                <SelectContent>
+                  {aktivitasList && aktivitasList.length > 0 ? (
+                    aktivitasList.map((aktivitas) => (
+                      <SelectItem 
+                        key={aktivitas.id} 
+                        value={aktivitas.nama_aktivitas || ""}
+                      >
+                        {aktivitas.nama_aktivitas || "Unnamed Activity"}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-data" disabled>
+                      Tidak ada data aktivitas
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <Select 
+                value={newPublikasi.nama_program}
+                onValueChange={(value: string) => {
+                  const selectedProgram = programList.find(
+                    (program) => program.nama_program === value
+                  );
+                  setNewPublikasi((prev) => ({
+                    ...prev,
+                    nama_program: value,
+                    program_id: selectedProgram?.id || "",
+                  }));
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Pilih Program" /></SelectTrigger>
+                <SelectContent>
+                  {programList && programList.length > 0 ? (
+                    programList.map((program) => (
+                      <SelectItem 
+                        key={program.id} 
+                        value={program.nama_program || ""}
+                      >
+                        {program.nama_program || "Unnamed Program"}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-data" disabled>
+                      Tidak ada data program
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
               <Input name="perusahaan" placeholder="Perusahaan Media" value={newPublikasi.perusahaan} onChange={handleInputChange} />
+              <Input
+                type="date"
+                name="tanggal"
+                placeholder="Tanggal Publikasi"
+                value={newPublikasi.tanggal ? new Date(newPublikasi.tanggal).toISOString().split("T")[0] : ""}
+                onChange={(e) => setNewPublikasi({ ...newPublikasi, tanggal: e.target.value })}
+              />
               <Input name="link" placeholder="Link Publikasi" value={newPublikasi.link} onChange={handleInputChange} />
               <div className="relative">
                 <span className="absolute left-3 top-2 text-black text-sm">Rp</span>
@@ -385,10 +685,35 @@ export default function PublikasiPage() {
                   className="pl-8"
                 />
               </div>
+              <Select
+                value={newPublikasi.tone}
+                onValueChange={(value: string) => setNewPublikasi({ ...newPublikasi, tone: value as Publikasi["tone"] })}
+              >
+                <SelectTrigger><SelectValue placeholder="Pilih Tone" /></SelectTrigger>
+                <SelectContent>
+                  {["Positif", "Netral", "Negatif"].map((type) => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsOpen(false)}>Batal</Button>
-              <Button className="bg-[#3A786D] text-white" onClick={handleAddPublikasi}>Simpan</Button>
+              <Button variant="outline" onClick={() => {
+                setIsOpen(false);
+                setNewPublikasi({
+                  judul: "",
+                  media: "Media Online",
+                  perusahaan: "",
+                  link: "",
+                  prValue: 0,
+                });
+              }}>Batal</Button>
+              <Button 
+                className="bg-[#3A786D] text-white" 
+                onClick={newPublikasi.id ? () => handleUpdatePublikasi(newPublikasi.id as string) : handleAddPublikasi}
+              >
+                Simpan
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
