@@ -266,6 +266,47 @@ const Program = () => {
         }
     };
 
+    const handleDeleteProgram = async (programId: number): Promise<boolean> => {
+        try {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // update the program list by filtering out the deleted program
+                    setProgramList(prevList => prevList.filter(program => program.id !== programId));
+                    
+                    // if deleting a program that's currently displayed and it's the last one on the page, go to previous page
+                    if (displayedProgram.length === 1 && currentPage > 1) {
+                        setCurrentPage(prev => prev - 1);
+                    }
+                    
+                    resolve(true); // success
+                }, 800);
+            });
+            
+            /*
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/programs/${programId}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to delete program");
+            }
+    
+            // Update the program list
+            setProgramList(prevList => prevList.filter(program => program.id !== programId));
+            
+            return true;
+            */
+        } catch (error) {
+            console.error("Error deleting program:", error);
+            return false;
+        }
+    };
+
     const downloadTemplate = () => {
         const worksheetData = [
             ["nama_program", "deskripsi_program", "pilar_program", "kriteria_program", "tanggal_mulai", "tanggal_selesai", "rancangan_anggaran", "aktualisasi_anggaran", "status_program"], 
@@ -324,6 +365,7 @@ const Program = () => {
                                 key={program.id} 
                                 program={program} 
                                 onClick={() => navigate(`/data-program/${program.id}`)} 
+                                onDelete={handleDeleteProgram}
                             />
                         ))}
                     </div>

@@ -252,12 +252,12 @@ const DetailProgram = () => {
                                 <div className="flex justify-end mt-6">
                                     {!isEditing ? (
                                         <Button className='h-10' variant="outline" onClick={handleEditClick}>
-                                            <Pencil className="h-4 w-4 mr-2" /> Edit
+                                            <Pencil className="h-4 w-4 mr-2" /> Ubah
                                         </Button>
                                     ) : (
                                         <div className="flex space-x-2">
                                             <Button variant="outline" size="sm" onClick={handleCancel}>
-                                                Cancel
+                                                Batal
                                             </Button>
                                             <Button 
                                                 variant="outline" 
