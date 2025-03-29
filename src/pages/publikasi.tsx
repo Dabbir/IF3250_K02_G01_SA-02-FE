@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search, ArrowUpDown, Download, Upload, Pencil, Trash2, BookOpen, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -65,7 +67,7 @@ export default function PublikasiPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // **1. GET Publikasi**
+  // GET
   const fetchPublikasi = async () => {
     try {
       const response = await fetch(`${API_URL}/api/publikasi`);
@@ -82,7 +84,7 @@ export default function PublikasiPage() {
     }
   };
 
-  // **2. Handle Input Form**
+  // Handle Input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === "prValue") {
@@ -93,7 +95,7 @@ export default function PublikasiPage() {
     }
   };
 
-  // **3. Menambahkan Publikasi Baru**
+  // POST
   const addPublikasi = async (publikasi: Publikasi) => {
     try {
       const token = localStorage.getItem("token");
@@ -138,7 +140,7 @@ export default function PublikasiPage() {
     }
   };  
 
-  // **4. Mengupdate Publikasi**
+  // PUT
   const updatePublikasi = async (id: string, publikasi: Publikasi) => {
     try {
       const token = localStorage.getItem("token");
@@ -178,7 +180,7 @@ export default function PublikasiPage() {
     }
   };  
 
-  // **5. Menghapus Publikasi**
+  // DELETE
   const deletePublikasi = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
@@ -210,6 +212,45 @@ export default function PublikasiPage() {
     }
   };  
 
+  const downloadTemplate = () => {
+    const worksheetData = [
+      ["judul", "media", "perusahaan", "tanggal", "link", "prValue"], 
+    ];
+  
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
+  
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  
+    const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(fileData, "Template_Publikasi.xlsx");
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click(); 
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedExtensions = [".xlsx", ".csv"];
+      const fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 1);
+
+      if (!allowedExtensions.includes(`.${fileExtension}`)) {
+        alert("Hanya file dengan format .xlsx atau .csv yang diperbolehkan!");
+        event.target.value = ""; 
+      } else {
+        console.log("File valid:", file.name);
+        // Proses olah file nanti
+      }
+    }
+  };
+
   return (
     <Card className="mx-auto mt-6 max-w-[70rem] p-6">
       <CardHeader>
@@ -234,8 +275,15 @@ export default function PublikasiPage() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Download Template</Button>
-            <Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
+            <Button variant="outline" onClick={downloadTemplate} ><Download className="w-4 h-4 mr-2" /> Download Template</Button>
+            <Button variant="outline" onClick={handleButtonClick}><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".xlsx,.csv"
+              onChange={handleFileChange}
+              style={{ display: "none" }} 
+            />
             <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
               Tambah Publikasi
             </Button>
