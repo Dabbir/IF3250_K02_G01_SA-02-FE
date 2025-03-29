@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
+import { toast } from "react-toastify";
 
 const API_URL = import.meta.env.VITE_HOST_NAME
 
@@ -56,19 +57,42 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const [filteredPrograms, setFilteredPrograms] = useState<{ id: number; nama: string }[]>([]);
+    const [filteredPrograms, setFilteredPrograms] = useState<{ id: number; nama_program: string }[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
-    const programs = Array.from({ length: 100 }, (_, i) => ({ id: i + 1, nama: `Program ${i + 1}` }));
+    const [programs, setPrograms] = useState<{ id: number; nama_program: string }[]>([]);
+
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/activity/idprogram`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) throw new Error("Gagal mengambil data program");
+
+                const data = await response.json();
+                setPrograms(data.idProgram);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        if (isOpen) fetchPrograms();
+    }, [isOpen]);
 
     const handleInputChangeProgram = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setNewKegiatan({ ...newKegiatan, programTerafiliasi: value });
         setShowDropdown(true);
-        setFilteredPrograms(programs.filter(p => p.nama.toLowerCase().includes(value.toLowerCase())));
+        setFilteredPrograms(programs.filter(p => p.nama_program.toLowerCase().includes(value.toLowerCase())));
     };
 
-    const handleSelectProgram = (program: { id: number; nama: string }) => {
-        setNewKegiatan((prev) => ({ ...prev, programTerafiliasi: program.nama, idProgram: program.id }));
+    const handleSelectProgram = (program: { id: number; nama_program: string }) => {
+        setNewKegiatan((prev) => ({ ...prev, programTerafiliasi: program.nama_program, idProgram: program.id }));
         setShowDropdown(false);
     };
 
@@ -103,7 +127,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         if (!newKegiatan.namaKegiatan) {
             newErrors.namaKegiatan = "Nama kegiatan wajib diisi!";
         }
-        if (!newKegiatan.programTerafiliasi || !programs.some(p => p.nama === newKegiatan.programTerafiliasi)) {
+        if (!newKegiatan.programTerafiliasi || !programs.some(p => p.nama_program === newKegiatan.programTerafiliasi)) {
             newErrors.programTerafiliasi = "Pilih program dari daftar!";
         }
         if (!newKegiatan.tanggalMulai || !newKegiatan.tanggalSelesai) {
@@ -125,7 +149,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
 
     const handleSubmit = async () => {
         if (!validateForm()) return;
-    
+
         setIsSaving(true);
         try {
             const formData = new FormData();
@@ -137,13 +161,13 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             formData.append("status", newKegiatan.status);
             formData.append("biaya_implementasi", String(newKegiatan.biayaImplementasi));
             formData.append("deskripsi", newKegiatan.deskripsi);
-    
+
             images.forEach((image) => {
                 formData.append("dokumentasi", image.file);
             });
-    
+
             const token = localStorage.getItem("token");
-    
+
             const response = await fetch(`${API_URL}/api/activity/add`, {
                 method: "POST",
                 headers: {
@@ -151,22 +175,25 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                 },
                 body: formData,
             });
-    
+
             if (!response.ok) {
                 throw new Error("Gagal menyimpan data");
             }
-    
+
             console.log("Data berhasil dikirim");
-    
+
             setIsOpen(false);
             setTimeout(() => window.location.reload(), 500)
 
+            toast.success("Kegiatan berhasil ditambahkan!")
+
         } catch (error) {
             console.error("Gagal menyimpan data:", error);
+            toast.error("Gagal menambahkan kegiatan!")
         } finally {
             setIsSaving(false);
         }
-    };    
+    };
 
     useEffect(() => {
         if (!isOpen) {
@@ -182,6 +209,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             });
             setErrors({});
             setImages([]);
+            setPrograms([]);
             setShowDropdown(false);
         }
     }, [isOpen]);
@@ -238,10 +266,10 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                                 handleSelectProgram(program);
                                             }}
                                         >
-                                            {program.nama}
+                                            {program.nama_program}
                                         </div>
                                     ))
-                                ) : (
+                                ) : programs.length > 0 ? (
                                     programs.map((program) => (
                                         <div
                                             key={program.id}
@@ -251,9 +279,13 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                                 handleSelectProgram(program);
                                             }}
                                         >
-                                            {program.nama}
+                                            {program.nama_program}
                                         </div>
                                     ))
+                                ) : (
+                                    <div className="px-4 py-2 cursor-pointer text-gray-500">
+                                        Tidak ada program
+                                    </div>
                                 )}
                             </div>
                         )}
