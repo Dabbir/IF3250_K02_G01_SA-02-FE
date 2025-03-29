@@ -10,6 +10,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import Publikasi from "@/pages/publikasi.tsx";
 import Kegiatan from "@/pages/activity.tsx";
 import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute} from "../utils/auth.tsx"
+import DetailKegiatan from "@/pages/detailactivity.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -62,7 +63,7 @@ const AppRoutes = () => (
         <Route path="/data-program" element={<div className="p-4">Data Program Content</div>} />
         <Route path="/publikasi" element={<Publikasi />} />
         <Route path="/kegiatan" element={<Kegiatan />} />
-        <Route path="/kegiatan/:id" element={<Kegiatan />} />
+        <Route path="/kegiatan/:id" element={<DetailKegiatan />} />
         <Route path="/stakeholder" element={<div className="p-4">Stakeholder Content</div>} />
         <Route path="/penerima-manfaat" element={<div className="p-4">Penerima Manfaat Content</div>} />
         <Route path="/karyawan" element={<div className="p-4">Karyawan Content</div>} />
