@@ -86,7 +86,10 @@ const DetailProgram = () => {
             <CardHeader>
                 <div className='justify-between items-top flex'>
                     <div className="flex items-center space-x-2">
-                        <ArrowLeft className="h-6 w-6 text-slate-700" />
+                        <ArrowLeft 
+                        className="h-6 w-6 text-slate-700 hover:cursor-pointer" 
+                        onClick={() => { navigate(`/data-program`); }}
+                        />
                         <h2 className="text-xl font-medium text-[var(--blue)]">Detail Program</h2>
                     </div>
                     <div className="flex flex-col text-xs space-y-2 text-right text-gray-700">
