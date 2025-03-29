@@ -30,6 +30,7 @@ export default function DetailKegiatan() {
     const navigate = useNavigate();
     const [kegiatan, setKegiatan] = useState<Kegiatan | null>(null);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editedKegiatan, setEditedKegiatan] = useState<Kegiatan | null>(null);
@@ -68,7 +69,6 @@ export default function DetailKegiatan() {
                 setError(err instanceof Error ? err.message : "An error occurred");
                 toast.error("Failed to load activity details");
             } finally {
-                console.log("udah")
                 setLoading(false);
             }
         };
@@ -98,11 +98,57 @@ export default function DetailKegiatan() {
     };
 
     const handleSaveClick = async () => {
+        if (!editedKegiatan) return;
+        
+        setSaving(true);
         try {
-            setIsEditing(false);
-            toast.success("Activity updated successfully");
+            const token = localStorage.getItem("token");
+            
+            if (!token) {
+                throw new Error("Authentication token not found");
+            }
+
+            // Create the request payload with only the fields we want to update
+            const updateData = {
+                nama_aktivitas: editedKegiatan.nama_aktivitas,
+                program_id: editedKegiatan.program_id,
+                deskripsi: editedKegiatan.deskripsi,
+                tanggal_mulai: editedKegiatan.tanggal_mulai ? new Date(editedKegiatan.tanggal_mulai).toISOString().split('T')[0] : null,
+                tanggal_selesai: editedKegiatan.tanggal_selesai ? new Date(editedKegiatan.tanggal_selesai).toISOString().split('T')[0] : null,
+                biaya_implementasi: editedKegiatan.biaya_implementasi,
+                status: editedKegiatan.status
+            };
+
+            // Send the update request to the API
+            const response = await fetch(`${API_URL}/api/activity/update/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Failed to update activity: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update the local state with the updated data
+                setKegiatan(data.data || editedKegiatan);
+                setIsEditing(false);
+                toast.success("Activity updated successfully");
+            } else {
+                throw new Error(data.message || "Failed to update activity");
+            }
         } catch (error) {
-            toast.error("Failed to update activity");
+            console.error("Error updating activity:", error);
+            toast.error(error instanceof Error ? error.message : "Failed to update activity");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -110,40 +156,10 @@ export default function DetailKegiatan() {
         setEditedKegiatan((prev) => prev ? ({ ...prev, [field]: value }) : null);
     };
 
-    const [programTerafiliasi, setProgramTerafiliasi] = useState("");
-    const [filteredPrograms, setFilteredPrograms] = useState<string[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-
-    const programs = Array.from({ length: 100 }, (_, i) => `Program ${i + 1}`);
-
-    const handleInputChangeProgram = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setProgramTerafiliasi(value);
-        if (value.trim() === "") {
-            setFilteredPrograms([]);
-        } else {
-            const filtered = programs.filter((p) =>
-                p.toLowerCase().includes(value.toLowerCase())
-            );
-            setFilteredPrograms(filtered);
-        }
-        setShowDropdown(true);
-    };
-
-    const handleSelectProgram = (program: string) => {
-        setProgramTerafiliasi(program);
-        setShowDropdown(false);
-        
-        if (editedKegiatan) {
-            setEditedKegiatan({
-                ...editedKegiatan,
-                nama_program: program
-            });
-        }
-    };
 
     const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (
@@ -156,6 +172,11 @@ export default function DetailKegiatan() {
 
     const handleGoBack = () => {
         navigate('/kegiatan');
+    };
+
+    const handleCancel = () => {
+        setEditedKegiatan(kegiatan);
+        setIsEditing(false);
     };
 
     if (loading) {
@@ -258,9 +279,27 @@ export default function DetailKegiatan() {
                                     <Pencil className="h-4 w-4 mr-2" /> Edit
                                 </Button>
                             ) : (
-                                <Button variant="outline" size="sm" >
-                                    <Save className="h-4 w-4 mr-2" onClick={handleSaveClick}/> Simpan
-                                </Button>   
+                                <div className="flex space-x-2">
+                                    <Button variant="outline" size="sm" onClick={handleCancel}>
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={handleSaveClick}
+                                        disabled={saving}
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" /> Simpan
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             )}
                         </div>
 
@@ -269,47 +308,9 @@ export default function DetailKegiatan() {
                                 <TableRow>
                                     <TableHead>Program Terafiliasi</TableHead>
                                     <TableCell className="relative" onBlur={handleBlur}>
-                                        {isEditing ? (
-                                            <>
-                                                <Input
-                                                    id="programTerafiliasi"
-                                                    ref={inputRef}
-                                                    value={programTerafiliasi || editedKegiatan?.nama_program || ''}
-                                                    onChange={handleInputChangeProgram}
-                                                    onFocus={() => setShowDropdown(true)}
-                                                    placeholder={kegiatan.nama_program || "Pilih Program"}
-                                                    className="w-full"
-                                                />
-                                                {showDropdown && (
-                                                    <div
-                                                        ref={dropdownRef}
-                                                        className="absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
-                                                    >
-                                                        {filteredPrograms.length > 0
-                                                            ? filteredPrograms.map((program) => (
-                                                                <div
-                                                                    key={program}
-                                                                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                                                    onClick={() => handleSelectProgram(program)}
-                                                                >
-                                                                    {program}
-                                                                </div>
-                                                            ))
-                                                            : programs.map((program) => (
-                                                                <div
-                                                                    key={program}
-                                                                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                                                    onClick={() => handleSelectProgram(program)}
-                                                                >
-                                                                    {program}
-                                                                </div>
-                                                            ))}
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            kegiatan.nama_program || "N/A"
-                                        )}
+                                        {
+                                            kegiatan.program_id || "N/A"
+                                        }
                                     </TableCell>
                                 </TableRow>
                                 <TableRow>
