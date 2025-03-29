@@ -332,7 +332,7 @@ const Program = () => {
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col md:flex-row justify-between mb-4 items-center">
-                    <div className="flex relative w-full md:w-2/5 gap-2 mb-4 md:mb-0">
+                    <div className="flex relative max-w-70 md:w-2/5 gap-2 mb-4 md:mb-0">
                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
                         <Input
                             type="text"
@@ -341,9 +341,6 @@ const Program = () => {
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-10"
                         />
-                        <Button variant="outline" className="flex items-center">
-                            <ArrowUpDown className="w-4 h-4 mr-2" /> Sort
-                        </Button>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" onClick={downloadTemplate} ><Download className="w-4 h-4 mr-2" /> Download Template</Button>
