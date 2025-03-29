@@ -12,7 +12,7 @@ import Kegiatan from "@/pages/activity.tsx";
 import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute} from "../utils/auth.tsx"
 import DetailKegiatan from "@/pages/detailactivity.tsx";
 import Program from "@/pages/program.tsx";
-import DetailProgram from "@/pages/detail-program.tsx";
+import DetailProgram from "@/pages/detailprogram.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
