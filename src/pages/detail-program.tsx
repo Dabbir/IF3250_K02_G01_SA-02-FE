@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Building } from 'lucide-react';
+import { ArrowLeft, User, Building, Pencil, Save, Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "react-toastify";
 import { Banknote } from 'lucide-react';
 import { HandCoins } from 'lucide-react';
 
@@ -45,10 +47,10 @@ const dataKegiatan: Kegiatan[] = Array.from({ length: 5 }, (_, i) => ({
     deskripsi: "Kegiatan baru"
 }));
 
-
 const DetailProgram = () => {
     const { id } = useParams<{ id: string }>();
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [program, setProgram] = useState<Program | null>(null);
     const [editedProgram, setEditedProgram] = useState<Program | null>(null);
@@ -81,6 +83,35 @@ const DetailProgram = () => {
         setEditedProgram((prev) => ({ ...prev!, [field]: value }));
     };
 
+    const handleEditClick = () => {
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setEditedProgram(program);
+        setIsEditing(false);
+    };
+
+    const handleSaveClick = async () => {
+        if (!editedProgram) return;
+        setSaving(true);
+        try {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                throw new Error("Authentication token not found");
+            }
+
+            setProgram(editedProgram);
+            setIsEditing(false);
+            toast.success("Activity updated successfully");
+        } catch (error) {
+            throw new Error("Failed to update program");
+        } finally {
+            setSaving(false);
+        }
+    }
+
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
             <CardHeader>
@@ -107,13 +138,44 @@ const DetailProgram = () => {
             <CardContent>
                 
                 <div className='space-y-2'>
-                    <div className="flex justify-between align-middle">
-                        <h1 className="text-3xl font-semibold">{String(program?.nama_program ?? "Program Masjid")}</h1>
-                        <div className="mt-2 flex justify-center items-center font-semibold w-20 h-8 md:w-22 md:h-10 rounded-2xl md:rounded-3xl text-sm md:text-base text-white bg-[#ECA72C]">
-                            Berjalan
+                    <div className="flex justify-between align-baseline">
+                        <div className="space-y-4 align-bottom">
+                            <h1 className="text-3xl font-semibold">{String(program?.nama_program ?? "Program Masjid")}</h1>
+                            <div className="mt-2 flex justify-center items-center font-semibold w-20 h-6 md:w-22 md:h-8 rounded-xl md:rounded-2xl text-sm md:text-base text-white bg-[#ECA72C]">
+                                    Berjalan
+                            </div>
+                        </div>
+                        <div className="flex justify-end mt-6">
+                            {!isEditing ? (
+                                <Button className='h-10' variant="outline" onClick={handleEditClick}>
+                                    <Pencil className="h-4 w-4 mr-2" /> Edit
+                                </Button>
+                            ) : (
+                                <div className="flex space-x-2">
+                                    <Button variant="outline" size="sm" onClick={handleCancel}>
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={handleSaveClick}
+                                        disabled={saving}
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" /> Simpan
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center mt-4 space-x-2">
                         <Building className='h-5 w-5 text-[#3A786D]'/>
                         <p className='text-[#3A786D] font-semibold'>Masjid Salman</p>
                     </div>
@@ -129,7 +191,7 @@ const DetailProgram = () => {
                             <TableHead>Deskripsi Program</TableHead>
                             <TableCell>
                                 {isEditing ? (
-                                    <Input
+                                    <Textarea
                                         value={program?.deskripsi_program}
                                         onChange={(e) => handleChange("deskripsi_program", e.target.value)}
                                     />
@@ -183,7 +245,7 @@ const DetailProgram = () => {
                             <TableHead>Tanggal Selesai</TableHead>
                             <TableCell>
                                 {isEditing ? (
-                                    <Textarea
+                                    <Input
                                         value={program?.waktu_selesai}
                                         onChange={(e) => handleChange("waktu_selesai", e.target.value)}
                                     />
@@ -196,7 +258,7 @@ const DetailProgram = () => {
                             <TableHead>Rancangan Anggaran</TableHead>
                             <TableCell>
                                 {isEditing ? (
-                                    <Textarea
+                                    <Input
                                         value={program?.rancangan_anggaran}
                                         onChange={(e) => handleChange("rancangan_anggaran", e.target.value)}
                                     />
@@ -211,7 +273,7 @@ const DetailProgram = () => {
                             <TableHead>Aktualisasi Anggaran</TableHead>
                             <TableCell>
                                 {isEditing ? (
-                                    <Textarea
+                                    <Input
                                         value={program?.aktualisasi_anggaran}
                                         onChange={(e) => handleChange("aktualisasi_anggaran", e.target.value)}
                                     />
