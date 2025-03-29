@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,15 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
+import { toast } from "react-toastify";
+
+const API_URL = import.meta.env.VITE_HOST_NAME
 
 interface Kegiatan {
     namaKegiatan: string;
+    programTerafiliasi: string;
+    idProgram: number;
     tanggalMulai: string;
     tanggalSelesai: string;
     status: string;
     biayaImplementasi: string;
     deskripsi: string;
-    dokumentasi: File[];
 }
 
 type ImageData = {
@@ -30,14 +34,17 @@ interface AddKegiatanDialogProps {
 }
 
 export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDialogProps) {
+    const [isSaving, setIsSaving] = useState(false);
+
     const [newKegiatan, setNewKegiatan] = useState<Kegiatan>({
         namaKegiatan: "",
+        programTerafiliasi: "",
+        idProgram: 0,
         tanggalMulai: "",
         tanggalSelesai: "",
         status: "",
         biayaImplementasi: "",
         deskripsi: "",
-        dokumentasi: [],
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -48,31 +55,44 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         setNewKegiatan((prev) => ({ ...prev, [name]: value }));
     };
 
-    const [programTerafiliasi, setProgramTerafiliasi] = useState("");
-    const [filteredPrograms, setFilteredPrograms] = useState<string[]>([]);
-    const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const [isSaving, setIsSaving] = useState(false)
+    const [filteredPrograms, setFilteredPrograms] = useState<{ id: number; nama_program: string }[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [programs, setPrograms] = useState<{ id: number; nama_program: string }[]>([]);
 
-    const programs = Array.from({ length: 100 }, (_, i) => `Program ${i + 1}`);
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/activity/idprogram`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) throw new Error("Gagal mengambil data program");
+
+                const data = await response.json();
+                setPrograms(data.idProgram);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        if (isOpen) fetchPrograms();
+    }, [isOpen]);
 
     const handleInputChangeProgram = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setProgramTerafiliasi(value);
-        if (value.trim() === "") {
-            setFilteredPrograms([]);
-        } else {
-            const filtered = programs.filter((p) =>
-                p.toLowerCase().includes(value.toLowerCase())
-            );
-            setFilteredPrograms(filtered);
-        }
+        setNewKegiatan({ ...newKegiatan, programTerafiliasi: value });
         setShowDropdown(true);
+        setFilteredPrograms(programs.filter(p => p.nama_program.toLowerCase().includes(value.toLowerCase())));
     };
 
-    const handleSelectProgram = (program: string) => {
-        setProgramTerafiliasi(program);
+    const handleSelectProgram = (program: { id: number; nama_program: string }) => {
+        setNewKegiatan((prev) => ({ ...prev, programTerafiliasi: program.nama_program, idProgram: program.id }));
         setShowDropdown(false);
     };
 
@@ -100,35 +120,106 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         setImages((prev) => prev.filter((_, i) => i !== index));
     };
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+        if (!newKegiatan.namaKegiatan) {
+            newErrors.namaKegiatan = "Nama kegiatan wajib diisi!";
+        }
+        if (!newKegiatan.programTerafiliasi || !programs.some(p => p.nama_program === newKegiatan.programTerafiliasi)) {
+            newErrors.programTerafiliasi = "Pilih program dari daftar!";
+        }
+        if (!newKegiatan.tanggalMulai || !newKegiatan.tanggalSelesai) {
+            newErrors.tanggal = "Tanggal mulai dan selesai wajib diisi!";
+        }
+        if (!newKegiatan.status) {
+            newErrors.status = "Status wajib dipilih";
+        }
+        if (!newKegiatan.biayaImplementasi || parseInt(newKegiatan.biayaImplementasi) < 0) {
+            newErrors.biayaImplementasi = "Biaya implementasi harus 0 atau lebih!";
+        }
+        if (!newKegiatan.deskripsi) {
+            newErrors.deskripsi = "Deskripsi harus lebih dari 10 karakter!";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async () => {
+        if (!validateForm()) return;
+
         setIsSaving(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const formData = new FormData();
+            formData.append("nama_aktivitas", newKegiatan.namaKegiatan);
+            formData.append("programTerafiliasi", newKegiatan.programTerafiliasi);
+            formData.append("program_id", String(newKegiatan.idProgram));
+            formData.append("tanggal_mulai", newKegiatan.tanggalMulai);
+            formData.append("tanggal_selesai", newKegiatan.tanggalSelesai);
+            formData.append("status", newKegiatan.status);
+            formData.append("biaya_implementasi", String(newKegiatan.biayaImplementasi));
+            formData.append("deskripsi", newKegiatan.deskripsi);
 
-            console.log("Data yang dikirim:", newKegiatan);
-
-            setNewKegiatan({
-                namaKegiatan: "",
-                tanggalMulai: "",
-                tanggalSelesai: "",
-                status: "",
-                biayaImplementasi: "",
-                deskripsi: "",
-                dokumentasi: [],
+            images.forEach((image) => {
+                formData.append("dokumentasi", image.file);
             });
-            setImages([]);
-            setProgramTerafiliasi("");
+
+            const token = localStorage.getItem("token");
+
+            const response = await fetch(`${API_URL}/api/activity/add`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Gagal menyimpan data");
+            }
+
+            console.log("Data berhasil dikirim");
+
             setIsOpen(false);
+            setTimeout(() => window.location.reload(), 500)
+
+            toast.success("Kegiatan berhasil ditambahkan!")
+
         } catch (error) {
             console.error("Gagal menyimpan data:", error);
+            toast.error("Gagal menambahkan kegiatan!")
         } finally {
             setIsSaving(false);
         }
     };
 
+    useEffect(() => {
+        if (!isOpen) {
+            setNewKegiatan({
+                namaKegiatan: "",
+                programTerafiliasi: "",
+                idProgram: 0,
+                tanggalMulai: "",
+                tanggalSelesai: "",
+                status: "",
+                biayaImplementasi: "",
+                deskripsi: "",
+            });
+            setErrors({});
+            setImages([]);
+            setPrograms([]);
+            setShowDropdown(false);
+        }
+    }, [isOpen]);
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="max-w-[600px] max-h-[95vh] overflow-y-auto">
+            <DialogContent
+                key={isOpen ? "open" : "closed"}
+                className="max-w-[600px] max-h-[95vh] overflow-y-auto"
+            >
 
                 <DialogHeader>
                     <DialogTitle className="text-center">Tambah Kegiatan</DialogTitle>
@@ -144,6 +235,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                             onChange={handleInputChange}
                             className="w-full"
                         />
+                        {errors.namaKegiatan && <p className="text-red-500 text-[12px]">{errors.namaKegiatan}</p>}
                     </div>
 
                     <div className="relative space-y-2" onBlur={handleBlur}>
@@ -151,66 +243,80 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                         <Input
                             id="programTerafiliasi"
                             ref={inputRef}
-                            value={programTerafiliasi}
+                            value={newKegiatan.programTerafiliasi}
                             onChange={handleInputChangeProgram}
                             onFocus={() => setShowDropdown(true)}
-                            placeholder="Ketik untuk mencari..."
+                            placeholder="Pilih program"
                             className="w-full"
                         />
+                        {errors.programTerafiliasi && <p className="text-red-500 text-[12px]">{errors.programTerafiliasi}</p>}
 
                         {showDropdown && (
                             <div
                                 ref={dropdownRef}
-                                className="absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
+                                className="text-[12px] absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
                             >
                                 {filteredPrograms.length > 0 ? (
                                     filteredPrograms.map((program) => (
                                         <div
-                                            key={program}
+                                            key={program.id}
                                             className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                            onClick={() => handleSelectProgram(program)}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleSelectProgram(program);
+                                            }}
                                         >
-                                            {program}
+                                            {program.nama_program}
+                                        </div>
+                                    ))
+                                ) : programs.length > 0 ? (
+                                    programs.map((program) => (
+                                        <div
+                                            key={program.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleSelectProgram(program);
+                                            }}
+                                        >
+                                            {program.nama_program}
                                         </div>
                                     ))
                                 ) : (
-                                    programs.map((program) => (
-                                        <div
-                                            key={program}
-                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                            onClick={() => handleSelectProgram(program)}
-                                        >
-                                            {program}
-                                        </div>
-                                    ))
+                                    <div className="px-4 py-2 cursor-pointer text-gray-500">
+                                        Tidak ada program
+                                    </div>
                                 )}
                             </div>
                         )}
                     </div>
 
-                    <div className="flex justify-left space-x-5">
-                        <div className="space-y-2 width-full">
-                            <Label htmlFor="tanggalMulai">Tanggal Mulai</Label>
-                            <Input
-                                name="tanggalMulai"
-                                id="tanggalMulai"
-                                type="date"
-                                value={newKegiatan.tanggalMulai}
-                                onChange={handleInputChange}
-                                className="w-full"
-                            />
+                    <div className="space-y-2">
+                        <div className="flex justify-left space-x-5">
+                            <div className="space-y-2 width-full">
+                                <Label htmlFor="tanggalMulai">Tanggal Mulai</Label>
+                                <Input
+                                    name="tanggalMulai"
+                                    id="tanggalMulai"
+                                    type="date"
+                                    value={newKegiatan.tanggalMulai}
+                                    onChange={handleInputChange}
+                                    className="w-full"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tanggalSelesai">Tanggal Selesai</Label>
+                                <Input
+                                    name="tanggalSelesai"
+                                    id="tanggalSelesai"
+                                    type="date"
+                                    value={newKegiatan.tanggalSelesai}
+                                    onChange={handleInputChange}
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="tanggalSelesai">Tanggal Selesai</Label>
-                            <Input
-                                name="tanggalSelesai"
-                                id="tanggalSelesai"
-                                type="date"
-                                value={newKegiatan.tanggalSelesai}
-                                onChange={handleInputChange}
-                                className="w-full"
-                            />
-                        </div>
+                        {errors.tanggal && <p className="text-red-500 text-[12px]">{errors.tanggal}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -229,6 +335,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                 className="w-full"
                             />
                         </div>
+                        {errors.biayaImplementasi && <p className="text-red-500 text-[12px]">{errors.biayaImplementasi}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -246,6 +353,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                 <SelectItem value="Finished">Finished</SelectItem>
                             </SelectContent>
                         </Select>
+                        {errors.namaKegiatan && <p className="text-red-500 text-[12px]">{errors.namaKegiatan}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -258,6 +366,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                             onChange={handleInputChange}
                             className="w-full"
                         />
+                        {errors.deskripsi && <p className="text-red-500 text-[12px]">{errors.deskripsi}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -294,7 +403,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                                 size="icon"
                                                 className="cursor-pointer absolute top-1 right-1 bg-red-500 text-white hover:bg-red-600"
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // Mencegah klik dari memicu input file
+                                                    e.stopPropagation();
                                                     removeImage(index);
                                                 }}
                                             >
