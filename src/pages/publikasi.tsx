@@ -1,64 +1,262 @@
-"use client"
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, ArrowUpDown, Download, Upload, Pencil, Trash2,  BookOpen } from "lucide-react";
+import { Search, ArrowUpDown, Download, Upload, Pencil, Trash2, BookOpen, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+const API_URL = import.meta.env.VITE_HOST_NAME;
 
 interface Publikasi {
+  id: string;
   judul: string;
+  media: "Televisi" | "Koran" | "Radio" | "Media Online" | "Sosial Media" | "Lainnya";
+  perusahaan: string;
   tanggal: string;
   link: string;
-  perusahaan: string;
-  media: string;
+  prValue: number;
 }
 
-const dataPublikasi: Publikasi[] = Array.from({ length: 100 }, (_, i) => ({
-  judul: `Publikasi ${i + 1}`,
-  tanggal: "20-03-2025",
-  link: "example.com",
-  perusahaan: "MediaCorp",
-  media: "Online",
-}));
+const formatRupiah = (value: number) => {
+  return `Rp ${value.toLocaleString("id-ID")}`;
+};
+
+// const dataPublikasi: Publikasi[] = Array.from({ length: 100 }, (_, i) => ({
+//   judul: `Publikasi ${i + 1}`,
+//   media: "Media Online",
+//   perusahaan: "MediaCorp",
+//   tanggal: "20-03-2025",
+//   link: "example.com",
+//   prValue: Math.floor(Math.random() * 1000000),
+// }));
 
 const ITEMS_PER_PAGE = 20;
 
 export default function PublikasiPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  
   const [isOpen, setIsOpen] = useState(false);
-  const [newPublikasi, setNewPublikasi] = useState<Publikasi>({
+  // const [selectedPublikasi, setSelectedPublikasi] = useState<Publikasi | null>(null);
+  const [publikasiList, setPublikasiList] = useState<Publikasi[]>([]);
+
+  useEffect(() => {
+    fetchPublikasi().then(setPublikasiList);
+  }, []);
+
+  const [newPublikasi, setNewPublikasi] = useState<Partial<Publikasi>>({
     judul: "",
-    tanggal: "",
-    link: "",
+    media: "Media Online",
     perusahaan: "",
-    media: "",
+    link: "",
+    prValue: 0,
   });
 
-  const filteredPublikasi = dataPublikasi.filter((item) =>
+  const filteredPublikasi = publikasiList.filter((item) =>
     item.judul.toLowerCase().includes(search.toLowerCase())
   );
-
+  
   const totalPages = Math.ceil(filteredPublikasi.length / ITEMS_PER_PAGE);
   const displayedPublikasi = filteredPublikasi.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
+  // GET
+  const fetchPublikasi = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/publikasi`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.message || "Gagal mengambil publikasi.");
+      }
+    } catch (error) {
+      console.error("Error fetching publikasi:", error);
+      return [];
+    }
+  };
+
+  // Handle Input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewPublikasi({ ...newPublikasi, [e.target.name]: e.target.value });
-  }; 
+    const { name, value } = e.target;
+    if (name === "prValue") {
+      const numericValue = Number(value.replace(/\D/g, "")) || 0;
+      setNewPublikasi((prev) => ({ ...prev, prValue: numericValue }));
+    } else {
+      setNewPublikasi((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // POST
+  const addPublikasi = async (publikasi: Publikasi) => {
+    try {
+      const token = localStorage.getItem("token");
+  
+      const response = await fetch(`${API_URL}/api/publikasi`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          judul_publikasi: publikasi.judul,
+          media_publikasi: publikasi.media,
+          nama_perusahaan_media: publikasi.perusahaan,
+          url_publikasi: publikasi.link,
+          pr_value: publikasi.prValue,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.message || "Gagal menambahkan publikasi.");
+      }
+    } catch (error) {
+      console.error("Error adding publikasi:", error);
+    }
+  };  
+
+  const handleAddPublikasi = async () => {
+    if (!newPublikasi.judul || !newPublikasi.perusahaan || !newPublikasi.link) {
+      alert("Harap isi semua bidang yang diperlukan.");
+      return;
+    }
+  
+    const added = await addPublikasi(newPublikasi as Publikasi);
+    if (added) {
+      setPublikasiList([...publikasiList, added]);
+      setIsOpen(false);
+    }
+  };  
+
+  // PUT
+  const updatePublikasi = async (id: string, publikasi: Publikasi) => {
+    try {
+      const token = localStorage.getItem("token");
+  
+      const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          judul_publikasi: publikasi.judul,
+          media_publikasi: publikasi.media,
+          nama_perusahaan_media: publikasi.perusahaan,
+          url_publikasi: publikasi.link,
+          pr_value: publikasi.prValue,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.message || "Gagal memperbarui publikasi.");
+      }
+    } catch (error) {
+      console.error("Error updating publikasi:", error);
+    }
+  };
+
+  const handleUpdatePublikasi = async (id: string) => {
+    const updated = await updatePublikasi(id, newPublikasi as Publikasi);
+    if (updated) {
+      setPublikasiList(publikasiList.map((item) => (item.id === id ? updated : item)));
+      setIsOpen(false);
+    }
+  };  
+
+  // DELETE
+  const deletePublikasi = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+  
+      const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Gagal menghapus publikasi.");
+      }
+  
+      return true;
+    } catch (error) {
+      console.error("Error deleting publikasi:", error);
+      return false;
+    }
+  };
+
+  const handleDeletePublikasi = async (id: string) => {
+    if (confirm("Apakah Anda yakin ingin menghapus publikasi ini?")) {
+      const deleted = await deletePublikasi(id);
+      if (deleted) {
+        setPublikasiList(publikasiList.filter((item) => item.id !== id));
+      }
+    }
+  };  
+
+  const downloadTemplate = () => {
+    const worksheetData = [
+      ["judul", "media", "perusahaan", "tanggal", "link", "prValue"], 
+    ];
+  
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
+  
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  
+    const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(fileData, "Template_Publikasi.xlsx");
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click(); 
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedExtensions = [".xlsx", ".csv"];
+      const fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 1);
+
+      if (!allowedExtensions.includes(`.${fileExtension}`)) {
+        alert("Hanya file dengan format .xlsx atau .csv yang diperbolehkan!");
+        event.target.value = ""; 
+      } else {
+        console.log("File valid:", file.name);
+        // Proses olah file nanti
+      }
+    }
+  };
 
   return (
     <Card className="mx-auto mt-6 max-w-[70rem] p-6">
       <CardHeader>
         <div className="flex items-center space-x-2">
-            <BookOpen className="h-6 w-6 text-slate-700" />
-            <h2 className="text-xl font-medium text-[var(--blue)]">Publikasi</h2>
+          <BookOpen className="h-6 w-6 text-slate-700" />
+          <h2 className="text-xl font-medium text-[var(--blue)]">Publikasi</h2>
         </div>
       </CardHeader>
       <CardContent>
@@ -77,23 +275,31 @@ export default function PublikasiPage() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Download Template</Button>
-            <Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
+            <Button variant="outline" onClick={downloadTemplate} ><Download className="w-4 h-4 mr-2" /> Download Template</Button>
+            <Button variant="outline" onClick={handleButtonClick}><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".xlsx,.csv"
+              onChange={handleFileChange}
+              style={{ display: "none" }} 
+            />
             <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
-                Tambah Publikasi
+              Tambah Publikasi
             </Button>
           </div>
         </div>
-        
+
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-100">
                 <TableHead>Judul Publikasi</TableHead>
+                <TableHead>Media Publikasi</TableHead>
+                <TableHead>Perusahaan Media</TableHead>
                 <TableHead>Tanggal Publikasi</TableHead>
                 <TableHead>Link Publikasi</TableHead>
-                <TableHead>Perusahaan Media</TableHead>
-                <TableHead>Media Publikasi</TableHead>
+                <TableHead>PR Value</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -101,18 +307,20 @@ export default function PublikasiPage() {
               {displayedPublikasi.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>{item.judul}</TableCell>
+                  <TableCell>{item.media}</TableCell>
+                  <TableCell>{item.perusahaan}</TableCell>
                   <TableCell>{item.tanggal}</TableCell>
                   <TableCell>
                     <a href={item.link} target="_blank" className="text-blue-600 underline">
                       {item.link}
                     </a>
                   </TableCell>
-                  <TableCell>{item.perusahaan}</TableCell>
-                  <TableCell>{item.media}</TableCell>
+                  <TableCell>{formatRupiah(item.prValue)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon"><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-red-600"><Trash2 className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleUpdatePublikasi(item.id)}><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDeletePublikasi(item.id)}><Trash2 className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-blue-600"><Share2 className="w-4 h-4" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -120,18 +328,18 @@ export default function PublikasiPage() {
             </TableBody>
           </Table>
         </div>
-        
+
         <div className="flex justify-center mt-4 space-x-2">
-          <Button 
-            disabled={currentPage === 1} 
+          <Button
+            disabled={currentPage === 1}
             onClick={() => setCurrentPage(currentPage - 1)}
             className="bg-[#3A786D] text-white"
           >
             Previous
           </Button>
           {Array.from({ length: totalPages }, (_, i) => (
-            <Button 
-              key={i} 
+            <Button
+              key={i}
               onClick={() => setCurrentPage(i + 1)}
               className={`${
                 currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
@@ -140,14 +348,15 @@ export default function PublikasiPage() {
               {i + 1}
             </Button>
           ))}
-          <Button 
-            disabled={currentPage === totalPages} 
+          <Button
+            disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(currentPage + 1)}
             className="bg-[#3A786D] text-white"
           >
             Next
           </Button>
         </div>
+
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent>
             <DialogHeader>
@@ -155,14 +364,31 @@ export default function PublikasiPage() {
             </DialogHeader>
             <div className="space-y-4">
               <Input name="judul" placeholder="Judul Publikasi" value={newPublikasi.judul} onChange={handleInputChange} />
-              <Input name="tanggal" type="date" value={newPublikasi.tanggal} onChange={handleInputChange} />
-              <Input name="link" placeholder="Link Publikasi" value={newPublikasi.link} onChange={handleInputChange} />
+              <Select onValueChange={(value: string) => setNewPublikasi({ ...newPublikasi, media: value as Publikasi["media"] })}>
+                <SelectTrigger><SelectValue placeholder="Pilih Media Publikasi" /></SelectTrigger>
+                <SelectContent>
+                  {["Televisi", "Koran", "Radio", "Media Online", "Sosial Media", "Lainnya"].map((type) => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input name="perusahaan" placeholder="Perusahaan Media" value={newPublikasi.perusahaan} onChange={handleInputChange} />
-              <Input name="media" placeholder="Media Publikasi" value={newPublikasi.media} onChange={handleInputChange} />
+              <Input name="link" placeholder="Link Publikasi" value={newPublikasi.link} onChange={handleInputChange} />
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-black text-sm">Rp</span>
+                <Input
+                  name="prValue"
+                  type="text"
+                  placeholder="PR Value"
+                  value={newPublikasi.prValue ? newPublikasi.prValue.toLocaleString("id-ID") : ""}
+                  onChange={handleInputChange}
+                  className="pl-8"
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsOpen(false)}>Batal</Button>
-              <Button className="bg-[#3A786D] text-white">Simpan</Button>
+              <Button className="bg-[#3A786D] text-white" onClick={handleAddPublikasi}>Simpan</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
