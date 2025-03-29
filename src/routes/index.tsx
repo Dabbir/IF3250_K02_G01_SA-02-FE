@@ -8,6 +8,7 @@ import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
 import AuthCallback from "@/pages/AuthCallback";
 import Publikasi from "@/pages/publikasi.tsx";
+import Kegiatan from "@/pages/activity.tsx";
 import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute} from "../utils/auth.tsx"
 
 const AppRoutes = () => (
@@ -60,7 +61,8 @@ const AppRoutes = () => (
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<div className="p-4">Data Program Content</div>} />
         <Route path="/publikasi" element={<Publikasi />} />
-        <Route path="/kegiatan" element={<div className="p-4">Kegiatan Content</div>} />
+        <Route path="/kegiatan" element={<Kegiatan />} />
+        <Route path="/kegiatan/:id" element={<Kegiatan />} />
         <Route path="/stakeholder" element={<div className="p-4">Stakeholder Content</div>} />
         <Route path="/penerima-manfaat" element={<div className="p-4">Penerima Manfaat Content</div>} />
         <Route path="/karyawan" element={<div className="p-4">Karyawan Content</div>} />
