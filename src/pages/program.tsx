@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CardProgram from "@/components/ui/card-program";
@@ -8,12 +8,14 @@ import { Database, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search, ArrowUpDown, Download, Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 interface Program {
     id: number;
@@ -196,6 +198,14 @@ const Program = () => {
         }
         setIsOpen(open);
     };
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    const handleButtonClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click(); 
+        }
+    };
     
     const handleSubmit = async () => {
         if (!newProgram.nama_program) {
@@ -256,6 +266,21 @@ const Program = () => {
         }
     };
 
+    const downloadTemplate = () => {
+        const worksheetData = [
+            ["nama_program", "deskripsi_program", "pilar_program", "kriteria_program", "tanggal_mulai", "tanggal_selesai", "rancangan_anggaran", "aktualisasi_anggaran", "status_program"], 
+        ];
+        
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
+        
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        
+        const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
+        saveAs(fileData, "Template_Program.xlsx");
+    };
+
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
             <CardHeader>
@@ -280,8 +305,8 @@ const Program = () => {
                         </Button>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Download Template</Button>
-                        <Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
+                        <Button variant="outline" onClick={downloadTemplate} ><Download className="w-4 h-4 mr-2" /> Download Template</Button>
+                        <Button variant="outline" onClick={handleButtonClick}><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
                         <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
                             Tambah Program
                         </Button>
@@ -341,9 +366,12 @@ const Program = () => {
 
                 <Dialog open={isOpen} onOpenChange={handleOpenChange}>
                     <DialogContent className="max-w-md md:max-w-2xl md:mt-2 max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Tambah Program</DialogTitle>
-                        </DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>Tambah Program</DialogTitle>
+                        <DialogDescription>
+                            Lengkapi informasi program berikut untuk menambah program baru.
+                        </DialogDescription>
+                    </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="nama_program">Nama Program</Label>
