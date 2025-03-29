@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Leaf, Pencil, Trash2, Loader2, Menu } from "lucide-react";
+import { Search, Leaf, Pencil, Trash2, Loader2, Menu, Filter } from "lucide-react";
 import AddActivityDialog from "@/components/activity/addactivity";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface Kegiatan {
   id: string;
@@ -27,6 +30,8 @@ interface Kegiatan {
 const ITEMS_PER_PAGE = 20;
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
+const STATUS_OPTIONS = ["Unstarted", "Ongoing", "Finished"];
+
 export default function KegiatanPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,6 +43,8 @@ export default function KegiatanPage() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -50,7 +57,6 @@ export default function KegiatanPage() {
     };
   }, []);
 
-  // Fetch activities from API
   useEffect(() => {
     const fetchActivities = async () => {
       try {
@@ -91,9 +97,28 @@ export default function KegiatanPage() {
     fetchActivities();
   }, []);
 
-  const filteredActivities = activities.filter(activity => 
-    activity.nama_aktivitas && activity.nama_aktivitas.toLowerCase().includes(search.toLowerCase())
-  );
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilters(prev => {
+      if (prev.includes(status)) {
+        return prev.filter(s => s !== status);
+      } else {
+        return [...prev, status];
+      }
+    });
+    setCurrentPage(1);
+  };
+
+  const filteredActivities = activities.filter(activity => {
+    // Apply text search filter
+    const matchesSearch = activity.nama_aktivitas && 
+      activity.nama_aktivitas.toLowerCase().includes(search.toLowerCase());
+    
+    // Apply status filters if any are selected
+    const matchesStatus = statusFilters.length === 0 || 
+      statusFilters.includes(activity.status);
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE);
   const displayedActivities = filteredActivities.slice(
@@ -200,16 +225,65 @@ export default function KegiatanPage() {
       </CardHeader>
       <CardContent className="p-3 md:p-6">
         <div className="flex flex-col md:flex-row justify-between mb-4 gap-4 md:items-center">
-          <div className="flex relative w-full md:w-2/5 gap-2">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex flex-col md:flex-row w-full md:w-2/3 gap-2">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder="Search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-1 md:w-auto">
+                  <Filter className="h-4 w-4" />
+                  <span>Filter Status</span>
+                  {statusFilters.length > 0 && (
+                    <Badge className="ml-1 bg-[#3A786D]">{statusFilters.length}</Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-4">
+                <h4 className="font-medium mb-3">Filter by Status</h4>
+                <div className="space-y-2">
+                  {STATUS_OPTIONS.map((status) => (
+                    <div key={status} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`status-${status}`} 
+                        checked={statusFilters.includes(status)}
+                        onCheckedChange={() => toggleStatusFilter(status)}
+                      />
+                      <Label htmlFor={`status-${status}`} className="flex items-center">
+                        {getStatusBadge(status)}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between mt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setStatusFilters([])}
+                    disabled={statusFilters.length === 0}
+                  >
+                    Clear All
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => setFilterOpen(false)}
+                    className="bg-[#3A786D]"
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
+          
           <div className="flex items-center gap-2">
             <Button className="bg-[#3A786D] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
               Tambah Kegiatan
@@ -217,9 +291,23 @@ export default function KegiatanPage() {
           </div>
         </div>
 
-        {activities.length === 0 ? (
-          <div className="text-center py-8">
+        {filteredActivities.length === 0 ? (
+          <div className="text-center py-8 border rounded-lg">
             <p className="text-gray-500">No activities found</p>
+            {(statusFilters.length > 0 || search) && (
+              <div className="mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setStatusFilters([]);
+                    setSearch("");
+                  }}
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
           </div>
         ) : isMobileView ? (
           // Mobile card view
