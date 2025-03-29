@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CardProgram from "@/components/ui/card-program";
-import { Database } from "lucide-react";
+import { Database, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search, ArrowUpDown, Download, Upload } from "lucide-react";
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "react-toastify";
 
 interface Program {
     id: number;
@@ -51,23 +52,6 @@ const pilarOptions = [
     { id: 17, name: "Kemitraan untuk Mencapai Tujuan" },
 ];
 
-const dataProgram: Program[] = Array.from({ length: 20 }, (_, i) => ({
-    id: i+1,
-    nama_program: 'Penyediaan Buka Puasa Gratis',
-    deskripsi_program: 'Program buka puasa bersama yang diselenggarakan selama bulan Ramadhan tahun 2025',
-    pilar_program: [1, 2, 3],
-    kriteria_program: "Program Berbagi",
-    waktu_mulai: "2025-03-29",
-    waktu_selesai: "2025-06-29",
-    rancangan_anggaran: 35000000,
-    aktualisasi_anggaran: 0,
-    status_program: "Berjalan",
-    masjid_id: i,
-    created_by: "2024-09-09",
-    created_at: "2025-01-01",
-    updated_at: "2025-01-01"
-}));
-
 const ITEMS_PER_PAGE = 6;
 
 const Program = () => {
@@ -76,9 +60,13 @@ const Program = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedPilars, setSelectedPilars] = useState<number[]>([]);
     const navigate = useNavigate();
+    
+    const [loading, setLoading] = useState(true);
+    const [programList, setProgramList] = useState<Program[]>([]);
+    const [submitting, setSubmitting] = useState(false);
 
     const [newProgram, setNewProgram] = useState<Program>({
-        id: 1,
+        id: 0,
         nama_program: "",
         deskripsi_program: "",
         pilar_program: [],
@@ -94,12 +82,60 @@ const Program = () => {
         updated_at: ""
     });
 
-    const fileteredProgram = dataProgram.filter((item) =>
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            setLoading(true);
+            try {
+                setTimeout(() => {
+                    const mockProgramData: Program[] = Array.from({ length: 20 }, (_, i) => ({
+                        id: i+1,
+                        nama_program: `Penyediaan Buka Puasa Gratis ${i+1}`,
+                        deskripsi_program: `Program buka puasa bersama yang diselenggarakan selama bulan Ramadhan tahun 2025 (Program ${i+1})`,
+                        pilar_program: [1, 2, 3],
+                        kriteria_program: "Program Berbagi",
+                        waktu_mulai: "2025-03-29",
+                        waktu_selesai: "2025-06-29",
+                        rancangan_anggaran: 35000000 + (i * 1000000),
+                        aktualisasi_anggaran: i < 5 ? 5000000 : 0,
+                        status_program: i < 15 ? "Berjalan" : "Selesai",
+                        masjid_id: i % 3 + 1,
+                        created_by: "Admin",
+                        created_at: "2025-01-01",
+                        updated_at: "2025-01-01"
+                    }));
+                    
+                    setProgramList(mockProgramData);
+                    setLoading(false);
+                }, 1200);
+                
+                // const token = localStorage.getItem("token");
+                // const response = await fetch(`${API_URL}/api/programs`, {
+                //     headers: {
+                //         Authorization: `Bearer ${token}`,
+                //         "Content-Type": "application/json",
+                //     },
+                // });
+                // const data = await response.json();
+                // if (data.success) {
+                //     setProgramList(data.programs);
+                // }
+            } catch (error) {
+                console.error("Error fetching programs:", error);
+                toast.error("Gagal memuat data program");
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchPrograms();
+    }, []);
+
+    const filteredProgram = programList.filter((item) =>
         item.nama_program.toLowerCase().includes(search.toLowerCase())
     );
 
-    const totalPages = Math.ceil(fileteredProgram.length / ITEMS_PER_PAGE);
-    const displayedProgram = fileteredProgram.slice(
+    const totalPages = Math.ceil(filteredProgram.length / ITEMS_PER_PAGE);
+    const displayedProgram = filteredProgram.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
@@ -160,76 +196,148 @@ const Program = () => {
         }
         setIsOpen(open);
     };
+    
+    const handleSubmit = async () => {
+        if (!newProgram.nama_program) {
+            toast.error("Nama program tidak boleh kosong");
+            return;
+        }
+        
+        if (!newProgram.waktu_mulai || !newProgram.waktu_selesai) {
+            toast.error("Tanggal mulai dan selesai harus diisi");
+            return;
+        }
+        
+        setSubmitting(true);
+        try {
+            // Simulate API request
+            setTimeout(() => {
+                // Create a new program with current timestamp and ID
+                const createdProgram = {
+                    ...newProgram,
+                    id: programList.length + 1,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    created_by: "Current User", // get from auth context
+                    masjid_id: 1, // get from user's context
+                };
+                
+                // add the new program to the list
+                setProgramList([createdProgram, ...programList]);
+                
+                setIsOpen(false);
+                resetForm();
+                
+                toast.success("Program berhasil ditambahkan");
+                setSubmitting(false);
+            }, 1000);
+            
+            // const token = localStorage.getItem("token");
+            // const response = await fetch(`${API_URL}/api/programs`, {
+            //     method: "POST",
+            //     headers: {
+            //         Authorization: `Bearer ${token}`,
+            //         "Content-Type": "application/json",
+            //     },
+            //     body: JSON.stringify(newProgram),
+            // });
+            // const data = await response.json();
+            // if (data.success) {
+            //     setProgramList([data.program, ...programList]);
+            //     setIsOpen(false);
+            //     resetForm();
+            //     toast.success("Program berhasil ditambahkan");
+            // }
+        } catch (error) {
+            console.error("Error adding program:", error);
+            toast.error("Gagal menambahkan program");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
             <CardHeader>
-            <div className="flex items-center space-x-2">
-                <Database className="h-6 w-6 text-slate-700" />
-                <h2 className="text-xl font-medium text-[var(--blue)]">Program</h2>
-            </div>
+                <div className="flex items-center space-x-2">
+                    <Database className="h-6 w-6 text-slate-700" />
+                    <h2 className="text-xl font-medium text-[var(--blue)]">Program</h2>
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col md:flex-row justify-between mb-4 items-center">
-                    <div className="flex relative w-2/5 gap-2">
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
-                    <Input
-                        type="text"
-                        placeholder="Search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10"
-                    />
-                    <Button variant="outline" className="flex items-center">
-                        <ArrowUpDown className="w-4 h-4 mr-2" /> Sort
-                    </Button>
+                    <div className="flex relative w-full md:w-2/5 gap-2 mb-4 md:mb-0">
+                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                        <Input
+                            type="text"
+                            placeholder="Search"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-10"
+                        />
+                        <Button variant="outline" className="flex items-center">
+                            <ArrowUpDown className="w-4 h-4 mr-2" /> Sort
+                        </Button>
                     </div>
                     <div className="flex items-center gap-2">
-                    <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Download Template</Button>
-                    <Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
-                    <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
-                        Tambah Program
-                    </Button>
+                        <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Download Template</Button>
+                        <Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
+                        <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
+                            Tambah Program
+                        </Button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {displayedProgram.map((program) => (
-                        <CardProgram 
-                        key={program.id} 
-                        program={program} 
-                        onClick={() => navigate(`/data-program/${program.id}`)} 
-                    />
-                    ))}
-                </div>
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+                    </div>
+                ) : displayedProgram.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {displayedProgram.map((program) => (
+                            <CardProgram 
+                                key={program.id} 
+                                program={program} 
+                                onClick={() => navigate(`/data-program/${program.id}`)} 
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-64 text-center">
+                        <p className="text-gray-500 mb-2">Tidak ada program yang ditemukan</p>
+                        <p className="text-gray-400 text-sm">Silakan coba kata kunci pencarian lain atau tambahkan program baru</p>
+                    </div>
+                )}
 
-                <div className="flex justify-center mt-4 space-x-2">
-                    <Button 
-                        disabled={currentPage === 1} 
-                        onClick={() => setCurrentPage(currentPage - 1)}
-                        className="bg-[#3A786D] text-white"
-                    >
-                        Previous
-                    </Button>
-                    {Array.from({ length: totalPages }, (_, i) => (
+                {!loading && filteredProgram.length > 0 && (
+                    <div className="flex justify-center mt-6 space-x-2">
                         <Button 
-                        key={i} 
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`${
-                            currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                        }`}
+                            disabled={currentPage === 1} 
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            className="bg-[#3A786D] text-white"
                         >
-                        {i + 1}
+                            Previous
                         </Button>
-                    ))}
-                    <Button 
-                        disabled={currentPage === totalPages} 
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                        className="bg-[#3A786D] text-white"
-                    >
-                        Next
-                    </Button>
-                </div>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <Button 
+                                key={i} 
+                                onClick={() => setCurrentPage(i + 1)}
+                                className={`${
+                                    currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                                }`}
+                            >
+                                {i + 1}
+                            </Button>
+                        ))}
+                        <Button 
+                            disabled={currentPage === totalPages} 
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            className="bg-[#3A786D] text-white"
+                        >
+                            Next
+                        </Button>
+                    </div>
+                )}
 
                 <Dialog open={isOpen} onOpenChange={handleOpenChange}>
                     <DialogContent className="max-w-md md:max-w-2xl md:mt-2 max-h-[90vh] overflow-y-auto">
@@ -350,13 +458,23 @@ const Program = () => {
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => handleOpenChange(false)}>Batal</Button>
-                            <Button className="bg-[#3A786D] text-white hover:bg-[#2a5d54]">Simpan</Button>
+                            <Button 
+                                className="bg-[#3A786D] text-white hover:bg-[#2a5d54]"
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                            >
+                                {submitting ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Menyimpan...
+                                    </>
+                                ) : "Simpan"}
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </CardContent>
         </Card>
-    )
-}
+    );
+};
 
 export default Program;
