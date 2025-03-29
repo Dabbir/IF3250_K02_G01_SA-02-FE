@@ -36,7 +36,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="fixed z-100 flex h-16 w-full items-center justify-between border-b px-4 bg-white">
+            <header className="fixed z-10 flex h-16 w-full items-center justify-between border-b px-4 bg-white">
                 <div className="flex items-center gap-4">
                     <SidebarTrigger className="text-slate-600">
                         <Menu className="h-5 w-5" />
