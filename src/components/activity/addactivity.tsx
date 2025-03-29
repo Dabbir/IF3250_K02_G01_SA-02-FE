@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 
+const API_URL = import.meta.env.VITE_HOST_NAME
+
 interface Kegiatan {
     namaKegiatan: string;
     programTerafiliasi: string;
@@ -32,7 +34,7 @@ interface AddKegiatanDialogProps {
 
 export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
-    
+
     const [newKegiatan, setNewKegiatan] = useState<Kegiatan>({
         namaKegiatan: "",
         programTerafiliasi: "",
@@ -43,33 +45,33 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         biayaImplementasi: "",
         deskripsi: "",
     });
-    
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setNewKegiatan({ ...newKegiatan, [e.target.name]: e.target.value });
     };
-    
+
     const handleSelectChange = (name: string, value: string) => {
         setNewKegiatan((prev) => ({ ...prev, [name]: value }));
     };
-    
+
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [filteredPrograms, setFilteredPrograms] = useState<{ id: number; nama: string }[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const programs = Array.from({ length: 100 }, (_, i) => ({ id: i + 1, nama: `Program ${i + 1}` }));
-    
+
     const handleInputChangeProgram = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setNewKegiatan({ ...newKegiatan, programTerafiliasi: value });
         setShowDropdown(true);
         setFilteredPrograms(programs.filter(p => p.nama.toLowerCase().includes(value.toLowerCase())));
     };
-    
+
     const handleSelectProgram = (program: { id: number; nama: string }) => {
         setNewKegiatan((prev) => ({ ...prev, programTerafiliasi: program.nama, idProgram: program.id }));
         setShowDropdown(false);
     };
-    
+
     const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (
             !inputRef.current?.contains(e.relatedTarget) &&
@@ -78,7 +80,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             setShowDropdown(false);
         }
     };
-    
+
     const [images, setImages] = useState<ImageData[]>([]);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,19 +101,22 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
         if (!newKegiatan.namaKegiatan) {
-            newErrors.namaKegiatan = "Nama kegiatan wajib diisi";
+            newErrors.namaKegiatan = "Nama kegiatan wajib diisi!";
         }
         if (!newKegiatan.programTerafiliasi || !programs.some(p => p.nama === newKegiatan.programTerafiliasi)) {
-            newErrors.programTerafiliasi = "Pilih program dari daftar";
+            newErrors.programTerafiliasi = "Pilih program dari daftar!";
         }
         if (!newKegiatan.tanggalMulai || !newKegiatan.tanggalSelesai) {
-            newErrors.tanggal = "Tanggal mulai dan selesai wajib diisi";
+            newErrors.tanggal = "Tanggal mulai dan selesai wajib diisi!";
         }
         if (!newKegiatan.status) {
             newErrors.status = "Status wajib dipilih";
         }
         if (!newKegiatan.biayaImplementasi || parseInt(newKegiatan.biayaImplementasi) < 0) {
-            newErrors.biayaImplementasi = "Biaya implementasi harus 0 atau lebih";
+            newErrors.biayaImplementasi = "Biaya implementasi harus 0 atau lebih!";
+        }
+        if (!newKegiatan.deskripsi) {
+            newErrors.deskripsi = "Deskripsi harus lebih dari 10 karakter!";
         }
 
         setErrors(newErrors);
@@ -119,21 +124,49 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     };
 
     const handleSubmit = async () => {
-        console.log(newKegiatan)
         if (!validateForm()) return;
-
+    
         setIsSaving(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            console.log("Data yang dikirim:", newKegiatan);
+            const formData = new FormData();
+            formData.append("nama_aktivitas", newKegiatan.namaKegiatan);
+            formData.append("programTerafiliasi", newKegiatan.programTerafiliasi);
+            formData.append("program_id", String(newKegiatan.idProgram));
+            formData.append("tanggal_mulai", newKegiatan.tanggalMulai);
+            formData.append("tanggal_selesai", newKegiatan.tanggalSelesai);
+            formData.append("status", newKegiatan.status);
+            formData.append("biaya_implementasi", String(newKegiatan.biayaImplementasi));
+            formData.append("deskripsi", newKegiatan.deskripsi);
+    
+            images.forEach((image) => {
+                formData.append("dokumentasi", image.file);
+            });
+    
+            const token = localStorage.getItem("token");
+    
+            const response = await fetch(`${API_URL}/api/activity/add`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+    
+            if (!response.ok) {
+                throw new Error("Gagal menyimpan data");
+            }
+    
+            console.log("Data berhasil dikirim");
+    
             setIsOpen(false);
+            setTimeout(() => window.location.reload(), 500)
+
         } catch (error) {
             console.error("Gagal menyimpan data:", error);
         } finally {
             setIsSaving(false);
         }
-    };
+    };    
 
     useEffect(() => {
         if (!isOpen) {
@@ -193,7 +226,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                         {showDropdown && (
                             <div
                                 ref={dropdownRef}
-                                className="absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
+                                className="text-[12px] absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
                             >
                                 {filteredPrograms.length > 0 ? (
                                     filteredPrograms.map((program) => (
@@ -301,6 +334,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                             onChange={handleInputChange}
                             className="w-full"
                         />
+                        {errors.deskripsi && <p className="text-red-500 text-[12px]">{errors.deskripsi}</p>}
                     </div>
 
                     <div className="space-y-2">
