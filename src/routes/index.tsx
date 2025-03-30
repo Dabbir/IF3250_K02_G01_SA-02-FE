@@ -12,6 +12,8 @@ import Publikasi from "@/pages/publikasi.tsx";
 import Kegiatan from "@/pages/activity.tsx";
 import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute, AdminProtectedRoute} from "../utils/auth.tsx"
 import DetailKegiatan from "@/pages/detailactivity.tsx";
+import Program from "@/pages/program.tsx";
+import DetailProgram from "@/pages/detailprogram.tsx";
 import AdminDashboard from "@/pages/admin-dashboard.tsx";
 // import ViewerAccessManagement from "@/pages/viewer-access.tsx";
 
@@ -70,7 +72,8 @@ const AppRoutes = () => (
           <ViewerAccessManagement />
         } /> */}
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
-        <Route path="/data-program" element={<div className="p-4">Data Program Content</div>} />
+        <Route path="/data-program" element={<Program/>} />
+        <Route path="/data-program/:id" element={<DetailProgram />} />
         <Route path="/publikasi" element={<Publikasi />} />
         <Route path="/kegiatan" element={<Kegiatan />} />
         <Route path="/kegiatan/:id" element={<DetailKegiatan />} />
