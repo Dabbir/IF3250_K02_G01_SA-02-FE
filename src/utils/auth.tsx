@@ -5,6 +5,71 @@ interface ProtectedRouteProps {
     children: ReactNode;
 }
 
+const AdminProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+    const location = useLocation();
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [checkDone, setCheckDone] = useState(false);
+
+    useEffect(() => {
+        const checkAdminAuth = () => {
+            console.log("AdminProtectedRoute: Checking admin status");
+            const token = localStorage.getItem("token");
+            
+            if (!token) {
+                setIsAuthenticated(false);
+                setIsAdmin(false);
+                setCheckDone(true);
+                return;
+            }
+            
+            const userData = localStorage.getItem("user");
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    setIsAuthenticated(true);
+                    setIsAdmin(user.peran === "Admin");
+                } catch (error) {
+                    console.error("Error parsing user data:", error);
+                    setIsAuthenticated(true);
+                    setIsAdmin(false);
+                }
+            } else {
+                setIsAuthenticated(true);
+                setIsAdmin(false);
+            }
+            
+            setCheckDone(true);
+        };
+
+        checkAdminAuth();
+        
+        const timeoutId = setTimeout(checkAdminAuth, 300);
+        return () => clearTimeout(timeoutId);
+    }, [location.pathname]);
+
+    if (!checkDone) {
+        return (
+            <div className="flex justify-center items-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold py-24">Verifying admin privileges...</h2>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+    
+    if (!isAdmin) {
+        return <Navigate to="/dashboard" state={{ from: location }} replace />;
+    }
+
+    return <>{children}</>;
+};
+
+
 const AuthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const location = useLocation(); // informasi lokasi halaman
     const [directTokenCheck, setDirectTokenCheck] = useState(false); // cek apakah token ditemuin scr lgsg di localStorage
@@ -113,4 +178,4 @@ const UnauthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children
     return <Navigate to="/login" state={{ from: location }} replace />;
 }
 
-export {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute};
+export {AdminProtectedRoute, UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute};

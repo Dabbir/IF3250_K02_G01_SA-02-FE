@@ -10,8 +10,10 @@ import AuthCallback from "@/pages/AuthCallback";
 import GoogleCallback from "@/pages/googlecallback.tsx";
 import Publikasi from "@/pages/publikasi.tsx";
 import Kegiatan from "@/pages/activity.tsx";
-import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute} from "../utils/auth.tsx"
+import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute, AdminProtectedRoute} from "../utils/auth.tsx"
 import DetailKegiatan from "@/pages/detailactivity.tsx";
+import AdminDashboard from "@/pages/admin-dashboard.tsx";
+// import ViewerAccessManagement from "@/pages/viewer-access.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -59,6 +61,14 @@ const AppRoutes = () => (
       >
         <Route index element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard-admin" element={
+          // <AdminProtectedRoute>
+            <AdminDashboard />
+          // </AdminProtectedRoute>
+        } />
+        {/* <Route path="/viewer-access" element={
+          <ViewerAccessManagement />
+        } /> */}
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<div className="p-4">Data Program Content</div>} />
         <Route path="/publikasi" element={<Publikasi />} />

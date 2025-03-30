@@ -19,6 +19,11 @@ export const dashboard = [
         url: "/",
         icon: Home,
     },
+    {
+        title: "Dashboard Admin",
+        url: "/dashboard-admin",
+        icon: Home,
+    },
 ]
 
 // Menu items.
