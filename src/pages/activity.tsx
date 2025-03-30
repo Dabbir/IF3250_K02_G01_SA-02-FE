@@ -88,7 +88,7 @@ export default function KegiatanPage() {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
-        
+
         if (!token) {
           throw new Error("Authentication token not found");
         }
@@ -106,7 +106,7 @@ export default function KegiatanPage() {
         }
 
         const data = await response.json();
-        
+
         if (data.success) {
           setActivities(data.activity || []);
         } else {
@@ -152,10 +152,10 @@ export default function KegiatanPage() {
 
   const handleDeleteActivity = async (id: string | undefined) => {
     if (!id) return;
-    
+
     try {
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -173,7 +173,7 @@ export default function KegiatanPage() {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setActivities(activities.filter(activity => activity.id !== id));
         toast.success("Activity deleted successfully");
@@ -185,11 +185,11 @@ export default function KegiatanPage() {
     } finally {
       setShowDeleteDialog(false);
     }
-  };  
+  };
 
   const getStatusBadge = (status: string) => {
     let color = "bg-gray-200 text-gray-800";
-    
+
     switch (status.toLowerCase()) {
       case "unstarted":
         color = "bg-blue-100 text-blue-800";
@@ -203,7 +203,7 @@ export default function KegiatanPage() {
       default:
         color = "bg-gray-200 text-gray-800";
     }
-    
+
     return (
       <Badge className={`px-2 py-1 text-xs font-medium rounded-full ${color}`}>
         {status}
@@ -227,8 +227,8 @@ export default function KegiatanPage() {
         <CardContent className="flex justify-center items-center h-[400px]">
           <div className="text-center">
             <p className="text-red-500 mb-4">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
+            <Button
+              onClick={() => window.location.reload()}
               className="bg-[#3A786D] text-white"
             >
               Try Again
@@ -240,44 +240,44 @@ export default function KegiatanPage() {
   }
 
   return (
-    <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
-      <CardHeader className="p-3 md:p-6">
+    <Card className="mx-auto mt-6 max-w-[70rem] md:p-6">
+      <CardHeader>
         <div className="flex items-center space-x-2">
           <Leaf className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
           <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Kegiatan</h2>
         </div>
       </CardHeader>
-      <CardContent className="p-3 md:p-6">
+      <CardContent>
         <div className="flex flex-col md:flex-row justify-between mb-4 gap-4 md:items-center">
           <div className="flex flex-col md:flex-row w-full md:w-2/3 gap-2">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+            <div className="relative flex-grow items-top">
+              <Search className="absolute left-3 top-2.5 w-3 h-3 md:w-4 md:h-4 text-gray-500" />
               <Input
                 type="text"
                 placeholder="Search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
+                className="pl-10 max-md:h-8 max-md:text-[12px]"
               />
             </div>
-            
+
             <Popover open={filterOpen} onOpenChange={setFilterOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-1 md:w-auto">
-                  <Filter className="h-4 w-4" />
-                  <span>Filter Status</span>
+                <Button variant="outline" className="max-md:h-8 flex items-center gap-1 md:w-auto">
+                  <Filter className="h-3 w-3 md:-h4 md:w-4" />
+                  <span className="max-md:text-[12px]">Filter Status</span>
                   {statusFilters.length > 0 && (
                     <Badge className="ml-1 bg-[#3A786D]">{statusFilters.length}</Badge>
                   )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-4">
-                <h4 className="font-medium mb-3">Filter by Status</h4>
+                <h4 className="text-[12px] font-medium mb-3">Filter berdasarkan status</h4>
                 <div className="space-y-2">
                   {STATUS_OPTIONS.map((status) => (
                     <div key={status} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`status-${status}`} 
+                      <Checkbox
+                        id={`status-${status}`}
                         checked={statusFilters.includes(status)}
                         onCheckedChange={() => toggleStatusFilter(status)}
                       />
@@ -288,18 +288,19 @@ export default function KegiatanPage() {
                   ))}
                 </div>
                 <div className="flex justify-between mt-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setStatusFilters([])}
                     disabled={statusFilters.length === 0}
+                    className="text-[12px]"
                   >
                     Clear All
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={() => setFilterOpen(false)}
-                    className="bg-[#3A786D]"
+                    className="bg-[#3A786D] text-[12px]"
                   >
                     Apply
                   </Button>
@@ -307,9 +308,9 @@ export default function KegiatanPage() {
               </PopoverContent>
             </Popover>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Button className="bg-[#3A786D] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
+            <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
               Tambah Kegiatan
             </Button>
           </div>
@@ -320,9 +321,9 @@ export default function KegiatanPage() {
             <p className="text-gray-500">No activities found</p>
             {(statusFilters.length > 0 || search) && (
               <div className="mt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setStatusFilters([]);
                     setSearch("");
@@ -337,8 +338,8 @@ export default function KegiatanPage() {
           // Mobile card view
           <div className="space-y-4">
             {displayedActivities.map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="border rounded-lg p-4 space-y-3 bg-white"
                 onClick={() => navigate(`/kegiatan/${item.id}`)}
               >
@@ -355,9 +356,9 @@ export default function KegiatanPage() {
                         <Menu className="h-4 w-4" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="bottom" className="h-auto max-h-[40vh] rounded-t-xl">
+                    <SheetContent side="bottom" className="h-auto max-h-[30vh] rounded-t-xl">
                       <div className="grid gap-4 py-4">
-                        <Button 
+                        <Button
                           className="w-full flex justify-start items-center space-x-2 bg-transparent text-blue-500 hover:bg-blue-50"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -392,23 +393,35 @@ export default function KegiatanPage() {
                     </SheetContent>
                   </Sheet>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <div>
                       <span className="block text-gray-500 text-xs">Tanggal Mulai</span>
-                      <span>{new Date(item.tanggal_mulai).toLocaleDateString('id-ID')}</span>
+                      <span className="text-[12px]">
+                        {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })}
+                      </span>
                     </div>
                     <div>
                       <span className="block text-gray-500 text-xs">Status</span>
                       {getStatusBadge(item.status)}
                     </div>
                   </div>
-                  
-                  <div className="space-y-2">
+
+                  <div className="space-y-4">
                     <div>
                       <span className="block text-gray-500 text-xs">Tanggal Selesai</span>
-                      <span>{new Date(item.tanggal_selesai).toLocaleDateString('id-ID')}</span>
+                      <span className="text-[12px]">
+                        {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })}
+                      </span>
                     </div>
                     <div>
                       <span className="block text-gray-500 text-xs">Biaya Implementasi</span>
@@ -445,10 +458,18 @@ export default function KegiatanPage() {
                   >
                     <TableCell className="pl-7 truncate max-w-[180px]">{item.nama_aktivitas}</TableCell>
                     <TableCell className="text-center truncate">
-                      {new Date(item.tanggal_mulai).toLocaleDateString('id-ID')}
+                      {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </TableCell>
                     <TableCell className="text-center truncate">
-                      {new Date(item.tanggal_selesai).toLocaleDateString('id-ID')}
+                      {new Date(item.tanggal_selesai).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </TableCell>
                     <TableCell className="text-center">
                       {getStatusBadge(item.status)}
@@ -515,9 +536,9 @@ export default function KegiatanPage() {
               <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
                 Batal
               </Button>
-              <Button 
-                type="button" 
-                variant="destructive" 
+              <Button
+                type="button"
+                variant="destructive"
                 onClick={() => handleDeleteActivity(selectedActivity?.id)}
               >
                 Hapus
@@ -539,11 +560,10 @@ export default function KegiatanPage() {
               <Button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${
-                  currentPage === i + 1 
-                  ? "bg-[#3A786D] text-white" 
+                className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${currentPage === i + 1
+                  ? "bg-[#3A786D] text-white"
                   : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                }`}
+                  }`}
               >
                 {i + 1}
               </Button>

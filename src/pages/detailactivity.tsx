@@ -51,9 +51,9 @@ export default function DetailKegiatan() {
 
     const formatRupiah = (amount: number): string => {
         const roundedAmount = Math.floor(amount);
-        
+
         return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-      };
+    };
 
     useEffect(() => {
         const fetchActivityDetail = async () => {
@@ -113,7 +113,7 @@ export default function DetailKegiatan() {
             return Array.isArray(parsed) ? parsed : [parsed];
         } catch (error) {
             console.error(error);
-            toast.error("Gagal memuat dokumentasi!")
+            // toast.error("Gagal memuat dokumentasi!")
             return dokumentasi.startsWith('http') ? [dokumentasi] : [];
         }
     }
@@ -275,7 +275,7 @@ export default function DetailKegiatan() {
     if (loading) {
         return (
             <div className="m-5">
-                <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner overflow-auto">
+                <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner">
                     <CardHeader>
                         <div className="flex items-center space-x-2">
                             <Button variant="ghost" size="sm" className="p-0 mr-2" onClick={handleGoBack}>
@@ -296,7 +296,7 @@ export default function DetailKegiatan() {
     if (error || !kegiatan) {
         return (
             <div className="m-5">
-                <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner overflow-auto">
+                <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner">
                     <CardHeader>
                         <div className="flex items-center space-x-2">
                             <Button variant="ghost" size="sm" className="p-0 mr-2" onClick={handleGoBack}>
@@ -321,7 +321,7 @@ export default function DetailKegiatan() {
 
     return (
         <div className="m-5">
-            <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner overflow-auto">
+            <Card className="w-full min-h-[500px] h-auto py-7 sm:p-5 mx-auto border-0 shadow-inner overflow-wrap">
                 <CardHeader className="flex flex-col md:flex-row md:justify-between items-start gap-2">
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" className="p-0" onClick={handleGoBack}>
@@ -526,27 +526,29 @@ export default function DetailKegiatan() {
 
                         {(dokumentasiList.length > 0 || isEditing) && (
                             <div className="mt-8">
-                                <h2 className="text-lg font-medium mb-4">Dokumentasi</h2>
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-lg font-medium mb-4">Dokumentasi</h2>
 
-                                {isEditing && (
-                                    <div className="mb-4">
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            multiple
-                                            accept="image/jpeg, image/png, image/gif, image/webp, image/svg+xml"
-                                            onChange={handleAddImages}
-                                            className="hidden"
-                                            id="dokumentasi-upload"
-                                        />
-                                        <label
-                                            htmlFor="dokumentasi-upload"
-                                            className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                        >
-                                            <Upload className="h-4 w-4 mr-2" /> Tambah Foto
-                                        </label>
-                                    </div>
-                                )}
+                                    {isEditing && (
+                                        <div className="mb-4">
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                multiple
+                                                accept="image/jpeg, image/png, image/gif, image/webp, image/svg+xml"
+                                                onChange={handleAddImages}
+                                                className="hidden"
+                                                id="dokumentasi-upload"
+                                            />
+                                            <label
+                                                htmlFor="dokumentasi-upload"
+                                                className="bg-[var(--green)] cursor-pointer inline-flex items-center px-4 py-2 text-white rounded-md hover:scale-95 hover:bg-[var(--blue)]"
+                                            >
+                                                <Upload className="h-4 w-4 mr-2" /> Tambah Foto
+                                            </label>
+                                        </div>
+                                    )}
+                                </div>
 
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-center place-items-center">
                                     {(isEditing ? dokumentasiList : dokumentasiList).map((url, index) => (
@@ -560,7 +562,7 @@ export default function DetailKegiatan() {
                                                 <Button
                                                     variant="destructive"
                                                     size="icon"
-                                                    className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 hover:bg-red-600"
+                                                    className="absolute top-2 right-2 h-8 w-8 hover:scale-95 cursor-pointer rounded-full bg-red-500 hover:bg-red-600"
                                                     onClick={() => handleRemoveImage(index)}
                                                 >
                                                     <span className="sr-only">Remove</span>
