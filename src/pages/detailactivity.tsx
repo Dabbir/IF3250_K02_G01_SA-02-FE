@@ -82,11 +82,9 @@ export default function DetailKegiatan() {
         if (!dokumentasi) return [];
 
         try {
-            // Try to parse as JSON
             const parsed = JSON.parse(dokumentasi);
             return Array.isArray(parsed) ? parsed : [parsed];
         } catch (error) {
-            // If parsing fails, it might be a single URL string
             console.error(error);
             toast.error("Gagal memuat dokumentasi!")
             return dokumentasi.startsWith('http') ? [dokumentasi] : [];
@@ -111,7 +109,6 @@ export default function DetailKegiatan() {
                 throw new Error("Authentication token not found");
             }
 
-            // Create the request payload with only the fields we want to update
             const updateData = {
                 nama_aktivitas: editedKegiatan.nama_aktivitas,
                 program_id: editedKegiatan.program_id,
@@ -122,7 +119,6 @@ export default function DetailKegiatan() {
                 status: editedKegiatan.status
             };
 
-            // Send the update request to the API
             const response = await fetch(`${API_URL}/api/activity/update/${id}`, {
                 method: "PUT",
                 headers: {

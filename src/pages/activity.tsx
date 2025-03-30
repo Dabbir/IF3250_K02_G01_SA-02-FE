@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Leaf, Pencil, Trash2, Loader2, Menu, Filter } from "lucide-react";
+import { Search, Leaf, Pencil, Trash2, Loader2, Menu, Filter, Share2 } from "lucide-react";
 import AddActivityDialog from "@/components/activity/addactivity";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +45,38 @@ export default function KegiatanPage() {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  
+  const formatRupiah = (amount: number): string => {
+    const roundedAmount = Math.floor(amount);
+    
+    return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  // Fungsi untuk berbagi ke WhatsApp
+  const shareToWhatsApp = (activity: Kegiatan) => {
+    // Mencegah navigasi saat tombol share diklik
+    event?.stopPropagation();
+    
+    // Format tanggal untuk ditampilkan
+    const tanggalMulai = new Date(activity.tanggal_mulai).toLocaleDateString('id-ID');
+    const tanggalSelesai = new Date(activity.tanggal_selesai).toLocaleDateString('id-ID');
+    
+    // Membuat teks untuk dibagikan
+    const shareText = `*Detail Kegiatan*\n\n` +
+      `*Nama Kegiatan:* ${activity.nama_aktivitas}\n` +
+      `*Tanggal Mulai:* ${tanggalMulai}\n` +
+      `*Tanggal Selesai:* ${tanggalSelesai}\n` +
+      `*Status:* ${activity.status}\n` +
+      `*Biaya Implementasi:* Rp ${formatRupiah(activity.biaya_implementasi)}\n` +
+      (activity.deskripsi ? `*Deskripsi:* ${activity.deskripsi}\n` : '');
+    
+    // Encode URI untuk WhatsApp
+    const encodedText = encodeURIComponent(shareText);
+    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+    
+    // Buka jendela baru untuk berbagi
+    window.open(whatsappUrl, '_blank');
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -109,11 +141,9 @@ export default function KegiatanPage() {
   };
 
   const filteredActivities = activities.filter(activity => {
-    // Apply text search filter
     const matchesSearch = activity.nama_aktivitas && 
       activity.nama_aktivitas.toLowerCase().includes(search.toLowerCase());
     
-    // Apply status filters if any are selected
     const matchesStatus = statusFilters.length === 0 || 
       statusFilters.includes(activity.status);
     
@@ -331,7 +361,7 @@ export default function KegiatanPage() {
                         <Menu className="h-4 w-4" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="bottom" className="h-auto max-h-[30vh] rounded-t-xl">
+                    <SheetContent side="bottom" className="h-auto max-h-[40vh] rounded-t-xl">
                       <div className="grid gap-4 py-4">
                         <Button 
                           className="w-full flex justify-start items-center space-x-2 bg-transparent text-blue-500 hover:bg-blue-50"
@@ -342,6 +372,16 @@ export default function KegiatanPage() {
                         >
                           <Pencil className="h-4 w-4" />
                           <span>Edit Kegiatan</span>
+                        </Button>
+                        <Button 
+                          className="w-full flex justify-start items-center space-x-2 bg-transparent text-green-500 hover:bg-green-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareToWhatsApp(item);
+                          }}
+                        >
+                          <Share2 className="h-4 w-4" />
+                          <span>Bagikan ke WhatsApp</span>
                         </Button>
                         <Button 
                           className="w-full flex justify-start items-center space-x-2 bg-transparent text-red-500 hover:bg-red-50"
@@ -378,7 +418,7 @@ export default function KegiatanPage() {
                     </div>
                     <div>
                       <span className="block text-gray-500 text-xs">Biaya Implementasi</span>
-                      <span className="font-medium">Rp {item.biaya_implementasi.toLocaleString('id-ID')}</span>
+                      <span className="font-medium">Rp {formatRupiah(item.biaya_implementasi)}</span>
                     </div>
                   </div>
                 </div>
@@ -396,7 +436,7 @@ export default function KegiatanPage() {
                   <TableHead className="w-[120px] text-center">Tanggal Selesai</TableHead>
                   <TableHead className="w-[120px] text-center">Status</TableHead>
                   <TableHead className="w-[180px]">Biaya Implementasi</TableHead>
-                  <TableHead className="w-[100px] text-right pr-9">Actions</TableHead>
+                  <TableHead className="w-[140px] text-right pr-9">Actions</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -420,7 +460,7 @@ export default function KegiatanPage() {
                       {getStatusBadge(item.status)}
                     </TableCell>
                     <TableCell className="text-left truncate max-w-[180px]">
-                      Rp {item.biaya_implementasi.toLocaleString('id-ID')}
+                      Rp {formatRupiah(item.biaya_implementasi)}
                     </TableCell>
                     <TableCell className="pr-5 text-right">
                       <div className="flex gap-2 justify-end">
@@ -434,6 +474,18 @@ export default function KegiatanPage() {
                           }}
                         >
                           <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-green-100 transition cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareToWhatsApp(item);
+                          }}
+                        >
+                          <Share2 className="w-4 h-4 text-green-500 hover:text-green-700" />
                         </Button>
 
                         <Button

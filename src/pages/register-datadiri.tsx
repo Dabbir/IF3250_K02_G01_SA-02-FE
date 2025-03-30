@@ -58,7 +58,6 @@ const RegisterDataDiri = () => {
         fetchMasjids();
     }, []);
 
-    // Filter masjid list based on search term
     useEffect(() => {
         if (searchTerm.trim() === '') {
             setFilteredMasjidList(masjidList);
@@ -70,7 +69,6 @@ const RegisterDataDiri = () => {
         }
     }, [searchTerm, masjidList]);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
