@@ -14,7 +14,7 @@ interface Program {
     id: number;
     nama_program: string;
     deskripsi_program: string;
-    pilar_program: number[];
+    pilar_program: string[];
     kriteria_program: string;
     waktu_mulai: string;
     waktu_selesai: string;
@@ -22,7 +22,7 @@ interface Program {
     aktualisasi_anggaran: number;
     status_program: "Berjalan" | "Selesai";
     masjid_id: number;
-    created_by: string;
+    created_by: number;
     created_at: string;
     updated_at: string;
 }

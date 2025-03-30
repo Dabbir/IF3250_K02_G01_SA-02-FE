@@ -10,6 +10,8 @@ import { toast } from "react-toastify";
 import { Banknote } from 'lucide-react';
 import { HandCoins } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_HOST_NAME;
+
 interface Program {
     id: number;
     nama_program: string;
@@ -52,61 +54,27 @@ const DetailProgram = () => {
         const fetchProgram = async () => {
             setLoading(true);
             try {
-                setTimeout(() => {
-                    setProgram({
-                        id: Number(id),
-                        nama_program: "Penyediaan Buka Puasa Gratis",
-                        deskripsi_program: "Program buka puasa bersama yang diselenggarakan selama bulan Ramadhan tahun 2025",
-                        pilar_program: "17",
-                        kriteria_program: "Program Penyejahteraan Umat",
-                        waktu_mulai: "2025-03-20",
-                        waktu_selesai: "2025-03-25",
-                        rancangan_anggaran: 5000000,
-                        aktualisasi_anggaran: 500000,
-                        status_program: "Berjalan",
-                        masjid_id: 2,
-                        created_by: "Sabil",
-                        created_at: "2025-03-20 17:01:01",
-                        updated_at: "2025-03-20 17:01:01",
-                    });
-                    setEditedProgram({
-                        id: Number(id),
-                        nama_program: "Penyediaan Buka Puasa Gratis",
-                        deskripsi_program: "Program buka puasa bersama yang diselenggarakan selama bulan Ramadhan tahun 2025",
-                        pilar_program: "17",
-                        kriteria_program: "Program Penyejahteraan Umat",
-                        waktu_mulai: "2025-03-20",
-                        waktu_selesai: "2025-03-25",
-                        rancangan_anggaran: 5000000,
-                        aktualisasi_anggaran: 500000,
-                        status_program: "Berjalan",
-                        masjid_id: 2,
-                        created_by: "Sabil",
-                        created_at: "2025-03-20 17:01:01",
-                        updated_at: "2025-03-20 17:01:01",
-                    });
-                    setLoading(false);
-                }, 1000);
-
-                // const token = localStorage.getItem("token");
-                // const response = await fetch(`${API_URL}/api/programs/${id}`, {
-                //     headers: {
-                //         Authorization: `Bearer ${token}`,
-                //         "Content-Type": "application/json",
-                //     },
-                // });
-                // const data = await response.json();
-                // if (data.success) {
-                //     setProgram(data.program);
-                //     setEditedProgram(data.program);
-                // }
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/program/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+        
+                const data = await response.json();
+        
+                if (!response.ok) throw new Error(data.message || "Gagal memuat data program");
+        
+                setProgram(data);
+                setEditedProgram(data);
             } catch (error) {
                 console.error("Error fetching program:", error);
                 toast.error("Gagal memuat data program");
             } finally {
                 setLoading(false);
             }
-        };
+        };        
 
         fetchProgram();
     }, [id]);
@@ -172,37 +140,21 @@ const DetailProgram = () => {
         setSaving(true);
         try {
             const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/program/${id}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(editedProgram),
+            });
 
-            if (!token) {
-                throw new Error("Authentication token not found");
-            }
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Gagal memperbarui program");
 
-            setTimeout(() => {
-                setProgram(editedProgram);
-                setIsEditing(false);
-                toast.success("Program berhasil diperbarui");
-                setSaving(false);
-            }, 1000);
-
-            // const response = await fetch(`${API_URL}/api/programs/${id}`, {
-            //     method: "PUT",
-            //     headers: {
-            //         Authorization: `Bearer ${token}`,
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify(editedProgram),
-            // });
-            //
-            // if (!response.ok) {
-            //     throw new Error("Failed to update program");
-            // }
-            //
-            // const data = await response.json();
-            // if (data.success) {
-            //     setProgram(editedProgram);
-            //     setIsEditing(false);
-            //     toast.success("Program berhasil diperbarui");
-            // }
+            setProgram(data);
+            setIsEditing(false);
+            toast.success("Program berhasil diperbarui");
         } catch (error) {
             console.error("Error updating program:", error);
             toast.error("Gagal memperbarui program");

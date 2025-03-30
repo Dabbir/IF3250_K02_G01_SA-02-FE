@@ -17,11 +17,13 @@ import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+const API_URL = import.meta.env.VITE_HOST_NAME;
+
 interface Program {
     id: number;
     nama_program: string;
     deskripsi_program: string;
-    pilar_program: number[];
+    pilar_program: string[];
     kriteria_program: string;
     waktu_mulai: string;
     waktu_selesai: string;
@@ -29,9 +31,14 @@ interface Program {
     aktualisasi_anggaran: number;
     status_program: "Berjalan" | "Selesai";
     masjid_id: number;
-    created_by: string;
+    created_by: number;
     created_at: string;
     updated_at: string;
+}
+
+interface userData {
+    id: number;
+    masjid_id: number;
 }
 
 const pilarOptions = [
@@ -60,12 +67,16 @@ const Program = () => {
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedPilars, setSelectedPilars] = useState<number[]>([]);
+    const [selectedPilars, setSelectedPilars] = useState<string[]>([]);
     const navigate = useNavigate();
     
     const [loading, setLoading] = useState(true);
     const [programList, setProgramList] = useState<Program[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [user, setUser] = useState<userData>({
+        id: 0,
+        masjid_id: 0,
+    });
 
     const [newProgram, setNewProgram] = useState<Program>({
         id: 0,
@@ -79,7 +90,7 @@ const Program = () => {
         aktualisasi_anggaran: 0,
         status_program: "Berjalan",
         masjid_id: 0,
-        created_by: "",
+        created_by: 0,
         created_at:"",
         updated_at: ""
     });
@@ -88,39 +99,16 @@ const Program = () => {
         const fetchPrograms = async () => {
             setLoading(true);
             try {
-                setTimeout(() => {
-                    const mockProgramData: Program[] = Array.from({ length: 20 }, (_, i) => ({
-                        id: i+1,
-                        nama_program: `Penyediaan Buka Puasa Gratis ${i+1}`,
-                        deskripsi_program: `Program buka puasa bersama yang diselenggarakan selama bulan Ramadhan tahun 2025 (Program ${i+1})`,
-                        pilar_program: [1, 2, 3],
-                        kriteria_program: "Program Berbagi",
-                        waktu_mulai: "2025-03-29",
-                        waktu_selesai: "2025-06-29",
-                        rancangan_anggaran: 35000000 + (i * 1000000),
-                        aktualisasi_anggaran: i < 5 ? 5000000 : 0,
-                        status_program: i < 15 ? "Berjalan" : "Selesai",
-                        masjid_id: i % 3 + 1,
-                        created_by: "Admin",
-                        created_at: "2025-01-01",
-                        updated_at: "2025-01-01"
-                    }));
-                    
-                    setProgramList(mockProgramData);
-                    setLoading(false);
-                }, 1200);
-                
-                // const token = localStorage.getItem("token");
-                // const response = await fetch(`${API_URL}/api/programs`, {
-                //     headers: {
-                //         Authorization: `Bearer ${token}`,
-                //         "Content-Type": "application/json",
-                //     },
-                // });
-                // const data = await response.json();
-                // if (data.success) {
-                //     setProgramList(data.programs);
-                // }
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/program`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+    
+                const data = await response.json();
+                setProgramList(data);
             } catch (error) {
                 console.error("Error fetching programs:", error);
                 toast.error("Gagal memuat data program");
@@ -128,8 +116,31 @@ const Program = () => {
                 setLoading(false);
             }
         };
-        
+
+        const fetchUser = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/users`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+    
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || "Gagal memuat data pengguna");
+
+                const { id, masjid_id } = data.user;
+                setUser({ id, masjid_id });
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                toast.error("Gagal memuat data pengguna");
+            }
+        };
+    
         fetchPrograms();
+        fetchUser();
+        console.log(user);
     }, []);
 
     const filteredProgram = programList.filter((item) =>
@@ -141,6 +152,11 @@ const Program = () => {
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toISOString().split("T")[0]; // Keeps only 'YYYY-MM-DD'
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -156,18 +172,18 @@ const Program = () => {
         setNewProgram({ ...newProgram, [name]: value });
     };
     
-    const handlePilarChange = (pilarId: number, checked: boolean) => {
+    const handlePilarChange = (pilarName: string, checked: boolean) => {
         if (checked) {
-            setSelectedPilars([...selectedPilars, pilarId]);
+            setSelectedPilars([...selectedPilars, pilarName]);
             setNewProgram({
                 ...newProgram,
-                pilar_program: [...newProgram.pilar_program, pilarId]
+                pilar_program: [...newProgram.pilar_program, pilarName]
             });
         } else {
-            setSelectedPilars(selectedPilars.filter(id => id !== pilarId));
+            setSelectedPilars(selectedPilars.filter(name => name !== pilarName));
             setNewProgram({
                 ...newProgram,
-                pilar_program: newProgram.pilar_program.filter(id => id !== pilarId)
+                pilar_program: newProgram.pilar_program.filter(name => name !== pilarName)
             });
         }
     };
@@ -185,7 +201,7 @@ const Program = () => {
             aktualisasi_anggaran: 0,
             status_program: "Berjalan",
             masjid_id: 0,
-            created_by: "",
+            created_by: 0,
             created_at:"",
             updated_at: ""
         });
@@ -208,83 +224,77 @@ const Program = () => {
     };
     
     const handleSubmit = async () => {
-        if (!newProgram.nama_program) {
-            toast.error("Nama program tidak boleh kosong");
+        if (!newProgram.nama_program || !newProgram.waktu_mulai || !newProgram.waktu_selesai) {
+            toast.error("Harap lengkapi semua informasi yang wajib.");
             return;
         }
-        
-        if (!newProgram.waktu_mulai || !newProgram.waktu_selesai) {
-            toast.error("Tanggal mulai dan selesai harus diisi");
+
+        const startDate = new Date(newProgram.waktu_mulai);
+        const endDate = new Date(newProgram.waktu_selesai);
+
+        if (endDate < startDate) {
+            toast.error("Tanggal selesai tidak boleh lebih awal dari tanggal mulai.");
             return;
         }
-        
+
+        // if (newProgram.rancangan_anggaran || Number.isInteger(newProgram.rancangan_anggaran) || newProgram.rancangan_anggaran <= 0) {
+        //     toast.error("Rancangan anggaran harus berupa bilangan bulat positif.");
+        //     return;
+        // }
+    
         setSubmitting(true);
         try {
-            // Simulate API request
-            setTimeout(() => {
-                // Create a new program with current timestamp and ID
+            const token = localStorage.getItem("token");
+
+            const payload = {
+                ...newProgram,
+                waktu_mulai: formatDate(newProgram.waktu_mulai),
+                waktu_selesai: formatDate(newProgram.waktu_selesai),
+                masjid_id: user.masjid_id,
+                created_by: user.id,
+                created_at: undefined,
+                updated_at: undefined
+            };
+    
+            const response = await fetch(`${API_URL}/api/program`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+    
+            const data = await response.json();
+    
+            if (response.ok) {
                 const createdProgram = {
                     ...newProgram,
-                    id: programList.length + 1,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    created_by: "Current User", // get from auth context
-                    masjid_id: 1, // get from user's context
+                    id: data.id,
+                    created_at: data.created_at,
+                    updated_at: data.updated_at,
                 };
-                
-                // add the new program to the list
+    
                 setProgramList([createdProgram, ...programList]);
-                
+                toast.success("Program berhasil ditambahkan");
                 setIsOpen(false);
                 resetForm();
-                
-                toast.success("Program berhasil ditambahkan");
-                setSubmitting(false);
-            }, 1000);
-            
-            // const token = localStorage.getItem("token");
-            // const response = await fetch(`${API_URL}/api/programs`, {
-            //     method: "POST",
-            //     headers: {
-            //         Authorization: `Bearer ${token}`,
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify(newProgram),
-            // });
-            // const data = await response.json();
-            // if (data.success) {
-            //     setProgramList([data.program, ...programList]);
-            //     setIsOpen(false);
-            //     resetForm();
-            //     toast.success("Program berhasil ditambahkan");
-            // }
+            } else {
+                throw new Error(data.message || "Terjadi kesalahan");
+            }
         } catch (error) {
-            console.error("Error adding program:", error);
+            console.error("Error creating program:", error);
             toast.error("Gagal menambahkan program");
         } finally {
             setSubmitting(false);
         }
-    };
+    };    
 
     const handleDeleteProgram = async (programId: number): Promise<boolean> => {
         try {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    // update the program list by filtering out the deleted program
-                    setProgramList(prevList => prevList.filter(program => program.id !== programId));
-                    
-                    // if deleting a program that's currently displayed and it's the last one on the page, go to previous page
-                    if (displayedProgram.length === 1 && currentPage > 1) {
-                        setCurrentPage(prev => prev - 1);
-                    }
-                    
-                    resolve(true); // success
-                }, 800);
-            });
-            
-            /*
             const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/api/programs/${programId}`, {
+    
+            const response = await fetch(`${API_URL}/api/program/${programId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -293,19 +303,22 @@ const Program = () => {
             });
     
             if (!response.ok) {
-                throw new Error("Failed to delete program");
+                throw new Error("Gagal menghapus program");
             }
     
-            // Update the program list
             setProgramList(prevList => prevList.filter(program => program.id !== programId));
-            
+            if (displayedProgram.length === 1 && currentPage > 1) {
+                setCurrentPage(prev => prev - 1);
+            }
+    
+            toast.success("Program berhasil dihapus");
             return true;
-            */
         } catch (error) {
             console.error("Error deleting program:", error);
+            toast.error("Gagal menghapus program");
             return false;
         }
-    };
+    };    
 
     const downloadTemplate = () => {
         const worksheetData = [
@@ -413,7 +426,7 @@ const Program = () => {
                     </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="nama_program">Nama Program</Label>
+                                <Label htmlFor="nama_program">Nama Program<span className="text-red-500 ml-0.5">*</span></Label>
                                 <Input 
                                     id="nama_program"
                                     name="nama_program" 
@@ -439,30 +452,30 @@ const Program = () => {
                                 <Label>Pilar Program</Label>
                                 <div className="max-h-48 overflow-y-auto border rounded-md p-3">
                                     <div className="grid grid-cols-1 gap-2">
-                                        {pilarOptions.map((pilar) => (
-                                            <div key={pilar.id} className="flex items-center space-x-2">
-                                                <Checkbox 
-                                                    id={`pilar-${pilar.id}`} 
-                                                    checked={selectedPilars.includes(pilar.id)}
-                                                    onCheckedChange={(checked) => 
-                                                        handlePilarChange(pilar.id, checked as boolean)
-                                                    }
-                                                />
-                                                <Label 
-                                                    htmlFor={`pilar-${pilar.id}`}
-                                                    className="text-sm font-normal"
-                                                >
-                                                    {pilar.name}
-                                                </Label>
-                                            </div>
-                                        ))}
+                                    {pilarOptions.map((pilar) => (
+                                        <div key={pilar.name} className="flex items-center space-x-2">
+                                            <Checkbox 
+                                                id={`pilar-${pilar.name}`} 
+                                                checked={selectedPilars.includes(pilar.name)}
+                                                onCheckedChange={(checked) => 
+                                                    handlePilarChange(pilar.name, checked as boolean)
+                                                }
+                                            />
+                                            <Label 
+                                                htmlFor={`pilar-${pilar.name}`}
+                                                className="text-sm font-normal"
+                                            >
+                                                {pilar.name}
+                                            </Label>
+                                        </div>
+                                    ))}
                                     </div>
                                 </div>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="waktu_mulai">Tanggal Mulai</Label>
+                                    <Label htmlFor="waktu_mulai">Tanggal Mulai<span className="text-red-500 ml-0.5">*</span></Label>
                                     <Input 
                                         id="waktu_mulai"
                                         name="waktu_mulai" 
@@ -472,7 +485,7 @@ const Program = () => {
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="waktu_selesai">Tanggal Selesai</Label>
+                                    <Label htmlFor="waktu_selesai">Tanggal Selesai<span className="text-red-500 ml-0.5">*</span></Label>
                                     <Input 
                                         id="waktu_selesai"
                                         name="waktu_selesai" 
