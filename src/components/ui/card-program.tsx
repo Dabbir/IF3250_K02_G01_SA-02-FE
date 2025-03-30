@@ -80,7 +80,7 @@ const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete })
                                 <p className="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-blue-500">
                                     {formatDate(program.waktu_mulai)} - {formatDate(program.waktu_selesai)}
                                 </p>
-                                <h3 className="text-2xl font-semibold text-gray-800 dark:text-neutral-300 dark:hover:text-white">
+                                <h3 className="cursor-default text-2xl font-semibold text-gray-800 dark:text-neutral-300 dark:hover:text-white">
                                     {program.nama_program}
                                 </h3>
                                 <div className={`mt-2 flex justify-center items-center font-semibold w-20 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${

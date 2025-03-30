@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CardProgram from "@/components/ui/card-program";
 import { Database, Loader2 } from "lucide-react";
@@ -69,8 +69,8 @@ const Program = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedPilars, setSelectedPilars] = useState<string[]>([]);
     const navigate = useNavigate();
-    
     const [loading, setLoading] = useState(true);
+    const [totalPrograms, setTotalPrograms] = useState(0);
     const [programList, setProgramList] = useState<Program[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [user, setUser] = useState<userData>({
@@ -95,63 +95,72 @@ const Program = () => {
         updated_at: ""
     });
 
+    const fetchPrograms = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/program`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+    
+            const data = await response.json();
+            setProgramList(data || []);
+            setTotalPrograms(data.length || 0);
+        } catch (error) {
+            console.error("Error fetching all programs:", error);
+            toast.error("Gagal memuat semua program");
+        } finally {
+            setLoading(false);
+        }
+    };    
+
+    const fetchPaginatedPrograms = async (page: number) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/program/paginated?page=${page}&limit=${ITEMS_PER_PAGE}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+            setProgramList(data.data || []);
+            setTotalPrograms(data.total || 0);
+        } catch (error) {
+            console.error("Error fetching programs:", error);
+            toast.error("Gagal memuat data program");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
     useEffect(() => {
-        const fetchPrograms = async () => {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/program`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-    
-                const data = await response.json();
-                setProgramList(data);
-            } catch (error) {
-                console.error("Error fetching programs:", error);
-                toast.error("Gagal memuat data program");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const fetchUser = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/users`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-    
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || "Gagal memuat data pengguna");
-
-                const { id, masjid_id } = data.user;
-                setUser({ id, masjid_id });
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-                toast.error("Gagal memuat data pengguna");
-            }
-        };
-    
-        fetchPrograms();
-        fetchUser();
-        console.log(user);
-    }, []);
+        if (search.trim().length > 0) {
+            fetchPrograms();
+        } else {
+            fetchPaginatedPrograms(currentPage);
+        }
+    }, [currentPage, search]);
 
     const filteredProgram = programList.filter((item) =>
-        item.nama_program.toLowerCase().includes(search.toLowerCase())
+    item.nama_program.toLowerCase().includes(search.toLowerCase())
     );
 
-    const totalPages = Math.ceil(filteredProgram.length / ITEMS_PER_PAGE);
-    const displayedProgram = filteredProgram.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
+    const totalPages = Math.ceil(
+        (search ? filteredProgram.length : totalPrograms) / ITEMS_PER_PAGE
     );
+
+    const displayedProgram = search
+        ? filteredProgram.slice(
+            (currentPage - 1) * ITEMS_PER_PAGE,
+            currentPage * ITEMS_PER_PAGE
+        )
+        : programList;
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -222,6 +231,27 @@ const Program = () => {
             fileInputRef.current.click(); 
         }
     };
+
+    const fetchUser = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/users`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Gagal memuat data pengguna");
+
+            const { id, masjid_id } = data.user;
+            setUser({ id, masjid_id });
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            toast.error("Gagal memuat data pengguna");
+        }
+    };
     
     const handleSubmit = async () => {
         if (!newProgram.nama_program || !newProgram.waktu_mulai || !newProgram.waktu_selesai) {
@@ -244,6 +274,7 @@ const Program = () => {
     
         setSubmitting(true);
         try {
+            fetchUser();
             const token = localStorage.getItem("token");
 
             const payload = {
@@ -264,21 +295,14 @@ const Program = () => {
                 },
                 body: JSON.stringify(payload),
             });
-    
+
             const data = await response.json();
-    
+
             if (response.ok) {
-                const createdProgram = {
-                    ...newProgram,
-                    id: data.id,
-                    created_at: data.created_at,
-                    updated_at: data.updated_at,
-                };
-    
-                setProgramList([createdProgram, ...programList]);
                 toast.success("Program berhasil ditambahkan");
                 setIsOpen(false);
                 resetForm();
+                fetchPaginatedPrograms(currentPage);
             } else {
                 throw new Error(data.message || "Terjadi kesalahan");
             }
@@ -293,7 +317,7 @@ const Program = () => {
     const handleDeleteProgram = async (programId: number): Promise<boolean> => {
         try {
             const token = localStorage.getItem("token");
-    
+
             const response = await fetch(`${API_URL}/api/program/${programId}`, {
                 method: "DELETE",
                 headers: {
@@ -301,35 +325,108 @@ const Program = () => {
                     "Content-Type": "application/json",
                 },
             });
-    
-            if (!response.ok) {
-                throw new Error("Gagal menghapus program");
-            }
-    
-            setProgramList(prevList => prevList.filter(program => program.id !== programId));
-            if (displayedProgram.length === 1 && currentPage > 1) {
-                setCurrentPage(prev => prev - 1);
-            }
-    
+
+            if (!response.ok) throw new Error("Gagal menghapus program");
+
             toast.success("Program berhasil dihapus");
+
+            const isLastItemOnPage = programList.length === 1 && currentPage > 1;
+            const nextPage = isLastItemOnPage ? currentPage - 1 : currentPage;
+            setCurrentPage(nextPage);
             return true;
         } catch (error) {
             console.error("Error deleting program:", error);
             toast.error("Gagal menghapus program");
             return false;
         }
-    };    
+    };   
 
     const downloadTemplate = () => {
         const worksheetData = [
             ["nama_program", "deskripsi_program", "pilar_program", "kriteria_program", "tanggal_mulai", "tanggal_selesai", "rancangan_anggaran", "aktualisasi_anggaran", "status_program"], 
+            ["(HAPUS TEKS INI) IKUTI PANDUAN PENGISIAN PADA SHEETS '(PENTING!) Panduan Unggah' DAN '(PENTING!) Pilar Program'"]
         ];
         
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
         
-        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const pilarOptionsSheet = XLSX.utils.aoa_to_sheet([
+            ["Pilihan Pilar Program 17 Poin Sustainable Development Goals"],
+            ["[INFO] Pengguna dapat menulis lebih dari satu pilar dengan memisahkan setiap pilar dengan tanda koma ','"],
+            ["[CONTOH PENULISAN 'pilar_program']"],
+            ["[Hanya satu pilar]"],
+            ["Tanpa Kelaparan"],
+            ["[Lebih dari satu pilar]"],
+            ["Tanpa Kelaparan,Tanpa Kemiskinan,Pendidikan Berkualitas,Kesetaraan Gender"],
+            [""],
+            ["Pilihan Pilar (Salin Pilihan Pilar yang Diinginkan) :"],
+            ["Tanpa Kemiskinan"],
+            ["Tanpa Kelaparan"],
+            ["Kehidupan Sehat dan Sejahtera"],
+            ["Pendidikan Berkualitas"],
+            ["Kesetaraan Gender"],
+            ["Air Bersih dan Sanitasi Layak"],
+            ["Energi Bersih dan Terjangkau"],
+            ["Pekerjaan Layak dan Pertumbuhan Ekonomi"],
+            ["Industri, Inovasi dan Infrastruktur"],
+            ["Berkurangnya Kesenjangan"],
+            ["Kota dan Pemukiman yang Berkelanjutan"],
+            ["Konsumsi dan Produksi yang Bertanggung Jawab"],
+            ["Penanganan Perubahan Iklim"],
+            ["Ekosistem Lautan"],
+            ["Ekosistem Daratan"],
+            ["Perdamaian, Keadilan dan Kelembagaan yang Tangguh"],
+            ["Kemitraan untuk Mencapai Tujuan"]
+        ]);
+
+        const guidanceSheet = XLSX.utils.aoa_to_sheet([
+            ["Panduan Pengisian Data Program dengan Mekanisme Unggah File"],
+            [""],
+            ["[1] Isi setiap kolom sesuai dengan kategori yang tertera. Perhatikan format pengisian data untuk setiap kolom sebagai berikut :"],
+            ["nama_program : TEXT bebas"],
+            ["deskripsi_program : TEXT bebas"],
+            ["pilar_program : Format mengikuti instruksi pada sheet '(PENTING!) Pilar Program'"],
+            ["kriteria_program : TEXT bebas"],
+            ["tanggal_mulai : Format YYYY-MM-DD"],
+            ["tanggal_selesai : Format YYYY-MM-DD"],
+            ["rancangan_anggaran : ANGKA positif"],
+            ["aktualisasi_anggaran : ANGKA positif"],
+            ["status_program : Berjalan/Selesai"],
+            [""],
+            ["[2] Hanya melakukan perubahan di sheets 'Template Program' tanpa mengubah sheets lainnya (sheets '(PENTING!) Pilar Program' dan sheets '(PENTING!) Panduan Unggah')"],
+            [""],
+            ["[3] Tidak diperbolehkan untuk memindah-mindahkan posisi sheets"],
+            [""],
+            ["[4] Simpan file dalam format xlsx atau xls dengan nama bebas"],
+            [""],
+            ["[5] Kunjungi laman 'Data Program' pada website Salman Sustainability Report"],
+            [""],
+            ["[6] Unggah file xlsx atau xls pada tombol 'Upload Data'"],
+            [""],
+            ["[CONTOH]"]
+        ]);
+        
+        // Create workbook and add all sheets
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Template Program");
+        XLSX.utils.book_append_sheet(workbook, guidanceSheet, "(PENTING!) Panduan Unggah");
+        XLSX.utils.book_append_sheet(workbook, pilarOptionsSheet, "(PENTING!) Pilar Program");
+        
+        XLSX.utils.sheet_add_aoa(guidanceSheet, [
+            ["nama_program", "deskripsi_program", "pilar_program", "kriteria_program", "tanggal_mulai", "tanggal_selesai", "rancangan_anggaran", "aktualisasi_anggaran", "status_program"],
+            ["Program Jumat Berkah", "Kegiatan rutin membagikan bahan sembako untuk warga sekitar", "Tanpa Kemiskinan,Tanpa Kelaparan,Kehidupan Sehat dan Sejahtera", "Program Penyejahteraan Umat", "2025-03-20", "2025-09-24", "50000000", "45000000", "Selesai"],
+            ["Pesantren Kilat", "Malam bina takwa untuk sekolah sekitar", "Pendidikan Berkualitas", "Program Pencerdasan Umat", "2025-03-20", "2025-09-24", "50000000", "45000000", "Berjalan"]
+        ], {origin: "A25"});
+        
+        const excelBuffer = XLSX.write(workbook, { 
+            bookType: "xlsx", 
+            type: "array",
+            bookSST: false,
+            Props: {
+                Title: "Template Program",
+                Subject: "Template untuk input program",
+                Author: "Sistem Sustainability"
+            } 
+        });
         
         const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
         saveAs(fileData, "Template_Program.xlsx");
@@ -347,7 +444,7 @@ const Program = () => {
                 const data = new Uint8Array(event.target?.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { 
                     type: 'array',
-                    cellDates: true  // Tell XLSX to parse dates
+                    cellDates: true
                 });
                 
                 const sheetName = workbook.SheetNames[0];
@@ -369,28 +466,44 @@ const Program = () => {
                     }
 
                     const parseExcelDate = (dateStr: string) => {
+                        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            return dateStr;
+                        }
                         let date;
-                        if (typeof dateStr === 'string') {
-                            // handle DD/MM/YYYY format
-                            if (dateStr.includes('/')) {
-                                const parts = dateStr.split('/');
-                                if (parts.length === 3) {
-                                    date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-                                } else {
+                        try {
+                            if (typeof dateStr === 'string') {
+                                if (dateStr.includes('/')) {
+                                    const parts = dateStr.split('/');
+                                    if (parts.length === 3) {
+                                        date = new Date(
+                                            parseInt(parts[2]), 
+                                            parseInt(parts[1]) - 1,
+                                            parseInt(parts[0]) 
+                                        );
+                                    } else {
+                                        date = new Date(dateStr);
+                                    }
+                                } 
+                                else if (!isNaN(Number(dateStr))) {
+                                    const excelEpoch = new Date(1899, 11, 30);
+                                    date = new Date(excelEpoch.getTime() + (Number(dateStr) * 24 * 60 * 60 * 1000));
+                                }
+                                else {
                                     date = new Date(dateStr);
                                 }
                             } else {
                                 date = new Date(dateStr);
                             }
-                        } else {
-                            date = new Date(dateStr);
-                        }
-
-                        if (isNaN(date.getTime())) {
+                    
+                            if (isNaN(date.getTime())) {
+                                throw new Error(`Format tanggal tidak valid: ${dateStr}`);
+                            }
+                            
+                            return date.toISOString().split('T')[0];
+                        } catch (error) {
+                            console.error(`Error parsing date "${dateStr}":`, error);
                             throw new Error(`Format tanggal tidak valid: ${dateStr}`);
                         }
-                        
-                        return date.toISOString().split('T')[0];
                     };
                     
                     return {
@@ -429,16 +542,7 @@ const Program = () => {
                     }
                 }
                 
-                // refresh data program
-                const response = await fetch(`${API_URL}/api/program`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-                
-                const programData = await response.json();
-                setProgramList(programData);
+                await fetchPaginatedPrograms(currentPage);
                 
                 toast.success(`Berhasil menambahkan ${successCount} program dari ${transformedData.length} data`);
             } catch (error) {
@@ -446,7 +550,6 @@ const Program = () => {
                 toast.error(error instanceof Error ? error.message : "Gagal memproses file");
             } finally {
                 setLoading(false);
-                // reset
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                 }
@@ -520,7 +623,7 @@ const Program = () => {
                     </div>
                 )}
 
-                {!loading && filteredProgram.length > 0 && (
+                {!loading && totalPrograms > 0 && (
                     <div className="flex justify-center mt-6 space-x-2">
                         <Button 
                             disabled={currentPage === 1} 
