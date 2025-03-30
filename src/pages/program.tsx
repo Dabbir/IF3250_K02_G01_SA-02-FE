@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CardProgram from "@/components/ui/card-program";
 import { Database, Loader2 } from "lucide-react";
@@ -69,8 +69,8 @@ const Program = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedPilars, setSelectedPilars] = useState<string[]>([]);
     const navigate = useNavigate();
-    
     const [loading, setLoading] = useState(true);
+    const [totalPrograms, setTotalPrograms] = useState(0);
     const [programList, setProgramList] = useState<Program[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [user, setUser] = useState<userData>({
@@ -95,63 +95,72 @@ const Program = () => {
         updated_at: ""
     });
 
+    const fetchPrograms = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/program`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+    
+            const data = await response.json();
+            setProgramList(data || []);
+            setTotalPrograms(data.length || 0);
+        } catch (error) {
+            console.error("Error fetching all programs:", error);
+            toast.error("Gagal memuat semua program");
+        } finally {
+            setLoading(false);
+        }
+    };    
+
+    const fetchPaginatedPrograms = async (page: number) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/program/paginated?page=${page}&limit=${ITEMS_PER_PAGE}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+            setProgramList(data.data || []);
+            setTotalPrograms(data.total || 0);
+        } catch (error) {
+            console.error("Error fetching programs:", error);
+            toast.error("Gagal memuat data program");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
     useEffect(() => {
-        const fetchPrograms = async () => {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/program`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-    
-                const data = await response.json();
-                setProgramList(data);
-            } catch (error) {
-                console.error("Error fetching programs:", error);
-                toast.error("Gagal memuat data program");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const fetchUser = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/users`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-    
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || "Gagal memuat data pengguna");
-
-                const { id, masjid_id } = data.user;
-                setUser({ id, masjid_id });
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-                toast.error("Gagal memuat data pengguna");
-            }
-        };
-    
-        fetchPrograms();
-        fetchUser();
-        console.log(user);
-    }, []);
+        if (search.trim().length > 0) {
+            fetchPrograms();
+        } else {
+            fetchPaginatedPrograms(currentPage);
+        }
+    }, [currentPage, search]);
 
     const filteredProgram = programList.filter((item) =>
-        item.nama_program.toLowerCase().includes(search.toLowerCase())
+    item.nama_program.toLowerCase().includes(search.toLowerCase())
     );
 
-    const totalPages = Math.ceil(filteredProgram.length / ITEMS_PER_PAGE);
-    const displayedProgram = filteredProgram.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
+    const totalPages = Math.ceil(
+        (search ? filteredProgram.length : totalPrograms) / ITEMS_PER_PAGE
     );
+
+    const displayedProgram = search
+        ? filteredProgram.slice(
+            (currentPage - 1) * ITEMS_PER_PAGE,
+            currentPage * ITEMS_PER_PAGE
+        )
+        : programList;
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -222,6 +231,27 @@ const Program = () => {
             fileInputRef.current.click(); 
         }
     };
+
+    const fetchUser = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/users`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Gagal memuat data pengguna");
+
+            const { id, masjid_id } = data.user;
+            setUser({ id, masjid_id });
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            toast.error("Gagal memuat data pengguna");
+        }
+    };
     
     const handleSubmit = async () => {
         if (!newProgram.nama_program || !newProgram.waktu_mulai || !newProgram.waktu_selesai) {
@@ -244,6 +274,7 @@ const Program = () => {
     
         setSubmitting(true);
         try {
+            fetchUser();
             const token = localStorage.getItem("token");
 
             const payload = {
@@ -264,21 +295,14 @@ const Program = () => {
                 },
                 body: JSON.stringify(payload),
             });
-    
+
             const data = await response.json();
-    
+
             if (response.ok) {
-                const createdProgram = {
-                    ...newProgram,
-                    id: data.id,
-                    created_at: data.created_at,
-                    updated_at: data.updated_at,
-                };
-    
-                setProgramList([createdProgram, ...programList]);
                 toast.success("Program berhasil ditambahkan");
                 setIsOpen(false);
                 resetForm();
+                fetchPaginatedPrograms(currentPage);
             } else {
                 throw new Error(data.message || "Terjadi kesalahan");
             }
@@ -293,7 +317,7 @@ const Program = () => {
     const handleDeleteProgram = async (programId: number): Promise<boolean> => {
         try {
             const token = localStorage.getItem("token");
-    
+
             const response = await fetch(`${API_URL}/api/program/${programId}`, {
                 method: "DELETE",
                 headers: {
@@ -301,24 +325,21 @@ const Program = () => {
                     "Content-Type": "application/json",
                 },
             });
-    
-            if (!response.ok) {
-                throw new Error("Gagal menghapus program");
-            }
-    
-            setProgramList(prevList => prevList.filter(program => program.id !== programId));
-            if (displayedProgram.length === 1 && currentPage > 1) {
-                setCurrentPage(prev => prev - 1);
-            }
-    
+
+            if (!response.ok) throw new Error("Gagal menghapus program");
+
             toast.success("Program berhasil dihapus");
+
+            const isLastItemOnPage = programList.length === 1 && currentPage > 1;
+            const nextPage = isLastItemOnPage ? currentPage - 1 : currentPage;
+            setCurrentPage(nextPage);
             return true;
         } catch (error) {
             console.error("Error deleting program:", error);
             toast.error("Gagal menghapus program");
             return false;
         }
-    };    
+    };   
 
     const downloadTemplate = () => {
         const worksheetData = [
@@ -347,7 +368,7 @@ const Program = () => {
                 const data = new Uint8Array(event.target?.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { 
                     type: 'array',
-                    cellDates: true  // Tell XLSX to parse dates
+                    cellDates: true
                 });
                 
                 const sheetName = workbook.SheetNames[0];
@@ -371,7 +392,6 @@ const Program = () => {
                     const parseExcelDate = (dateStr: string) => {
                         let date;
                         if (typeof dateStr === 'string') {
-                            // handle DD/MM/YYYY format
                             if (dateStr.includes('/')) {
                                 const parts = dateStr.split('/');
                                 if (parts.length === 3) {
@@ -429,7 +449,6 @@ const Program = () => {
                     }
                 }
                 
-                // refresh data program
                 const response = await fetch(`${API_URL}/api/program`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -520,7 +539,7 @@ const Program = () => {
                     </div>
                 )}
 
-                {!loading && filteredProgram.length > 0 && (
+                {!loading && totalPrograms > 0 && (
                     <div className="flex justify-center mt-6 space-x-2">
                         <Button 
                             disabled={currentPage === 1} 
