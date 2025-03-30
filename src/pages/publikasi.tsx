@@ -13,6 +13,8 @@ import { saveAs } from "file-saver";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
+const SORTABLE_COLUMNS = ["judul", "media", "perusahaan", "tanggal", "link", "prValue", "nama_program", "nama_aktivitas", "tone"];
+
 interface Publikasi {
   id: string;
   judul: string;
@@ -50,6 +52,53 @@ export default function PublikasiPage() {
   const [publikasiList, setPublikasiList] = useState<Publikasi[]>([]);
   const [programList, setProgramList] = useState<Program[]>([]);
   const [aktivitasList, setAktivitasList] = useState<Aktivitas[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<string>("tanggal"); 
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  useEffect(() => {
+    const loadData = async () => {
+      const publikasiData = await fetchPublikasi();
+      setPublikasiList(publikasiData);
+    };
+    loadData();
+  }, []);
+
+  const handleSortChange = (column: string) => {
+    if (sortColumn === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortOrder("asc");
+    }
+  };
+
+  const filteredPublikasi = publikasiList.filter((item) =>
+    item.judul?.toLowerCase().includes(search.toLowerCase()) ?? false
+  );
+  
+  const sortedPublikasi = [...filteredPublikasi].sort((a, b) => {
+    let valueA = a[sortColumn as keyof Publikasi];
+    let valueB = b[sortColumn as keyof Publikasi];
+  
+    if (typeof valueA === "string" && typeof valueB === "string") {
+      return sortOrder === "asc"
+        ? valueA.localeCompare(valueB)
+        : valueB.localeCompare(valueA);
+    }
+  
+    if (typeof valueA === "number" && typeof valueB === "number") {
+      return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
+    }
+  
+    return 0;
+  });
+  
+  // Terapkan paginasi setelah sorting
+  const displayedPublikasi = sortedPublikasi.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );  
 
   useEffect(() => {
     const loadData = async () => {
@@ -77,16 +126,16 @@ export default function PublikasiPage() {
     nama_aktivitas: "",
     tone: "Netral",
   });
-
-  const filteredPublikasi = publikasiList.filter((item) =>
-    item.judul?.toLowerCase().includes(search.toLowerCase()) ?? false
-  );
   
   const totalPages = Math.ceil(filteredPublikasi.length / ITEMS_PER_PAGE);
-  const displayedPublikasi = filteredPublikasi.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+
+  const shareToWhatsApp = (item: Publikasi) => {
+    const message = `Cek publikasi ini: ${item.judul} - ${item.link}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+  
+    window.open(whatsappUrl, "_blank");
+  };  
 
   // GET
   const fetchPublikasi = async (): Promise<Publikasi[]> => {
@@ -294,11 +343,11 @@ export default function PublikasiPage() {
     }
   };  
 
-  // PUT
+  // PUT - Perbarui publikasi berdasarkan ID
   const updatePublikasi = async (id: string, publikasi: Partial<Publikasi>): Promise<Publikasi | null> => {
     try {
       const token = localStorage.getItem("token");
-  
+
       const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
         method: "PUT",
         headers: {
@@ -309,17 +358,19 @@ export default function PublikasiPage() {
           judul_publikasi: publikasi.judul,
           media_publikasi: publikasi.media,
           nama_perusahaan_media: publikasi.perusahaan,
-          tanggal_publikasi: publikasi.tanggal,
+          tanggal_publikasi: publikasi.tanggal
+          ? new Date(publikasi.tanggal).toISOString().split("T")[0] 
+          : null,
           url_publikasi: publikasi.link,
           pr_value: publikasi.prValue,
           nama_program: publikasi.nama_program,
           nama_aktivitas: publikasi.nama_aktivitas,
-          tone: publikasi.tone || "Netral"
+          tone: publikasi.tone || "Netral",
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         return {
           id: data.id || id,
@@ -342,30 +393,47 @@ export default function PublikasiPage() {
     }
   };
 
-  const handleUpdatePublikasi = async (id: string) => {
+  const handleSavePublikasi = async () => {
     if (!newPublikasi.judul || !newPublikasi.perusahaan) {
-      alert("Data tidak lengkap");
+      alert("Harap isi semua bidang yang diperlukan.");
       return;
     }
-    
-    const updated = await updatePublikasi(id, newPublikasi);
-    if (updated) {
-      const refreshedData = await fetchPublikasi();
-      setPublikasiList(refreshedData);
-      // setPublikasiList(publikasiList.map((item) => (item.id === id ? updated : item)));
-      setIsOpen(false);
-      
-      setNewPublikasi({
-        judul: "",
-        media: "Media Online",
-        perusahaan: "",
-        tanggal: new Date().toISOString(),
-        link: "",
-        prValue: 0,
-        nama_program: "",
-        nama_aktivitas: "",
-      });
+  
+    if (editingId) {
+      // Mode Edit (PUT)
+      const updated = await updatePublikasi(editingId, newPublikasi);
+      if (updated) {
+        setPublikasiList((prev) =>
+          prev.map((p) => (p.id === editingId ? updated : p)) // Update tanpa fetch ulang
+        );
+        alert("Publikasi berhasil diperbarui!");
+      }
+    } else {
+      // Mode Tambah (POST)
+      const added = await addPublikasi(newPublikasi);
+      if (added) {
+        setPublikasiList((prev) => [...prev, added]); // Tambah ke daftar
+        alert("Publikasi berhasil ditambahkan!");
+      }
     }
+  
+    setIsOpen(false);
+    setEditingId(null); // Reset mode edit setelah simpan
+    resetNewPublikasi(); // Reset form setelah simpan
+  };
+  
+  const resetNewPublikasi = () => {
+    setNewPublikasi({
+      judul: "",
+      media: "Media Online",
+      perusahaan: "",
+      tanggal: new Date().toISOString().split("T")[0],
+      link: "",
+      prValue: 0,
+      nama_program: "",
+      nama_aktivitas: "",
+      tone: "Netral",
+    });
   };  
 
   // DELETE
@@ -398,27 +466,94 @@ export default function PublikasiPage() {
       if (deleted) {
         const refreshedData = await fetchPublikasi();
         setPublikasiList(refreshedData);
-        // setPublikasiList(publikasiList.filter((item) => item.id !== id));
       } else {
         alert("Gagal menghapus publikasi. Silakan coba lagi.");
       }
     }
   };  
 
-  const downloadTemplate = () => {
-    const worksheetData = [
-      ["judul", "media", "perusahaan", "tanggal", "link", "prValue", "nama_program", "nama_aktivitas"], 
-    ];
+  const downloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem("token");
   
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
+      const responseProgram = await fetch(`${API_URL}/api/program`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+      });
+      const programData = await responseProgram.json();
+      const namaProgramList = programData.map((item: any) => [item.nama_program]);
   
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const responseActivity = await fetch(`${API_URL}/api/activity/getactivity/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+      });
+      const activityData = await responseActivity.json();
+      const namaAktivitasList = activityData.activity.map((item: any) => [item.nama_aktivitas]);
   
-    const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(fileData, "Template_Publikasi.xlsx");
-  };
+      const uploadData = [
+        ["judul", "media", "perusahaan", "tanggal", "link", "prValue", "nama_program", "nama_aktivitas", "tone"],
+        ["", "", "", "YYYY-MM-DD", "", 0, "", "", ""], 
+      ];
+      const wsUpload = XLSX.utils.aoa_to_sheet(uploadData);
+
+      const mediaList = [["Media yang dapat digunakan"], ["Televisi"], ["Koran"], ["Radio"], ["Media Online"], ["Sosial Media"], ["Lainnya"]];
+      const wsMedia = XLSX.utils.aoa_to_sheet(mediaList);
+
+      const toneList = [["Tone yang dapat digunakan"], ["Positif"], ["Netral"], ["Negatif"]];
+      const wsTone = XLSX.utils.aoa_to_sheet(toneList);
+  
+      const wsProgram = XLSX.utils.aoa_to_sheet([["Nama Program"], ...namaProgramList]);
+  
+      const wsActivity = XLSX.utils.aoa_to_sheet([["Nama Aktivitas"], ...namaAktivitasList]);
+  
+      wsUpload["!dataValidation"] = [
+        {
+          sqref: "B2:B100",
+          type: "list",
+          formula1: "Info Media!A2:A7", 
+          showDropDown: true,
+        },
+        {
+          sqref: "I2:I100",
+          type: "list",
+          formula1: "Info Tone!A2:A4", 
+          showDropDown: true,
+        },
+        {
+          sqref: "G2:G100",
+          type: "list",
+          formula1: "Info Nama Program!A2:A" + (namaProgramList.length + 1), 
+          showDropDown: true,
+        },
+        {
+          sqref: "H2:H100",
+          type: "list",
+          formula1: "Info Nama Aktivitas!A2:A" + (namaAktivitasList.length + 1), 
+          showDropDown: true,
+        },
+      ];
+  
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, wsUpload, "Upload Data");
+      XLSX.utils.book_append_sheet(wb, wsMedia, "Info Media");
+      XLSX.utils.book_append_sheet(wb, wsTone, "Info Tone");
+      XLSX.utils.book_append_sheet(wb, wsProgram, "Info Nama Program");
+      XLSX.utils.book_append_sheet(wb, wsActivity, "Info Nama Aktivitas");
+  
+      const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
+      saveAs(fileData, "Template_Publikasi.xlsx");
+  
+    } catch (error) {
+      console.error("Error saat mengambil data atau membuat file:", error);
+    }
+  };   
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -432,17 +567,123 @@ export default function PublikasiPage() {
     const file = event.target.files?.[0];
     if (file) {
       const allowedExtensions = [".xlsx", ".csv"];
-      const fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 1);
 
-      if (!allowedExtensions.includes(`.${fileExtension}`)) {
+      const isValidFile = allowedExtensions.some((ext) => file.name.toLowerCase().endsWith(ext));
+  
+      if (!isValidFile) {
         alert("Hanya file dengan format .xlsx atau .csv yang diperbolehkan!");
-        event.target.value = ""; 
-      } else {
-        console.log("File valid:", file.name);
-        // Proses upload file
-        // ...implementasi upload file nanti
+        event.target.value = "";
+        return;
       }
+  
+      console.log("File valid:", file.name);
+      handleFileUpload(event); 
     }
+  };  
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+  
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      // Hanya baca tab pertama (Upload Data)
+      const sheetName = workbook.SheetNames[0]; 
+      if (sheetName !== "Upload Data") {
+        alert("Error: Pastikan tab pertama bernama 'Upload Data'");
+        return;
+      }
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+
+      const convertExcelDate = (value: any) => {
+        if (!value) return "";
+      
+        if (typeof value === "number") {
+          const date = XLSX.SSF.parse_date_code(value);
+          return `${date.y}-${String(date.m).padStart(2, "0")}-${String(date.d).padStart(2, "0")}`;
+        }
+      
+        if (typeof value === "string") {
+          const parts = value.split(/[\/\-\.]/).map((p) => p.padStart(2, "0"));
+      
+          if (parts.length === 3) {
+            let [day, month, year] = parts;
+      
+            if (year.length === 2) {
+              year = `20${year}`; 
+            }
+      
+            if (parseInt(day) > 12 && parseInt(month) <= 12) {
+              return `${year}-${month}-${day}`;
+            } else if (parseInt(month) > 12 && parseInt(day) <= 12) {
+              return `${year}-${day}-${month}`;
+            } else {
+              return `${year}-${month}-${day}`;
+            }
+          }
+        }
+      
+        return value; 
+      };         
+
+      const parsePrValue = (value: any): number => {
+        console.log("Nilai prValue sebelum parsing:", value);
+      
+        if (typeof value === "number") return value; 
+      
+        if (typeof value === "string") {
+          let cleanValue = value.trim().replace(".", "").replace(",", "."); 
+          let parsedNumber = parseFloat(cleanValue); 
+      
+          console.log("Nilai prValue setelah parsing:", parsedNumber);
+          return isNaN(parsedNumber) ? 0 : parsedNumber; 
+        }
+      
+        return 0; 
+      };        
+  
+      const formattedData: Partial<Publikasi>[] = jsonData.map((row) => ({
+        judul: row["judul"] || "",
+        media: row["media"] || "Media Online",
+        perusahaan: row["perusahaan"] || "",
+        tanggal: convertExcelDate(row["tanggal"]),
+        link: row["link"] || "",
+        prValue: parsePrValue(row["prValue"]), 
+        nama_program: row["nama_program"] || "",
+        nama_aktivitas: row["nama_aktivitas"] || "",
+        tone: row["tone"] || "Netral",
+      }));   
+  
+      try {
+        const uploadedPublikasi = await Promise.all(
+          formattedData.map(async (publikasi) => {
+            try {
+              return await addPublikasi(publikasi);
+            } catch (err) {
+              console.error("Gagal menambahkan publikasi:", publikasi, err);
+              return null; 
+            }
+          })
+        );
+
+        const successfulPublikasi = uploadedPublikasi.filter((p): p is Publikasi => p !== null);
+
+        if (successfulPublikasi.length > 0) {
+          setPublikasiList((prev) => [...prev, ...successfulPublikasi]);
+          alert(`Berhasil mengunggah ${successfulPublikasi.length} data publikasi!`);
+        } else {
+          alert("Tidak ada data yang berhasil diunggah.");
+        }
+      } catch (error) {
+        console.error("Terjadi kesalahan saat mengunggah data:", error);
+        alert("Terjadi kesalahan saat mengunggah data.");
+      }
+    };
+  
+    reader.readAsArrayBuffer(file);
   };
 
   return (
@@ -464,8 +705,23 @@ export default function PublikasiPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
             />
-            <Button variant="outline" className="flex items-center">
+            <Select value={sortColumn} onValueChange={setSortColumn}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Pilih Kolom" />
+              </SelectTrigger>
+              <SelectContent>
+                {SORTABLE_COLUMNS.map((col) => (
+                  <SelectItem key={col} value={col}>
+                    {col.charAt(0).toUpperCase() + col.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Tombol Sort Ascending/Descending */}
+            <Button variant="outline" onClick={() => handleSortChange(sortColumn)} className="flex items-center">
               <ArrowUpDown className="w-4 h-4 mr-2" /> Sort
+              {sortOrder === "asc" ? "Ascending" : "Descending"}
             </Button>
           </div>
           <div className="flex items-center gap-2">
@@ -478,7 +734,11 @@ export default function PublikasiPage() {
               onChange={handleFileChange}
               style={{ display: "none" }} 
             />
-            <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
+            <Button className="bg-[#3A786D] text-white" onClick={() => {
+                setEditingId(null);
+                resetNewPublikasi(); 
+                setIsOpen(true);
+              }}>
               Tambah Publikasi
             </Button>
           </div>
@@ -519,26 +779,45 @@ export default function PublikasiPage() {
                     <TableCell>{item.tone}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => {
-                          setNewPublikasi({
-                            judul: item.judul,
-                            media: item.media,
-                            perusahaan: item.perusahaan,
-                            link: item.link,
-                            prValue: item.prValue,
-                            nama_program: item.nama_program,
-                            nama_aktivitas: item.nama_aktivitas,
-                            tone: item.tone,
-                          });
-                          setIsOpen(true);
-                        }}>
-                          <Pencil className="w-4 h-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-gray-200 transition cursor-pointer"
+                          onClick={() => {
+                            setNewPublikasi({
+                              judul: item.judul,
+                              media: item.media,
+                              perusahaan: item.perusahaan,
+                              tanggal: item.tanggal,
+                              link: item.link,
+                              prValue: item.prValue,
+                              nama_program: item.nama_program,
+                              nama_aktivitas: item.nama_aktivitas,
+                              tone: item.tone,
+                            });
+                            setEditingId(item.id); 
+                            setIsOpen(true);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDeletePublikasi(item.id)}>
-                          <Trash2 className="w-4 h-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-green-100 transition cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareToWhatsApp(item);
+                          }}
+                        >
+                          <Share2 className="w-4 h-4 text-green-500 hover:text-green-700" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-blue-600">
-                          <Share2 className="w-4 h-4" />
+                        <Button 
+                         variant="ghost"
+                         size="icon"
+                         className="hover:bg-red-100 transition cursor-pointer"
+                         onClick={() => handleDeletePublikasi(item.id)}>
+                          <Trash2 className="w-4 h-4 text-red-600 hover:text-red-800" />
                         </Button>
                       </div>
                     </TableCell>
@@ -710,7 +989,7 @@ export default function PublikasiPage() {
               }}>Batal</Button>
               <Button 
                 className="bg-[#3A786D] text-white" 
-                onClick={newPublikasi.id ? () => handleUpdatePublikasi(newPublikasi.id as string) : handleAddPublikasi}
+                onClick={handleSavePublikasi}
               >
                 Simpan
               </Button>
