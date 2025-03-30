@@ -166,6 +166,8 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                 formData.append("dokumentasi", image.file);
             });
 
+            console.log("Form data:", formData.get("dokumentasi"));
+
             const token = localStorage.getItem("token");
 
             const response = await fetch(`${API_URL}/api/activity/add`, {
@@ -353,7 +355,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                 <SelectItem value="Finished">Finished</SelectItem>
                             </SelectContent>
                         </Select>
-                        {errors.namaKegiatan && <p className="text-red-500 text-[12px]">{errors.namaKegiatan}</p>}
+                        {errors.status && <p className="text-red-500 text-[12px]">{errors.status}</p>}
                     </div>
 
                     <div className="space-y-2">

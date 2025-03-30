@@ -413,8 +413,8 @@ const Program = () => {
         
         XLSX.utils.sheet_add_aoa(guidanceSheet, [
             ["nama_program", "deskripsi_program", "pilar_program", "kriteria_program", "tanggal_mulai", "tanggal_selesai", "rancangan_anggaran", "aktualisasi_anggaran", "status_program"],
-            ["Program Jumat Berkah", "Kegiatan rutin membagikan bahan sembako untuk warga sekitar", "Tanpa Kemiskinan,Tanpa Kelaparan,Kehidupan Sehat dan Sejahtera", "Program Penyejahteraan Umat", "29/05/2024", "17/06/2024", "50000000", "45000000", "Selesai"],
-            ["Pesantren Kilat", "Malam bina takwa untuk sekolah sekitar", "Pendidikan Berkualitas", "Program Pencerdasan Umat", "20/03/2025", "29/04/2025", "50000000", "45000000", "Berjalan"]
+            ["Program Jumat Berkah", "Kegiatan rutin membagikan bahan sembako untuk warga sekitar", "Tanpa Kemiskinan,Tanpa Kelaparan,Kehidupan Sehat dan Sejahtera", "Program Penyejahteraan Umat", "2025-03-20", "2025-09-24", "50000000", "45000000", "Selesai"],
+            ["Pesantren Kilat", "Malam bina takwa untuk sekolah sekitar", "Pendidikan Berkualitas", "Program Pencerdasan Umat", "2025-03-20", "2025-09-24", "50000000", "45000000", "Berjalan"]
         ], {origin: "A25"});
         
         const excelBuffer = XLSX.write(workbook, { 
@@ -466,27 +466,44 @@ const Program = () => {
                     }
 
                     const parseExcelDate = (dateStr: string) => {
+                        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            return dateStr;
+                        }
                         let date;
-                        if (typeof dateStr === 'string') {
-                            if (dateStr.includes('/')) {
-                                const parts = dateStr.split('/');
-                                if (parts.length === 3) {
-                                    date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-                                } else {
+                        try {
+                            if (typeof dateStr === 'string') {
+                                if (dateStr.includes('/')) {
+                                    const parts = dateStr.split('/');
+                                    if (parts.length === 3) {
+                                        date = new Date(
+                                            parseInt(parts[2]), 
+                                            parseInt(parts[1]) - 1,
+                                            parseInt(parts[0]) 
+                                        );
+                                    } else {
+                                        date = new Date(dateStr);
+                                    }
+                                } 
+                                else if (!isNaN(Number(dateStr))) {
+                                    const excelEpoch = new Date(1899, 11, 30);
+                                    date = new Date(excelEpoch.getTime() + (Number(dateStr) * 24 * 60 * 60 * 1000));
+                                }
+                                else {
                                     date = new Date(dateStr);
                                 }
                             } else {
                                 date = new Date(dateStr);
                             }
-                        } else {
-                            date = new Date(dateStr);
-                        }
-
-                        if (isNaN(date.getTime())) {
+                    
+                            if (isNaN(date.getTime())) {
+                                throw new Error(`Format tanggal tidak valid: ${dateStr}`);
+                            }
+                            
+                            return date.toISOString().split('T')[0];
+                        } catch (error) {
+                            console.error(`Error parsing date "${dateStr}":`, error);
                             throw new Error(`Format tanggal tidak valid: ${dateStr}`);
                         }
-                        
-                        return date.toISOString().split('T')[0];
                     };
                     
                     return {
@@ -525,15 +542,7 @@ const Program = () => {
                     }
                 }
                 
-                const response = await fetch(`${API_URL}/api/program`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-                
-                const programData = await response.json();
-                setProgramList(programData);
+                await fetchPaginatedPrograms(currentPage);
                 
                 toast.success(`Berhasil menambahkan ${successCount} program dari ${transformedData.length} data`);
             } catch (error) {
@@ -541,7 +550,6 @@ const Program = () => {
                 toast.error(error instanceof Error ? error.message : "Gagal memproses file");
             } finally {
                 setLoading(false);
-                // reset
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                 }
