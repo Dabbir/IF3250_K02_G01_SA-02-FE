@@ -376,7 +376,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                 id="dokumentasi"
                                 type="file"
                                 multiple
-                                accept="image/*"
+                                accept="image/jpeg, image/png, image/gif, image/webp, image/svg+xml"
                                 onChange={handleImageChange}
                                 className="hidden"
                             />
