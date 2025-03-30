@@ -49,6 +49,12 @@ export default function DetailKegiatan() {
     const [prevDokumentasi, setPrevDokumentasi] = useState<string[]>([])
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const formatRupiah = (amount: number): string => {
+        const roundedAmount = Math.floor(amount);
+        
+        return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      };
+
     useEffect(() => {
         const fetchActivityDetail = async () => {
             try {
@@ -103,13 +109,12 @@ export default function DetailKegiatan() {
         if (!dokumentasi) return []
 
         try {
-            // Try to parse as JSON
-            const parsed = JSON.parse(dokumentasi)
-            return Array.isArray(parsed) ? parsed : [parsed]
+            const parsed = JSON.parse(dokumentasi);
+            return Array.isArray(parsed) ? parsed : [parsed];
         } catch (error) {
-            // If parsing fails, it might be a single URL string
-            console.error(error)
-            return dokumentasi.startsWith("http") ? [dokumentasi] : []
+            console.error(error);
+            toast.error("Gagal memuat dokumentasi!")
+            return dokumentasi.startsWith('http') ? [dokumentasi] : [];
         }
     }
 
@@ -479,7 +484,7 @@ export default function DetailKegiatan() {
                                             ) : kegiatan.biaya_implementasi ? (
                                                 kegiatan.biaya_implementasi.toLocaleString("id-ID")
                                             ) : (
-                                                "0"
+                                                kegiatan.biaya_implementasi ? formatRupiah(kegiatan.biaya_implementasi) : "0"
                                             )}
                                         </div>
                                     </TableCell>

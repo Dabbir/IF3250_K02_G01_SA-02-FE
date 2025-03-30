@@ -7,6 +7,7 @@ import ManajemenAkun from "@/pages/manajemenakun";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
 import AuthCallback from "@/pages/AuthCallback";
+import GoogleCallback from "@/pages/googlecallback.tsx";
 import Publikasi from "@/pages/publikasi.tsx";
 import Kegiatan from "@/pages/activity.tsx";
 import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute} from "../utils/auth.tsx"
@@ -18,17 +19,13 @@ const AppRoutes = () => (
       <Route 
         path="/register-datadiri" 
         element={ 
-        <AuthenticatedProtectedRoute>
-          <RegisterDataDiri />
-        </AuthenticatedProtectedRoute>} 
+          <RegisterDataDiri />} 
       />
 
       <Route 
         path="/wait-verification" 
         element={ 
-        <AuthenticatedProtectedRoute>
-          <WaitVerification />
-        </AuthenticatedProtectedRoute>}
+          <WaitVerification />}
       />
 
       <Route 
@@ -46,6 +43,9 @@ const AppRoutes = () => (
           <Register />
         </AuthenticatedProtectedRoute>} 
       />
+
+
+      <Route path="/auth/callback" element={<GoogleCallback />} />
       
       <Route path="/auth/callback" element={<AuthCallback />} />
       
