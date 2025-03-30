@@ -58,7 +58,6 @@ const RegisterDataDiri = () => {
         fetchMasjids();
     }, []);
 
-    // Filter masjid list based on search term
     useEffect(() => {
         if (searchTerm.trim() === '') {
             setFilteredMasjidList(masjidList);
@@ -70,7 +69,6 @@ const RegisterDataDiri = () => {
         }
     }, [searchTerm, masjidList]);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -111,6 +109,12 @@ const RegisterDataDiri = () => {
         }
 
         try {
+
+            if (localStorage.getItem('token')) {
+                localStorage.removeItem('token');
+                console.log('Token lama berhasil dihapus dari localStorage');
+            }
+            
             const response = await fetch(`${API_URL}/api/users/${userId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
