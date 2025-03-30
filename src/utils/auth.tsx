@@ -1,5 +1,7 @@
+import { jwtDecode } from "jwt-decode";
 import React, { useState, useEffect, ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 
 interface ProtectedRouteProps {
     children: ReactNode;
@@ -71,21 +73,21 @@ const AdminProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
 
 const AuthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const location = useLocation(); // informasi lokasi halaman
-    const [directTokenCheck, setDirectTokenCheck] = useState(false); // cek apakah token ditemuin scr lgsg di localStorage
-    const [localCheckDone, setLocalCheckDone] = useState(false); // status apakah pengecekan lokal udh selesai
+    const location = useLocation(); 
+    const [directTokenCheck, setDirectTokenCheck] = useState(false); 
+    const [localCheckDone, setLocalCheckDone] = useState(false); 
 
-    useEffect(() => { // cek status autentikasi pengguna tiap kali ada perubahan state
+    useEffect(() => { 
 
-        // FUNCTION UTK CEK LOCALSTORAGE
+        // CEK LOCALSTORAGE
         const checkLocalAuth = () => { 
             console.log("ProtectedRoute: Checking auth status");
             const token = localStorage.getItem("token");
 
             if (token) {
-                setDirectTokenCheck(true); // ubah status kalau udh ngelakuin directTokenCheck
+                setDirectTokenCheck(true); 
             } else {
-                setDirectTokenCheck(false); // ubah status kalau udh ngelakuin directTokenCheck
+                setDirectTokenCheck(false); 
             }
 
             setLocalCheckDone(true);
@@ -99,7 +101,6 @@ const AuthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }
 
     }, [location.pathname])
 
-    // Kalau lagi dalam proses cek lokal, atau lagi proses autentikasi, tampilin status lagi Verifying
     if (!localCheckDone) {
         console.log("ProtectedRoute: Still loading auth status");
 
@@ -119,27 +120,45 @@ const AuthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }
         return <>{children}</>;
     }
 
+    toast.success("Login berhasil!")
+
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
 };
 
-const UnauthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {  // ambil data isAuthenticated, isLoading, dan checkAuthStatus tuh dari data login user?
-    const location = useLocation(); // informasi lokasi halaman
-    const [directTokenCheck, setDirectTokenCheck] = useState(false); // cek apakah token ditemuin scr lgsg di localStorage
-    const [localCheckDone, setLocalCheckDone] = useState(false); // status apakah pengecekan lokal udh selesai
+const UnauthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => { 
+    const location = useLocation();
+    const [directTokenCheck, setDirectTokenCheck] = useState(false);
+    const [localCheckDone, setLocalCheckDone] = useState(false);
 
-    useEffect(() => { // cek status autentikasi pengguna tiap kali ada perubahan state
+    useEffect(() => {
 
-        // FUNCTION UTK CEK LOCALSTORAGE
+        // CEK LOCALSTORAGE
         const checkLocalAuth = () => { 
             console.log("ProtectedRoute: Checking auth status");
             const token = localStorage.getItem("token");
-
+        
             if (token) {
-                setDirectTokenCheck(true); // ubah status kalau udh ngelakuin directTokenCheck
+                try {
+                    const decoded = jwtDecode<{ exp: number }>(token);
+                    console.log(decoded);
+                    console.log(Date.now());
+                    const isExpired = decoded.exp * 1000 < Date.now();
+        
+                    if (isExpired) {
+                        console.log("Token expired, logging out...");
+                        localStorage.removeItem("token");
+                        setDirectTokenCheck(false);
+                    } else {
+                        setDirectTokenCheck(true);
+                    }
+                } catch (error) {
+                    console.error("Invalid token:", error);
+                    setDirectTokenCheck(false);
+                }
             } else {
-                setDirectTokenCheck(false); // ubah status kalau udh ngelakuin directTokenCheck
+                setDirectTokenCheck(false);
             }
-
+        
             setLocalCheckDone(true);
         };
 
@@ -150,9 +169,7 @@ const UnauthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children
         return() => clearTimeout(timeoutId);
 
     }, [location.pathname])
-    // checking local storage auth bakal dilakuin tiap user pindah halaman
-
-    // Kalau lagi dalam proses cek lokal, atau lagi proses autentikasi, tampilin status lagi Verifying
+    
     if (!localCheckDone) {
         console.log("ProtectedRoute: Still loading auth status");
 
@@ -174,7 +191,8 @@ const UnauthenticatedProtectedRoute: React.FC<ProtectedRouteProps> = ({ children
 
     console.log("ProtectedRoute: Not authenticated, redirecting to login =>  directTokenCheck", {directTokenCheck}, "page location :", {from: location.pathname})
 
-    // yeay proses autentikasi utk route udh selesai dan user bisa masuk ke page yang dituju
+    toast.error("Token Expired: silahkan login kembali!")
+
     return <Navigate to="/login" state={{ from: location }} replace />;
 }
 
