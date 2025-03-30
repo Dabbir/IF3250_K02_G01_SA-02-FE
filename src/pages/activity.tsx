@@ -1,5 +1,6 @@
 "use client"
 
+import { utils, writeFile } from 'xlsx';
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,12 +20,12 @@ import { Label } from "@/components/ui/label";
 interface Kegiatan {
   id: string;
   nama_aktivitas: string;
+  nama_program: string;
   tanggal_mulai: string;
   tanggal_selesai: string;
-  status: string;
   biaya_implementasi: number;
+  status: string;
   deskripsi: string;
-  dokumentasi?: string;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -45,19 +46,19 @@ export default function KegiatanPage() {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  
+
   const formatRupiah = (amount: number): string => {
     const roundedAmount = Math.floor(amount);
-    
+
     return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   const shareToWhatsApp = (activity: Kegiatan) => {
     event?.stopPropagation();
-    
+
     const tanggalMulai = new Date(activity.tanggal_mulai).toLocaleDateString('id-ID');
     const tanggalSelesai = new Date(activity.tanggal_selesai).toLocaleDateString('id-ID');
-  
+
     const shareText = `*Detail Kegiatan*\n\n` +
       `*Nama Kegiatan:* ${activity.nama_aktivitas}\n` +
       `*Tanggal Mulai:* ${tanggalMulai}\n` +
@@ -68,7 +69,7 @@ export default function KegiatanPage() {
 
     const encodedText = encodeURIComponent(shareText);
     const whatsappUrl = `https://wa.me/?text=${encodedText}`;
-    
+
     window.open(whatsappUrl, '_blank');
   };
 
@@ -135,12 +136,12 @@ export default function KegiatanPage() {
   };
 
   const filteredActivities = activities.filter(activity => {
-    const matchesSearch = activity.nama_aktivitas && 
+    const matchesSearch = activity.nama_aktivitas &&
       activity.nama_aktivitas.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesStatus = statusFilters.length === 0 || 
+
+    const matchesStatus = statusFilters.length === 0 ||
       statusFilters.includes(activity.status);
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -185,6 +186,50 @@ export default function KegiatanPage() {
     } finally {
       setShowDeleteDialog(false);
     }
+  };
+
+  const exportXlsx = () => {
+    if (activities.length === 0) {
+      alert("Tidak ada data untuk diekspor.");
+      return;
+    }
+
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
+
+    // Membentuk data sesuai struktur
+    const data = activities.map(activity => ({
+      "Nama Aktivitas": activity.nama_aktivitas,
+      "Nama Program": activity.nama_program,
+      "Tanggal Mulai": formatDate(activity.tanggal_mulai),
+      "Tanggal Selesai": formatDate(activity.tanggal_selesai),
+      "Biaya Implementasi": activity.biaya_implementasi,
+      "Status": activity.status,
+      "Deskripsi": activity.deskripsi
+    }));
+
+    const columnWidths = [
+      { wch: 30 }, // Nama Aktivitas
+      { wch: 30 }, // Nama Program
+      { wch: 15 }, // Tanggal Mulai
+      { wch: 15 }, // Tanggal Selesai
+      { wch: 20 }, // Biaya Implementasi
+      { wch: 15 }, // Status
+      { wch: 50 }  // Deskripsi
+    ];
+
+    const worksheet = utils.json_to_sheet(data);
+    worksheet['!cols'] = columnWidths;
+
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, "Kegiatan");
+
+    writeFile(workbook, "Kegiatan.xlsx");
   };
 
   const getStatusBadge = (status: string) => {
@@ -310,6 +355,11 @@ export default function KegiatanPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={exportXlsx}>
+              Unduh Kegiatan
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
             <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
               Tambah Kegiatan
             </Button>
@@ -368,7 +418,7 @@ export default function KegiatanPage() {
                           <Pencil className="h-4 w-4" />
                           <span>Edit Kegiatan</span>
                         </Button>
-                        <Button 
+                        <Button
                           className="w-full flex justify-start items-center space-x-2 bg-transparent text-green-500 hover:bg-green-50"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -378,7 +428,7 @@ export default function KegiatanPage() {
                           <Share2 className="h-4 w-4" />
                           <span>Bagikan ke WhatsApp</span>
                         </Button>
-                        <Button 
+                        <Button
                           className="w-full flex justify-start items-center space-x-2 bg-transparent text-red-500 hover:bg-red-50"
                           onClick={(e) => {
                             e.stopPropagation();
