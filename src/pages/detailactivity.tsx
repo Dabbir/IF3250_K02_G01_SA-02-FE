@@ -12,12 +12,12 @@ interface Kegiatan {
     id: string;
     nama_aktivitas: string;
     program_id: string;
-    nama_program?: string;
-    deskripsi?: string;
+    nama_program: string;
+    deskripsi: string;
     dokumentasi?: string;
-    tanggal_mulai?: string;
-    tanggal_selesai?: string;
-    biaya_implementasi?: number;
+    tanggal_mulai: string;
+    tanggal_selesai: string;
+    biaya_implementasi: number;
     status: "Unstarted" | "Ongoing" | "Finished";
     created_at?: string;
     updated_at?: string;
@@ -40,7 +40,7 @@ export default function DetailKegiatan() {
             try {
                 setLoading(true);
                 const token = localStorage.getItem("token");
-                
+
                 if (!token) {
                     throw new Error("Authentication token not found");
                 }
@@ -58,7 +58,7 @@ export default function DetailKegiatan() {
                 }
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     setKegiatan(data.activity);
                     setEditedKegiatan(data.activity);
@@ -67,7 +67,7 @@ export default function DetailKegiatan() {
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : "An error occurred");
-                toast.error("Failed to load activity details");
+                toast.error("Gagal memuat detail aktivitas!");
             } finally {
                 setLoading(false);
             }
@@ -80,30 +80,33 @@ export default function DetailKegiatan() {
 
     const getDokumentasiList = (dokumentasi?: string): string[] => {
         if (!dokumentasi) return [];
-        
+
         try {
-          // Try to parse as JSON
-          const parsed = JSON.parse(dokumentasi);
-          return Array.isArray(parsed) ? parsed : [parsed];
+            // Try to parse as JSON
+            const parsed = JSON.parse(dokumentasi);
+            return Array.isArray(parsed) ? parsed : [parsed];
         } catch (error) {
-          // If parsing fails, it might be a single URL string
-          return dokumentasi.startsWith('http') ? [dokumentasi] : [];
+            // If parsing fails, it might be a single URL string
+            console.error(error);
+            toast.error("Gagal memuat dokumentasi!")
+            return dokumentasi.startsWith('http') ? [dokumentasi] : [];
         }
     };
-      
+
     const dokumentasiList: string[] = getDokumentasiList(kegiatan?.dokumentasi);
 
     const handleEditClick = () => {
         setIsEditing(true);
+        fetchPrograms();
     };
 
     const handleSaveClick = async () => {
         if (!editedKegiatan) return;
-        
+
         setSaving(true);
         try {
             const token = localStorage.getItem("token");
-            
+
             if (!token) {
                 throw new Error("Authentication token not found");
             }
@@ -131,22 +134,26 @@ export default function DetailKegiatan() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || `Failed to update activity: ${response.status}`);
+                throw new Error(errorData.message || `Gagal memperbarui kegiatan!: ${response.status}`);
             }
 
             const data = await response.json();
-            
+
             if (data.success) {
                 // Update the local state with the updated data
-                setKegiatan(data.data || editedKegiatan);
+                setKegiatan((prev) => prev ? { ...prev, ...data.data } : data.data);
                 setIsEditing(false);
-                toast.success("Activity updated successfully");
+                toast.success("Kegiatan berhasil diperbarui!");
             } else {
-                throw new Error(data.message || "Failed to update activity");
+                throw new Error(data.message || "Gagal memperbarui kegiatan!");
             }
+
+            console.log(kegiatan);
+
+            setTimeout(() => window.location.reload(), 500)
         } catch (error) {
             console.error("Error updating activity:", error);
-            toast.error(error instanceof Error ? error.message : "Failed to update activity");
+            toast.error(error instanceof Error ? error.message : "Gagal memperbarui kegiatan!");
         } finally {
             setSaving(false);
         }
@@ -156,10 +163,42 @@ export default function DetailKegiatan() {
         setEditedKegiatan((prev) => prev ? ({ ...prev, [field]: value }) : null);
     };
 
-    const [showDropdown, setShowDropdown] = useState(false);
-
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [filteredPrograms, setFilteredPrograms] = useState<{ id: number; nama_program: string }[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [programs, setPrograms] = useState<{ id: number; nama_program: string }[]>([]);
+
+    const fetchPrograms = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/activity/idprogram`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error("Gagal mengambil data program");
+
+            const data = await response.json();
+            setPrograms(data.idProgram);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleInputChangeProgram = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setEditedKegiatan((prev) => prev ? { ...prev, nama_program: value } : null);
+        setShowDropdown(true);
+        setFilteredPrograms(programs.filter(p => p.nama_program.toLowerCase().includes(value.toLowerCase())));
+    };
+
+    const handleSelectProgram = (program: { id: number; nama_program: string }) => {
+        setEditedKegiatan((prev) => prev ? { ...prev, nama_program: program.nama_program, program_id: program.id.toString() } : null);
+        setShowDropdown(false);
+    };
 
     const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (
@@ -185,9 +224,9 @@ export default function DetailKegiatan() {
                 <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner overflow-auto">
                     <CardHeader>
                         <div className="flex items-center space-x-2">
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 className="p-0 mr-2"
                                 onClick={handleGoBack}
                             >
@@ -211,9 +250,9 @@ export default function DetailKegiatan() {
                 <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner overflow-auto">
                     <CardHeader>
                         <div className="flex items-center space-x-2">
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 className="p-0 mr-2"
                                 onClick={handleGoBack}
                             >
@@ -226,8 +265,8 @@ export default function DetailKegiatan() {
                     <CardContent className="flex justify-center items-center h-[400px]">
                         <div className="text-center">
                             <p className="text-red-500 mb-4">{error || "Activity not found"}</p>
-                            <Button 
-                                onClick={() => window.location.reload()} 
+                            <Button
+                                onClick={() => window.location.reload()}
                                 className="bg-[#3A786D] text-white"
                             >
                                 Try Again
@@ -245,9 +284,9 @@ export default function DetailKegiatan() {
                 <CardHeader>
                     <div className="justify-between items-center flex">
                         <div className="flex items-center space-x-2">
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 className="p-0 mr-2"
                                 onClick={handleGoBack}
                             >
@@ -283,9 +322,9 @@ export default function DetailKegiatan() {
                                     <Button variant="outline" size="sm" onClick={handleCancel}>
                                         Cancel
                                     </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
                                         onClick={handleSaveClick}
                                         disabled={saving}
                                     >
@@ -308,9 +347,59 @@ export default function DetailKegiatan() {
                                 <TableRow>
                                     <TableHead>Program Terafiliasi</TableHead>
                                     <TableCell className="relative" onBlur={handleBlur}>
-                                        {
-                                            kegiatan.program_id || "N/A"
-                                        }
+                                        {isEditing ? (
+                                            <>
+                                                <Input
+                                                    id="programTerafiliasi"
+                                                    ref={inputRef}
+                                                    value={editedKegiatan?.nama_program || ""}
+                                                    onChange={handleInputChangeProgram}
+                                                    onFocus={() => setShowDropdown(true)}
+                                                    className="w-full"
+                                                />
+
+                                                {showDropdown && (
+                                                    <div
+                                                        ref={dropdownRef}
+                                                        className="text-[12px] absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
+                                                    >
+                                                        {filteredPrograms.length > 0 ? (
+                                                            filteredPrograms.map((program) => (
+                                                                <div
+                                                                    key={program.id}
+                                                                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                                                    onMouseDown={(e) => {
+                                                                        e.preventDefault();
+                                                                        handleSelectProgram(program);
+                                                                    }}
+                                                                >
+                                                                    {program.nama_program}
+                                                                </div>
+                                                            ))
+                                                        ) : programs.length > 0 ? (
+                                                            programs.map((program) => (
+                                                                <div
+                                                                    key={program.id}
+                                                                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                                                    onMouseDown={(e) => {
+                                                                        e.preventDefault();
+                                                                        handleSelectProgram(program);
+                                                                    }}
+                                                                >
+                                                                    {program.nama_program}
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <div className="px-4 py-2 cursor-pointer text-gray-500">
+                                                                Tidak ada program
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            kegiatan.nama_program || "N/A"
+                                        )}
                                     </TableCell>
                                 </TableRow>
                                 <TableRow>
