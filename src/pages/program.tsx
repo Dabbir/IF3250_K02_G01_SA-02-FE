@@ -335,6 +335,104 @@ const Program = () => {
         saveAs(fileData, "Template_Program.xlsx");
     };
 
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        setLoading(true);
+        const reader = new FileReader();
+        
+        reader.onload = async (event) => {
+            try {
+                const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData.length === 0) {
+                    toast.error("File tidak mengandung data yang valid");
+                    setLoading(false);
+                    return;
+                }
+                
+                const token = localStorage.getItem("token");
+                const transformedData = jsonData.map((row: any) => {
+                    
+                    if (!row.nama_program || !row.tanggal_mulai || !row.tanggal_selesai) {
+                        throw new Error("Data tidak lengkap: nama program, tanggal mulai, dan tanggal selesai wajib diisi");
+                    }
+                    
+                    return {
+                        nama_program: row.nama_program,
+                        deskripsi_program: row.deskripsi_program || "",
+                        pilar_program: row.pilar_program ? row.pilar_program.split(",") : [],
+                        kriteria_program: row.kriteria_program || "",
+                        waktu_mulai: formatDate(row.tanggal_mulai),
+                        waktu_selesai: formatDate(row.tanggal_selesai),
+                        rancangan_anggaran: Number(row.rancangan_anggaran) || 0,
+                        aktualisasi_anggaran: Number(row.aktualisasi_anggaran) || 0,
+                        status_program: row.status_program === "Selesai" ? "Selesai" : "Berjalan",
+                        masjid_id: user.masjid_id,
+                        created_by: user.id
+                    };
+                });
+                
+                let successCount = 0;
+                
+                for (const program of transformedData) {
+                    try {
+                        const response = await fetch(`${API_URL}/api/program`, {
+                            method: "POST",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(program),
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        }
+                    } catch (error) {
+                        console.error("Error creating program:", error);
+                    }
+                }
+                
+                // refresh data program
+                const response = await fetch(`${API_URL}/api/program`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+                
+                const programData = await response.json();
+                setProgramList(programData);
+                
+                toast.success(`Berhasil menambahkan ${successCount} program dari ${transformedData.length} data`);
+            } catch (error) {
+                console.error("Error processing upload:", error);
+                toast.error(error instanceof Error ? error.message : "Gagal memproses file");
+            } finally {
+                setLoading(false);
+                // reset
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
+            }
+        };
+        
+        reader.onerror = () => {
+            toast.error("Gagal membaca file");
+            setLoading(false);
+        };
+        
+        reader.readAsArrayBuffer(file);
+    };
+
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
             <CardHeader>
@@ -363,6 +461,14 @@ const Program = () => {
                         </Button>
                     </div>
                 </div>
+
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    accept=".xlsx,.xls" 
+                    className="hidden" 
+                />
 
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
