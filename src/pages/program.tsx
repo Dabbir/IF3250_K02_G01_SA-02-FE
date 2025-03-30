@@ -344,13 +344,89 @@ const Program = () => {
     const downloadTemplate = () => {
         const worksheetData = [
             ["nama_program", "deskripsi_program", "pilar_program", "kriteria_program", "tanggal_mulai", "tanggal_selesai", "rancangan_anggaran", "aktualisasi_anggaran", "status_program"], 
+            ["(HAPUS TEKS INI) IKUTI PANDUAN PENGISIAN PADA SHEETS '(PENTING!) Panduan Unggah' DAN '(PENTING!) Pilar Program'"]
         ];
         
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
         
-        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const pilarOptionsSheet = XLSX.utils.aoa_to_sheet([
+            ["Pilihan Pilar Program 17 Poin Sustainable Development Goals"],
+            ["[INFO] Pengguna dapat menulis lebih dari satu pilar dengan memisahkan setiap pilar dengan tanda koma ','"],
+            ["[CONTOH PENULISAN 'pilar_program']"],
+            ["[Hanya satu pilar]"],
+            ["Tanpa Kelaparan"],
+            ["[Lebih dari satu pilar]"],
+            ["Tanpa Kelaparan,Tanpa Kemiskinan,Pendidikan Berkualitas,Kesetaraan Gender"],
+            [""],
+            ["Pilihan Pilar (Salin Pilihan Pilar yang Diinginkan) :"],
+            ["Tanpa Kemiskinan"],
+            ["Tanpa Kelaparan"],
+            ["Kehidupan Sehat dan Sejahtera"],
+            ["Pendidikan Berkualitas"],
+            ["Kesetaraan Gender"],
+            ["Air Bersih dan Sanitasi Layak"],
+            ["Energi Bersih dan Terjangkau"],
+            ["Pekerjaan Layak dan Pertumbuhan Ekonomi"],
+            ["Industri, Inovasi dan Infrastruktur"],
+            ["Berkurangnya Kesenjangan"],
+            ["Kota dan Pemukiman yang Berkelanjutan"],
+            ["Konsumsi dan Produksi yang Bertanggung Jawab"],
+            ["Penanganan Perubahan Iklim"],
+            ["Ekosistem Lautan"],
+            ["Ekosistem Daratan"],
+            ["Perdamaian, Keadilan dan Kelembagaan yang Tangguh"],
+            ["Kemitraan untuk Mencapai Tujuan"]
+        ]);
+
+        const guidanceSheet = XLSX.utils.aoa_to_sheet([
+            ["Panduan Pengisian Data Program dengan Mekanisme Unggah File"],
+            [""],
+            ["[1] Isi setiap kolom sesuai dengan kategori yang tertera. Perhatikan format pengisian data untuk setiap kolom sebagai berikut :"],
+            ["nama_program : TEXT bebas"],
+            ["deskripsi_program : TEXT bebas"],
+            ["pilar_program : Format mengikuti instruksi pada sheet '(PENTING!) Pilar Program'"],
+            ["kriteria_program : TEXT bebas"],
+            ["tanggal_mulai : Format DD/MM/YYYY"],
+            ["tanggal_selesai : Format DD/MM/YYYY"],
+            ["rancangan_anggaran : ANGKA positif"],
+            ["aktualisasi_anggaran : ANGKA positif"],
+            ["status_program : Berjalan/Selesai"],
+            [""],
+            ["[2] Hanya melakukan perubahan di sheets 'Template Program' tanpa mengubah sheets lainnya (sheets '(PENTING!) Pilar Program' dan sheets '(PENTING!) Panduan Unggah')"],
+            [""],
+            ["[3] Tidak diperbolehkan untuk memindah-mindahkan posisi sheets"],
+            [""],
+            ["[4] Simpan file dalam format xlsx atau xls dengan nama bebas"],
+            [""],
+            ["[5] Kunjungi laman 'Data Program' pada website Salman Sustainability Report"],
+            [""],
+            ["[6] Unggah file xlsx atau xls pada tombol 'Upload Data'"],
+            [""],
+            ["[CONTOH]"]
+        ]);
+        
+        // Create workbook and add all sheets
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Template Program");
+        XLSX.utils.book_append_sheet(workbook, guidanceSheet, "(PENTING!) Panduan Unggah");
+        XLSX.utils.book_append_sheet(workbook, pilarOptionsSheet, "(PENTING!) Pilar Program");
+        
+        XLSX.utils.sheet_add_aoa(guidanceSheet, [
+            ["nama_program", "deskripsi_program", "pilar_program", "kriteria_program", "tanggal_mulai", "tanggal_selesai", "rancangan_anggaran", "aktualisasi_anggaran", "status_program"],
+            ["Program Jumat Berkah", "Kegiatan rutin membagikan bahan sembako untuk warga sekitar", "Tanpa Kemiskinan,Tanpa Kelaparan,Kehidupan Sehat dan Sejahtera", "Program Penyejahteraan Umat", "29/05/2024", "17/06/2024", "50000000", "45000000", "Selesai"],
+            ["Pesantren Kilat", "Malam bina takwa untuk sekolah sekitar", "Pendidikan Berkualitas", "Program Pencerdasan Umat", "20/03/2025", "29/04/2025", "50000000", "45000000", "Berjalan"]
+        ], {origin: "A25"});
+        
+        const excelBuffer = XLSX.write(workbook, { 
+            bookType: "xlsx", 
+            type: "array",
+            bookSST: false,
+            Props: {
+                Title: "Template Program",
+                Subject: "Template untuk input program",
+                Author: "Sistem Sustainability"
+            } 
+        });
         
         const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
         saveAs(fileData, "Template_Program.xlsx");
