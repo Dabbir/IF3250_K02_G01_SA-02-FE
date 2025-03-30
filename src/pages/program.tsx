@@ -237,10 +237,10 @@ const Program = () => {
             return;
         }
 
-        // if (newProgram.rancangan_anggaran || Number.isInteger(newProgram.rancangan_anggaran) || newProgram.rancangan_anggaran <= 0) {
-        //     toast.error("Rancangan anggaran harus berupa bilangan bulat positif.");
-        //     return;
-        // }
+        if (newProgram.rancangan_anggaran && Number.isInteger(newProgram.rancangan_anggaran) && newProgram.rancangan_anggaran <= 0) {
+            toast.error("Rancangan anggaran harus berupa bilangan bulat positif.");
+            return;
+        }
     
         setSubmitting(true);
         try {
@@ -345,12 +345,15 @@ const Program = () => {
         reader.onload = async (event) => {
             try {
                 const data = new Uint8Array(event.target?.result as ArrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
+                const workbook = XLSX.read(data, { 
+                    type: 'array',
+                    cellDates: true  // Tell XLSX to parse dates
+                });
                 
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
                 
                 if (jsonData.length === 0) {
                     toast.error("File tidak mengandung data yang valid");
@@ -364,14 +367,39 @@ const Program = () => {
                     if (!row.nama_program || !row.tanggal_mulai || !row.tanggal_selesai) {
                         throw new Error("Data tidak lengkap: nama program, tanggal mulai, dan tanggal selesai wajib diisi");
                     }
+
+                    const parseExcelDate = (dateStr: string) => {
+                        let date;
+                        if (typeof dateStr === 'string') {
+                            // handle DD/MM/YYYY format
+                            if (dateStr.includes('/')) {
+                                const parts = dateStr.split('/');
+                                if (parts.length === 3) {
+                                    date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                                } else {
+                                    date = new Date(dateStr);
+                                }
+                            } else {
+                                date = new Date(dateStr);
+                            }
+                        } else {
+                            date = new Date(dateStr);
+                        }
+
+                        if (isNaN(date.getTime())) {
+                            throw new Error(`Format tanggal tidak valid: ${dateStr}`);
+                        }
+                        
+                        return date.toISOString().split('T')[0];
+                    };
                     
                     return {
                         nama_program: row.nama_program,
                         deskripsi_program: row.deskripsi_program || "",
                         pilar_program: row.pilar_program ? row.pilar_program.split(",") : [],
                         kriteria_program: row.kriteria_program || "",
-                        waktu_mulai: formatDate(row.tanggal_mulai),
-                        waktu_selesai: formatDate(row.tanggal_selesai),
+                        waktu_mulai: parseExcelDate(row.tanggal_mulai),
+                        waktu_selesai: parseExcelDate(row.tanggal_selesai),
                         rancangan_anggaran: Number(row.rancangan_anggaran) || 0,
                         aktualisasi_anggaran: Number(row.aktualisasi_anggaran) || 0,
                         status_program: row.status_program === "Selesai" ? "Selesai" : "Berjalan",
