@@ -109,6 +109,12 @@ const RegisterDataDiri = () => {
         }
 
         try {
+
+            if (localStorage.getItem('token')) {
+                localStorage.removeItem('token');
+                console.log('Token lama berhasil dihapus dari localStorage');
+            }
+            
             const response = await fetch(`${API_URL}/api/users/${userId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
