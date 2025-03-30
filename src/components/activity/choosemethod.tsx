@@ -8,10 +8,7 @@ import {
 } from "../ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import AddActivityDialog from "./addactivity";
-import ExportButton from "./exporttemplate";
 import ExportTemplate from "./exporttemplate";
-
-const API_URL = import.meta.env.VITE_HOST_NAME;
 
 interface ChooseMethod {
     isOpen: boolean;
