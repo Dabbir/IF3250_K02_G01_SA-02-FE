@@ -84,38 +84,38 @@ const DetailProgram = () => {
         const fetchKegiatan = async () => {
             setKegiatanLoading(true);
             try {
-                setTimeout(() => {
-                    const mockKegiatanData: Kegiatan[] = Array.from({ length: 5 }, (_, i) => ({
-                        idKegiatan: `${i}`,
-                        namaKegiatan: `Kegiatan Buka Puasa Hari ${i + 1}`,
-                        tanggalMulai: "2025-03-20",
-                        tanggalSelesai: "2025-03-20",
-                        status: i < 2 ? "Finished" : "Ongoing",
-                        biayaImplementasi: (1000000 * (i + 1)).toString(),
-                        deskripsi: `Kegiatan buka puasa bersama hari ke-${i + 1}`
-                    }));
-                    setKegiatanList(mockKegiatanData);
-                    setKegiatanLoading(false);
-                }, 1500);
-
-                // const token = localStorage.getItem("token");
-                // const response = await fetch(`${API_URL}/api/programs/${id}/kegiatan`, {
-                //     headers: {
-                //         Authorization: `Bearer ${token}`,
-                //         "Content-Type": "application/json",
-                //     },
-                // });
-                // const data = await response.json();
-                // if (data.success) {
-                //     setKegiatanList(data.kegiatan);
-                // }
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/activity/program/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+        
+                const data = await response.json();
+        
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Gagal memuat kegiatan program");
+                }
+        
+                const listKegiatan: Kegiatan[] = data.activity.map((item: any) => ({
+                    idKegiatan: String(item.id),
+                    namaKegiatan: item.nama_aktivitas,
+                    tanggalMulai: new Date(item.tanggal_mulai).toISOString().split("T")[0],
+                    tanggalSelesai: new Date(item.tanggal_selesai).toISOString().split("T")[0],
+                    status: item.status,
+                    biayaImplementasi: String(item.biaya_implementasi),
+                    deskripsi: item.deskripsi,
+                }));
+        
+                setKegiatanList(listKegiatan);
             } catch (error) {
                 console.error("Error fetching kegiatan:", error);
                 toast.error("Gagal memuat data kegiatan");
             } finally {
                 setKegiatanLoading(false);
             }
-        };
+        };        
 
         if (id) {
             fetchKegiatan();
