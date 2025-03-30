@@ -94,7 +94,12 @@ const DetailProgram = () => {
         
                 const data = await response.json();
         
-                if (!response.ok || !data.success) {
+                if (response.status === 404 || !data.success || !Array.isArray(data.activity)) {
+                    setKegiatanList([]);
+                    return;
+                }
+
+                if (!response.ok) {
                     throw new Error(data.message || "Gagal memuat kegiatan program");
                 }
         
@@ -115,7 +120,7 @@ const DetailProgram = () => {
             } finally {
                 setKegiatanLoading(false);
             }
-        };        
+        };         
 
         if (id) {
             fetchKegiatan();
@@ -353,6 +358,8 @@ const DetailProgram = () => {
                                 <div className="flex justify-center items-center h-32">
                                     <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
                                 </div>
+                            ) : kegiatanList.length === 0 ? (
+                                <p className="text-gray-500 text-center py-4">Tidak terdapat kegiatan untuk program ini.</p>
                             ) : (
                                 <Table className="border overflow-hidden">
                                     <TableHeader>
