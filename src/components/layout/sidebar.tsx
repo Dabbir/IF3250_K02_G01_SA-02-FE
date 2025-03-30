@@ -14,7 +14,7 @@ import {
 
 import Logo from "@/assets/logo.svg"
 import LogoTitle from "@/assets/logo-title.svg"
-import { dashboard, programs, reportItems, training } from "@/components/layout/sidebardata.tsx"
+import { dashboard, programs, reportItems, training, viewerAccess } from "@/components/layout/sidebardata.tsx"
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { Home } from "lucide-react";
@@ -148,7 +148,31 @@ export default function AppSidebar() {
                         <SidebarMenu>
                             {[...training].map((item) => {
                                 const isActive = location.pathname === item.url;
-
+                                return (
+                                    <SidebarMenuItem key={item.title}>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={isActive}
+                                            className={`text-slate-600 hover:bg-gray-100 hover:text-slate-800 ${isActive ? "bg-blue-50 text-blue-600" : ""
+                                                }`}
+                                        >
+                                            <a href={item.url}>
+                                                <item.icon className="h-" />
+                                                <span>{item.title}</span>
+                                            </a>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                );
+                            })}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+                <SidebarSeparator />
+                <SidebarGroup>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {[...viewerAccess].map((item) => {
+                                const isActive = location.pathname === item.url;
                                 return (
                                     <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton

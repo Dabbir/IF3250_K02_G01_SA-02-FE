@@ -10,6 +10,7 @@ import {
     BarChart3,
     FileBarChart,
     GraduationCap,
+    Eye,
 } from "lucide-react"
 
 // Dashboard.
@@ -88,5 +89,13 @@ export const training = [
         title: "Pelatihan",
         url: "/pelatihan",
         icon: GraduationCap,
+    },
+]
+
+export const viewerAccess = [
+    {
+        title: "Viewer Access",
+        url: "/viewer-access",
+        icon: Eye,
     },
 ]
