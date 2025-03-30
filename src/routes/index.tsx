@@ -15,7 +15,7 @@ import DetailKegiatan from "@/pages/detailactivity.tsx";
 import Program from "@/pages/program.tsx";
 import DetailProgram from "@/pages/detailprogram.tsx";
 import AdminDashboard from "@/pages/admin-dashboard.tsx";
-// import ViewerAccessManagement from "@/pages/viewer-access.tsx";
+import ViewerAccessManagement from "@/pages/viewer-access.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -68,9 +68,9 @@ const AppRoutes = () => (
             <AdminDashboard />
           // </AdminProtectedRoute>
         } />
-        {/* <Route path="/viewer-access" element={
+        <Route path="/viewer-access" element={
           <ViewerAccessManagement />
-        } /> */}
+        } />
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<Program/>} />
         <Route path="/data-program/:id" element={<DetailProgram />} />
