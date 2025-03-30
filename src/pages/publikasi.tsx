@@ -403,16 +403,16 @@ export default function PublikasiPage() {
       // Mode Edit (PUT)
       const updated = await updatePublikasi(editingId, newPublikasi);
       if (updated) {
-        setPublikasiList((prev) =>
-          prev.map((p) => (p.id === editingId ? updated : p)) // Update tanpa fetch ulang
-        );
+        const refreshedData = await fetchPublikasi();
+        setPublikasiList(refreshedData);
         alert("Publikasi berhasil diperbarui!");
       }
     } else {
       // Mode Tambah (POST)
       const added = await addPublikasi(newPublikasi);
       if (added) {
-        setPublikasiList((prev) => [...prev, added]); // Tambah ke daftar
+        const refreshedData = await fetchPublikasi();
+        setPublikasiList(refreshedData);
         alert("Publikasi berhasil ditambahkan!");
       }
     }
@@ -672,7 +672,9 @@ export default function PublikasiPage() {
         const successfulPublikasi = uploadedPublikasi.filter((p): p is Publikasi => p !== null);
 
         if (successfulPublikasi.length > 0) {
-          setPublikasiList((prev) => [...prev, ...successfulPublikasi]);
+          const refreshedData = await fetchPublikasi();
+          setPublikasiList(refreshedData);
+
           alert(`Berhasil mengunggah ${successfulPublikasi.length} data publikasi!`);
         } else {
           alert("Tidak ada data yang berhasil diunggah.");
@@ -681,6 +683,11 @@ export default function PublikasiPage() {
         console.error("Terjadi kesalahan saat mengunggah data:", error);
         alert("Terjadi kesalahan saat mengunggah data.");
       }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      
     };
   
     reader.readAsArrayBuffer(file);
