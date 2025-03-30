@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import ChooseMethod from '@/components/activity/choosemethod';
 
 interface Kegiatan {
   id: string;
@@ -627,7 +628,7 @@ export default function KegiatanPage() {
             </Button>
           </div>
         )}
-        <AddActivityDialog
+        <ChooseMethod
           isOpen={isOpen}
           setIsOpen={setIsOpen}
         />
