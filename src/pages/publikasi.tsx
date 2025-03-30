@@ -317,32 +317,6 @@ export default function PublikasiPage() {
     }
   };  
 
-  const handleAddPublikasi = async () => {
-    if (!newPublikasi.judul || !newPublikasi.perusahaan || !newPublikasi.link) {
-      alert("Harap isi semua bidang yang diperlukan.");
-      return;
-    }
-  
-    const added = await addPublikasi(newPublikasi);
-    if (added) {
-      const refreshedData = await fetchPublikasi();
-      setPublikasiList(refreshedData);
-      setIsOpen(false);
-      
-      setNewPublikasi({
-        judul: "",
-        media: "Media Online",
-        perusahaan: "",
-        tanggal: new Date().toISOString().split("T")[0],
-        link: "",
-        prValue: 0,
-        nama_program: "",
-        nama_aktivitas: "",
-        tone: "Netral",
-      });
-    }
-  };  
-
   // PUT - Perbarui publikasi berdasarkan ID
   const updatePublikasi = async (id: string, publikasi: Partial<Publikasi>): Promise<Publikasi | null> => {
     try {
