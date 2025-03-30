@@ -35,6 +35,12 @@ export default function DetailKegiatan() {
     const [isEditing, setIsEditing] = useState(false);
     const [editedKegiatan, setEditedKegiatan] = useState<Kegiatan | null>(null);
 
+    const formatRupiah = (amount: number): string => {
+        const roundedAmount = Math.floor(amount);
+        
+        return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      };
+
     useEffect(() => {
         const fetchActivityDetail = async () => {
             try {
@@ -440,7 +446,7 @@ export default function DetailKegiatan() {
                                                     onChange={(e) => handleChange("biaya_implementasi", Number(e.target.value))}
                                                 />
                                             ) : (
-                                                kegiatan.biaya_implementasi ? kegiatan.biaya_implementasi.toLocaleString('id-ID') : "0"
+                                                kegiatan.biaya_implementasi ? formatRupiah(kegiatan.biaya_implementasi) : "0"
                                             )}
                                         </div>
                                     </TableCell>

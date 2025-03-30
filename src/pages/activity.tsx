@@ -52,16 +52,12 @@ export default function KegiatanPage() {
     return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-  // Fungsi untuk berbagi ke WhatsApp
   const shareToWhatsApp = (activity: Kegiatan) => {
-    // Mencegah navigasi saat tombol share diklik
     event?.stopPropagation();
     
-    // Format tanggal untuk ditampilkan
     const tanggalMulai = new Date(activity.tanggal_mulai).toLocaleDateString('id-ID');
     const tanggalSelesai = new Date(activity.tanggal_selesai).toLocaleDateString('id-ID');
-    
-    // Membuat teks untuk dibagikan
+  
     const shareText = `*Detail Kegiatan*\n\n` +
       `*Nama Kegiatan:* ${activity.nama_aktivitas}\n` +
       `*Tanggal Mulai:* ${tanggalMulai}\n` +
@@ -69,12 +65,10 @@ export default function KegiatanPage() {
       `*Status:* ${activity.status}\n` +
       `*Biaya Implementasi:* Rp ${formatRupiah(activity.biaya_implementasi)}\n` +
       (activity.deskripsi ? `*Deskripsi:* ${activity.deskripsi}\n` : '');
-    
-    // Encode URI untuk WhatsApp
+
     const encodedText = encodeURIComponent(shareText);
     const whatsappUrl = `https://wa.me/?text=${encodedText}`;
     
-    // Buka jendela baru untuk berbagi
     window.open(whatsappUrl, '_blank');
   };
 
