@@ -237,7 +237,7 @@ const Program = () => {
             return;
         }
 
-        if (newProgram.rancangan_anggaran && Number.isInteger(newProgram.rancangan_anggaran) && newProgram.rancangan_anggaran <= 0) {
+        if (newProgram.rancangan_anggaran && !Number.isInteger(newProgram.rancangan_anggaran) && newProgram.rancangan_anggaran <= 0) {
             toast.error("Rancangan anggaran harus berupa bilangan bulat positif.");
             return;
         }
