@@ -10,7 +10,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import GoogleCallback from "@/pages/googlecallback.tsx";
 import Publikasi from "@/pages/publikasi.tsx";
 import Kegiatan from "@/pages/activity.tsx";
-import {UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute, AdminProtectedRoute} from "../utils/auth.tsx"
+import { UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute } from "../utils/auth.tsx"
 import DetailKegiatan from "@/pages/detailactivity.tsx";
 import Program from "@/pages/program.tsx";
 import DetailProgram from "@/pages/detailprogram.tsx";
@@ -63,14 +63,7 @@ const AppRoutes = () => (
       >
         <Route index element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard-admin" element={
-          // <AdminProtectedRoute>
-            <AdminDashboard />
-          // </AdminProtectedRoute>
-        } />
-        <Route path="/viewer-access" element={
-          <ViewerAccessManagement />
-        } />
+        <Route path="/dashboard-admin" element={<AdminDashboard />} />
         <Route path="/akun-manajemen" element={<ManajemenAkun />} />
         <Route path="/data-program" element={<Program/>} />
         <Route path="/data-program/:id" element={<DetailProgram />} />
@@ -84,6 +77,7 @@ const AppRoutes = () => (
         <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
         <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
+        <Route path="/viewer-access" element={<ViewerAccessManagement />} />
       </Route>
     </Routes>
   </BrowserRouter>

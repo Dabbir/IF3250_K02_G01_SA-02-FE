@@ -17,7 +17,7 @@ import LogoTitle from "@/assets/logo-title.svg"
 import { dashboard, programs, reportItems, training, viewerAccess } from "@/components/layout/sidebardata.tsx"
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
-import { Eye, Home } from "lucide-react";
+import { Home } from "lucide-react";
 
 interface CustomJwtPayload {
     email: string;
