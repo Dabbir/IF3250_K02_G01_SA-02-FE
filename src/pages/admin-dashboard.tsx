@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search, ArrowUpDown, UserCheck, UserX, ShieldCheck } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "react-toastify";
@@ -39,6 +39,8 @@ export default function AdminDashboard() {
   const [rejectedEditors, setRejectedEditors] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'approve' | 'reject', user: User | null }>({ type: 'approve', user: null });
 
   useEffect(() => {
     fetchPendingEditors();
@@ -162,8 +164,18 @@ export default function AdminDashboard() {
       if (data.success) {
         toast.success("Editor berhasil disetujui");
         
-        fetchPendingEditors();
-        fetchApprovedEditors();
+        // Immediately update the UI
+        const updatedUser = { ...confirmAction.user, status: "Approved" } as User;
+        
+        // Remove from pending or rejected lists
+        if (currentTab === "pending") {
+          setPendingEditors(prev => prev.filter(editor => editor.id !== editorId));
+        } else if (currentTab === "rejected") {
+          setRejectedEditors(prev => prev.filter(editor => editor.id !== editorId));
+        }
+        
+        // Add to approved list
+        setApprovedEditors(prev => [...prev, updatedUser]);
         
         return true;
       } else {
@@ -200,8 +212,14 @@ export default function AdminDashboard() {
       if (data.success) {
         toast.success("Editor berhasil ditolak");
         
-        fetchPendingEditors();
-        fetchRejectedEditors();
+        // Immediately update the UI
+        const updatedUser = { ...confirmAction.user, status: "Rejected" } as User;
+        
+        // Remove from pending list
+        setPendingEditors(prev => prev.filter(editor => editor.id !== editorId));
+        
+        // Add to rejected list
+        setRejectedEditors(prev => [...prev, updatedUser]);
         
         return true;
       } else {
@@ -259,21 +277,24 @@ export default function AdminDashboard() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleApprove = async (user: User) => {
-    if (confirm(`Apakah Anda yakin ingin menyetujui ${user.nama} sebagai editor?`)) {
-      const success = await approveEditor(user.id);
-      if (success) {
-        setIsDetailsOpen(false);
-      }
-    }
+  const showConfirmDialog = (type: 'approve' | 'reject', user: User) => {
+    setConfirmAction({ type, user });
+    setIsConfirmDialogOpen(true);
   };
 
-  const handleReject = async (user: User) => {
-    if (confirm(`Apakah Anda yakin ingin menolak ${user.nama} sebagai editor?`)) {
-      const success = await rejectEditor(user.id);
-      if (success) {
-        setIsDetailsOpen(false);
-      }
+  const handleConfirmAction = async () => {
+    if (!confirmAction.user) return;
+    
+    let success = false;
+    if (confirmAction.type === 'approve') {
+      success = await approveEditor(confirmAction.user.id);
+    } else {
+      success = await rejectEditor(confirmAction.user.id);
+    }
+    
+    if (success) {
+      setIsConfirmDialogOpen(false);
+      if (isDetailsOpen) setIsDetailsOpen(false);
     }
   };
 
@@ -373,7 +394,7 @@ export default function AdminDashboard() {
                               variant="outline" 
                               size="sm" 
                               className="flex items-center text-green-600"
-                              onClick={() => handleApprove(user)}
+                              onClick={() => showConfirmDialog('approve', user)}
                             >
                               <UserCheck className="w-4 h-4 mr-1" /> Setujui
                             </Button>
@@ -381,7 +402,7 @@ export default function AdminDashboard() {
                               variant="outline" 
                               size="sm" 
                               className="flex items-center text-red-600"
-                              onClick={() => handleReject(user)}
+                              onClick={() => showConfirmDialog('reject', user)}
                             >
                               <UserX className="w-4 h-4 mr-1" /> Tolak
                             </Button>
@@ -487,7 +508,7 @@ export default function AdminDashboard() {
                               variant="outline" 
                               size="sm" 
                               className="flex items-center text-green-600"
-                              onClick={() => handleApprove(user)}
+                              onClick={() => showConfirmDialog('approve', user)}
                             >
                               <UserCheck className="w-4 h-4 mr-1" /> Setujui
                             </Button>
@@ -609,13 +630,13 @@ export default function AdminDashboard() {
                   <Button 
                     variant="outline" 
                     className="text-red-600 border-red-600 hover:bg-red-50"
-                    onClick={() => handleReject(selectedUser)}
+                    onClick={() => showConfirmDialog('reject', selectedUser)}
                   >
                     <UserX className="w-4 h-4 mr-2" /> Tolak
                   </Button>
                   <Button 
                     className="bg-[#3A786D] text-white"
-                    onClick={() => handleApprove(selectedUser)}
+                    onClick={() => showConfirmDialog('approve', selectedUser)}
                   >
                     <UserCheck className="w-4 h-4 mr-2" /> Setujui
                   </Button>
@@ -625,7 +646,7 @@ export default function AdminDashboard() {
               {selectedUser?.status === "Rejected" && (
                 <Button 
                   className="bg-[#3A786D] text-white"
-                  onClick={() => handleApprove(selectedUser)}
+                  onClick={() => showConfirmDialog('approve', selectedUser)}
                 >
                   <UserCheck className="w-4 h-4 mr-2" /> Setujui
                 </Button>
@@ -636,6 +657,37 @@ export default function AdminDashboard() {
                 onClick={() => setIsDetailsOpen(false)}
               >
                 Tutup
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Konfirmasi</DialogTitle>
+              <DialogDescription>
+                {confirmAction.type === 'approve' 
+                  ? `Apakah Anda yakin ingin menyetujui ${confirmAction.user?.nama || ''} sebagai editor?`
+                  : `Apakah Anda yakin ingin menolak ${confirmAction.user?.nama || ''} sebagai editor?`
+                }
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsConfirmDialogOpen(false)}
+                disabled={isLoading}
+              >
+                Batal
+              </Button>
+              <Button 
+                className={confirmAction.type === 'approve' ? "bg-[#3A786D] text-white" : "bg-red-600 text-white"}
+                onClick={handleConfirmAction}
+                disabled={isLoading}
+              >
+                {isLoading ? "Memproses..." : confirmAction.type === 'approve' ? "Setujui" : "Tolak"}
               </Button>
             </DialogFooter>
           </DialogContent>
