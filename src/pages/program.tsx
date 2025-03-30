@@ -542,15 +542,7 @@ const Program = () => {
                     }
                 }
                 
-                const response = await fetch(`${API_URL}/api/program`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-                
-                const programData = await response.json();
-                setProgramList(programData);
+                await fetchPaginatedPrograms(currentPage);
                 
                 toast.success(`Berhasil menambahkan ${successCount} program dari ${transformedData.length} data`);
             } catch (error) {
@@ -558,7 +550,6 @@ const Program = () => {
                 toast.error(error instanceof Error ? error.message : "Gagal memproses file");
             } finally {
                 setLoading(false);
-                // reset
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                 }
