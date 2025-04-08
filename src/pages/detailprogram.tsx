@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-toastify";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Banknote } from 'lucide-react';
 import { HandCoins } from 'lucide-react';
 
@@ -16,7 +18,7 @@ interface Program {
     id: number;
     nama_program: string;
     deskripsi_program: string;
-    pilar_program: string;
+    pilar_program: string[];
     kriteria_program: string;
     waktu_mulai: string;
     waktu_selesai: string;
@@ -38,6 +40,26 @@ interface Kegiatan {
     biayaImplementasi: string;
     deskripsi: string;
 }
+
+const pilarOptions = [
+    { id: 1, name: "Tanpa Kemiskinan" },
+    { id: 2, name: "Tanpa Kelaparan" },
+    { id: 3, name: "Kehidupan Sehat dan Sejahtera" },
+    { id: 4, name: "Pendidikan Berkualitas" },
+    { id: 5, name: "Kesetaraan Gender" },
+    { id: 6, name: "Air Bersih dan Sanitasi Layak" },
+    { id: 7, name: "Energi Bersih dan Terjangkau" },
+    { id: 8, name: "Pekerjaan Layak dan Pertumbuhan Ekonomi" },
+    { id: 9, name: "Industri, Inovasi dan Infrastruktur" },
+    { id: 10, name: "Berkurangnya Kesenjangan" },
+    { id: 11, name: "Kota dan Pemukiman yang Berkelanjutan" },
+    { id: 12, name: "Konsumsi dan Produksi yang Bertanggung Jawab" },
+    { id: 13, name: "Penanganan Perubahan Iklim" },
+    { id: 14, name: "Ekosistem Lautan" },
+    { id: 15, name: "Ekosistem Daratan" },
+    { id: 16, name: "Perdamaian, Keadilan dan Kelembagaan yang Tangguh" },
+    { id: 17, name: "Kemitraan untuk Mencapai Tujuan" },
+];
 
 const DetailProgram = () => {
     const { id } = useParams<{ id: string }>();
@@ -144,6 +166,8 @@ const DetailProgram = () => {
         if (!editedProgram) return;
         setSaving(true);
         try {
+            console.log("Edited Program", editedProgram);
+            console.log("Stringify", JSON.stringify(editedProgram))
             const token = localStorage.getItem("token");
             const response = await fetch(`${API_URL}/api/program/${id}`, {
                 method: "PUT",
@@ -155,6 +179,7 @@ const DetailProgram = () => {
             });
 
             const data = await response.json();
+            console.log("Data yang bakal diupdate", data);
             if (!response.ok) throw new Error(data.message || "Gagal memperbarui program");
 
             setProgram(data);
@@ -265,12 +290,51 @@ const DetailProgram = () => {
                                     <TableHead>Pilar Program</TableHead>
                                     <TableCell>
                                         {isEditing ? (
-                                            <Input
-                                                value={editedProgram?.pilar_program}
-                                                onChange={(e) => handleChange("pilar_program", e.target.value)}
-                                            />
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {pilarOptions.map((pilar) => (
+                                                    <div key={pilar.name} className="flex items-center space-x-2">
+                                                        <Checkbox 
+                                                            id={`pilar-${pilar.name}`} 
+                                                            checked={
+                                                                Array.isArray(editedProgram?.pilar_program) 
+                                                                ? editedProgram.pilar_program.includes(pilar.name)
+                                                                : false
+                                                            }
+                                                            onCheckedChange={(checked) => {
+                                                                const currentPilars = Array.isArray(editedProgram?.pilar_program) 
+                                                                    ? editedProgram.pilar_program 
+                                                                    : [];
+                                                                
+                                                                const newPilars = checked 
+                                                                    ? [...currentPilars, pilar.name]
+                                                                    : currentPilars.filter(p => p !== pilar.name);
+                                                                    console.log("current pillars",currentPilars)
+                                                                    setEditedProgram(prev => {
+                                                                        if (!prev) {
+                                                                          return null;
+                                                                        }
+                                                                      
+                                                                        return {
+                                                                          ...prev,
+                                                                          pilar_program: newPilars, 
+                                                                        };
+                                                                    });
+
+                                                            }}
+                                                        />
+                                                        <Label 
+                                                            htmlFor={`pilar-${pilar.name}`}
+                                                            className="text-sm font-normal"
+                                                        >
+                                                            {pilar.name}
+                                                        </Label>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         ) : (
-                                            String(program?.pilar_program)
+                                            Array.isArray(program?.pilar_program) 
+                                                ? program.pilar_program.join(', ') 
+                                                : String(program?.pilar_program)
                                         )}
                                     </TableCell>
                                 </TableRow>
