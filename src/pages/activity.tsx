@@ -31,7 +31,7 @@ interface Kegiatan {
 const ITEMS_PER_PAGE = 20;
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
-const STATUS_OPTIONS = ["Unstarted", "Ongoing", "Finished"];
+const STATUS_OPTIONS = ["Belum Mulai", "Berjalan", "Selesai"];
 
 export default function KegiatanPage() {
   const [search, setSearch] = useState("");
@@ -231,24 +231,24 @@ export default function KegiatanPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    let color = "bg-gray-200 text-gray-800";
-
+    let color = "";
+  
     switch (status.toLowerCase()) {
-      case "unstarted":
-        color = "bg-blue-100 text-blue-800";
+      case "belum mulai":
+        color = "bg-blue-100 text-blue-800 border border-blue-200";
         break;
-      case "ongoing":
-        color = "bg-yellow-100 text-yellow-800";
+      case "berjalan":
+        color = "bg-yellow-100 text-yellow-800 border border-yellow-200";
         break;
-      case "finished":
-        color = "bg-green-100 text-green-800";
+      case "selesai":
+        color = "bg-green-100 text-green-800 border border-green-200";
         break;
       default:
-        color = "bg-gray-200 text-gray-800";
+        color = "bg-gray-100 text-gray-800 border border-gray-200";
     }
-
+  
     return (
-      <Badge className={`px-2 py-1 text-xs font-medium rounded-full ${color}`}>
+      <Badge className={`px-3 py-1 text-xs font-medium rounded-md min-w-[90px] text-center ${color}`}>
         {status}
       </Badge>
     );
