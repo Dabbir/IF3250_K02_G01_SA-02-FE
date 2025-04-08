@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Leaf, Pencil, Trash2, Loader2, Menu, Filter, Share2 } from "lucide-react";
+import { Search, Leaf, Pencil, Trash2, Loader2, Menu, Filter, Share2, ArrowUpDown } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -46,6 +46,10 @@ export default function KegiatanPage() {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  
+  // Sort states
+  const [sortColumn, setSortColumn] = useState<string>("nama_aktivitas");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const formatRupiah = (amount: number): string => {
     const roundedAmount = Math.floor(amount);
@@ -58,6 +62,16 @@ export default function KegiatanPage() {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
+  };
+
+  // Function to handle sorting
+  const handleSortChange = (column: string) => {
+    if (sortColumn === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortOrder("asc");
+    }
   };
 
   const shareToWhatsApp = (activity: Kegiatan) => {
@@ -142,6 +156,7 @@ export default function KegiatanPage() {
     setCurrentPage(1);
   };
 
+  // First filter activities by search and status
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = activity.nama_aktivitas &&
       activity.nama_aktivitas.toLowerCase().includes(search.toLowerCase());
@@ -152,8 +167,36 @@ export default function KegiatanPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE);
-  const displayedActivities = filteredActivities.slice(
+  // Then sort the filtered activities
+  const sortedActivities = [...filteredActivities].sort((a, b) => {
+    let valueA = a[sortColumn as keyof Kegiatan];
+    let valueB = b[sortColumn as keyof Kegiatan];
+  
+    // Handle date sorting
+    if (sortColumn === "tanggal_mulai" || sortColumn === "tanggal_selesai") {
+      const dateA = new Date(valueA as string).getTime();
+      const dateB = new Date(valueB as string).getTime();
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    }
+  
+    // Handle string sorting
+    if (typeof valueA === "string" && typeof valueB === "string") {
+      return sortOrder === "asc"
+        ? valueA.localeCompare(valueB)
+        : valueB.localeCompare(valueA);
+    }
+  
+    // Handle number sorting
+    if (typeof valueA === "number" && typeof valueB === "number") {
+      return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
+    }
+  
+    return 0;
+  });
+
+  // Apply pagination to sorted activities
+  const totalPages = Math.ceil(sortedActivities.length / ITEMS_PER_PAGE);
+  const displayedActivities = sortedActivities.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -235,16 +278,16 @@ export default function KegiatanPage() {
   
     switch (status.toLowerCase()) {
       case "belum mulai":
-        color = "bg-blue-100 text-blue-800 border border-blue-200";
+        color = "bg-slate-100 text-slate-700 border border-slate-200";
         break;
       case "berjalan":
-        color = "bg-yellow-100 text-yellow-800 border border-yellow-200";
+        color = "bg-amber-50 text-amber-700 border border-amber-200";
         break;
       case "selesai":
-        color = "bg-green-100 text-green-800 border border-green-200";
+        color = "bg-emerald-50 text-emerald-700 border border-emerald-200";
         break;
       default:
-        color = "bg-gray-100 text-gray-800 border border-gray-200";
+        color = "bg-gray-100 text-gray-700 border border-gray-200";
     }
   
     return (
@@ -478,11 +521,61 @@ export default function KegiatanPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="pl-7 w-[200px]">Nama Kegiatan</TableHead>
-                  <TableHead className="w-[120px] text-center">Tanggal Mulai</TableHead>
-                  <TableHead className="w-[120px] text-center">Tanggal Selesai</TableHead>
-                  <TableHead className="w-[120px] text-center">Status</TableHead>
-                  <TableHead className="w-[180px]">Biaya Implementasi</TableHead>
+                  <TableHead 
+                    className="pl-7 w-[200px] cursor-pointer"
+                    onClick={() => handleSortChange("nama_aktivitas")}
+                  >
+                    <div className="flex items-center">
+                      Nama Kegiatan
+                      {sortColumn === "nama_aktivitas" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[120px] text-center cursor-pointer"
+                    onClick={() => handleSortChange("tanggal_mulai")}
+                  >
+                    <div className="flex items-center justify-center">
+                      Tanggal Mulai
+                      {sortColumn === "tanggal_mulai" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[120px] text-center cursor-pointer"
+                    onClick={() => handleSortChange("tanggal_selesai")}
+                  >
+                    <div className="flex items-center justify-center">
+                      Tanggal Selesai
+                      {sortColumn === "tanggal_selesai" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[120px] text-center cursor-pointer"
+                    onClick={() => handleSortChange("status")}
+                  >
+                    <div className="flex items-center justify-center">
+                      Status
+                      {sortColumn === "status" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[180px] cursor-pointer"
+                    onClick={() => handleSortChange("biaya_implementasi")}
+                  >
+                    <div className="flex items-center">
+                      Biaya Implementasi
+                      {sortColumn === "biaya_implementasi" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[140px] text-right pr-9">Actions</TableHead>
                 </TableRow>
               </TableHeader>
