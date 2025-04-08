@@ -197,6 +197,9 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         if (!newPublikasi.judul) {
             newErrors.judul = "Judul publikasi wajib diisi!";
         }
+        if (!newPublikasi.media) {
+            newErrors.media = "Media publikasi wajib diisi!";
+        }
         if (!newPublikasi.nama_program || !programs.some(p => p.nama_program === newPublikasi.nama_program)) {
             newErrors.namaProgram = "Pilih program dari daftar!";
         }
@@ -216,6 +219,9 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         }
         if (!newPublikasi.prValue) {
             newErrors.prValue = "PR Value publikasi wajib diisi!";
+        }
+        if (!newPublikasi.tone) {
+            newErrors.tone = "Tone publikasi wajib diisi!";
         }
 
         setErrors(newErrors);
@@ -334,6 +340,7 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
                                 ))}
                             </SelectContent>
                         </Select>
+                        {errors.media && <p className="text-red-500 text-[12px]">{errors.media}</p>}
                     </div>
 
                     <div className="relative space-y-2" onBlur={handleBlurProgram}>
@@ -513,6 +520,7 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
                                 ))}
                             </SelectContent>
                         </Select>
+                        {errors.tone && <p className="text-red-500 text-[12px]">{errors.tone}</p>}
                     </div>
                 </div>
                 <DialogFooter>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil } from "lucide-react";
+import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -29,16 +29,6 @@ interface Publikasi {
   tone: "Positif" | "Netral" | "Negatif";
 }
 
-interface Program {
-  id: string;
-  nama_program: string;
-}
-
-interface Aktivitas {
-  id: string;
-  nama_aktivitas: string;
-}
-
 const formatRupiah = (value: number) => {
   return `Rp ${value.toLocaleString("id-ID")}`;
 };
@@ -50,12 +40,8 @@ export default function PublikasiPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
-  const [] = useState(false);
   const [publikasiList, setPublikasiList] = useState<Publikasi[]>([]);
-  const [, setProgramList] = useState<Program[]>([]);
-  const [, setAktivitasList] = useState<Aktivitas[]>([]);
-  const [] = useState<string | null>(null);
-  const [sortColumn, setSortColumn] = useState<string>("tanggal"); 
+  const [sortColumn, setSortColumn] = useState<string>("tanggal");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Fetch data on component mount
@@ -67,12 +53,6 @@ export default function PublikasiPage() {
     try {
       const publikasiData = await fetchPublikasi();
       setPublikasiList(publikasiData);
-      
-      const programData = await fetchProgram();
-      setProgramList(programData);
-
-      const aktivitasData = await fetchAktivitas();
-      setAktivitasList(aktivitasData);
     } catch (error) {
       console.error("Error refreshing data:", error);
       toast.error("Gagal memuat data, silakan coba lagi");
@@ -91,51 +71,39 @@ export default function PublikasiPage() {
   const filteredPublikasi = publikasiList.filter((item) =>
     item.judul?.toLowerCase().includes(search.toLowerCase()) ?? false
   );
-  
+
   const sortedPublikasi = [...filteredPublikasi].sort((a, b) => {
     let valueA = a[sortColumn as keyof Publikasi];
     let valueB = b[sortColumn as keyof Publikasi];
-  
+
     if (typeof valueA === "string" && typeof valueB === "string") {
       return sortOrder === "asc"
         ? valueA.localeCompare(valueB)
         : valueB.localeCompare(valueA);
     }
-  
+
     if (typeof valueA === "number" && typeof valueB === "number") {
       return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
     }
-  
+
     return 0;
   });
-  
+
   // Apply pagination after sorting
   const displayedPublikasi = sortedPublikasi.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
-  );  
+  );
 
-  const [] = useState<Partial<Publikasi>>({
-    judul: "",
-    media: "Media Online",
-    perusahaan: "",
-    tanggal: new Date().toISOString().split("T")[0],
-    link: "",
-    prValue: 0,
-    nama_program: "",
-    nama_aktivitas: "",
-    tone: "Netral",
-  });
-  
   const totalPages = Math.ceil(filteredPublikasi.length / ITEMS_PER_PAGE);
 
   const shareToWhatsApp = (item: Publikasi) => {
     const message = `Cek publikasi ini: ${item.judul} - ${item.link}`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-  
+
     window.open(whatsappUrl, "_blank");
-  };  
+  };
 
   // Export data to XLSX
   const exportToXlsx = () => {
@@ -145,27 +113,12 @@ export default function PublikasiPage() {
     }
 
     try {
-      // Format date for export
-      const formatDateExport = (dateString: string) => {
-        if (!dateString) return "";
-        try {
-          const date = new Date(dateString);
-          return date.toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          });
-        } catch (e) {
-          return dateString;
-        }
-      };
-
       // Prepare data for export
       const data = publikasiList.map(item => ({
         "Judul Publikasi": item.judul,
         "Media Publikasi": item.media,
         "Perusahaan Media": item.perusahaan,
-        "Tanggal Publikasi": formatDateExport(item.tanggal),
+        "Tanggal Publikasi": formatDate(item.tanggal),
         "Link Publikasi": item.link,
         "PR Value": item.prValue,
         "Nama Program": item.nama_program || "",
@@ -196,7 +149,7 @@ export default function PublikasiPage() {
 
       // Write to file and download
       XLSX.writeFile(workbook, "Publikasi.xlsx");
-      
+
       toast.success("Berhasil mengunduh data publikasi");
     } catch (error) {
       console.error("Error exporting data:", error);
@@ -204,14 +157,40 @@ export default function PublikasiPage() {
     }
   };
 
+  const [loading, setLoading] = useState(false);
+
   // GET - Fetch all publications
   const fetchPublikasi = async (): Promise<Publikasi[]> => {
     try {
-      const response = await fetch(`${API_URL}/api/publikasi`);
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(`${API_URL}/api/publikasi`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
       const data = await response.json();
-      
+
       if (response.ok) {
-        const formattedData: Publikasi[] = data.map((item: any) => ({
+        const formattedData: Publikasi[] = data.map((item: {
+          id?: string;
+          judul_publikasi?: string;
+          media_publikasi?: "Televisi" | "Koran" | "Radio" | "Media Online" | "Sosial Media" | "Lainnya";
+          nama_perusahaan_media?: string;
+          tanggal_publikasi?: string;
+          url_publikasi?: string;
+          pr_value?: number;
+          nama_program?: string;
+          nama_aktivitas?: string;
+          tone?: "Positif" | "Netral" | "Negatif";
+        }): Publikasi => ({
           id: item.id || "",
           judul: item.judul_publikasi || "",
           media: item.media_publikasi || "Media Online",
@@ -231,127 +210,42 @@ export default function PublikasiPage() {
       console.error("Error fetching publikasi:", error);
       toast.error("Gagal memuat data publikasi");
       return [];
-    }
-  };
-
-  // GET - Fetch all programs
-  const fetchProgram = async (): Promise<Program[]> => {
-    try {
-      const token = localStorage.getItem("token");
-      
-      // Handle case with no token gracefully
-      if (!token) {
-        console.warn("Token tidak ditemukan, tidak dapat mengambil program");
-        return [];
-      }
-      
-      const response = await fetch(`${API_URL}/api/program`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Gagal mengambil program: ${response.status}`);
-      }
-  
-      const data = await response.json();
-  
-      if (data && Array.isArray(data)) {
-        const formattedData: Program[] = data.map((item: any) => ({
-          id: item.id || "",
-          nama_program: item.nama_program || "",
-        }));
-        return formattedData;
-      } else {
-        console.warn("Format data program tidak sesuai:", data);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching program:", error);
-      return [];
-    }
-  }
-
-  // GET - Fetch all activities
-  const fetchAktivitas = async (): Promise<Aktivitas[]> => {
-    try {
-      const token = localStorage.getItem("token");
-    
-      if (!token) {
-        console.warn("Token tidak ditemukan, tidak dapat mengambil aktivitas");
-        return [];
-      }
-    
-      const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-    
-      if (!response.ok) {
-        throw new Error(`Gagal mengambil aktivitas: ${response.status}`);
-      }
-    
-      const data = await response.json();
-      
-      if (data && data.activity && Array.isArray(data.activity)) {
-        const formattedData: Aktivitas[] = data.activity.map((item: any) => ({
-          id: item.id || "",
-          nama_aktivitas: item.nama_aktivitas || "",
-        }));
-        return formattedData;
-      } else {
-        console.warn("Format data aktivitas tidak sesuai:", data);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching aktivitas:", error);
-      return [];
+    } finally {
+      setLoading(false);
     }
   };
 
   // Format date for display
   const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("id-ID", { 
-        day: "2-digit",
-        month: "long", 
-        year: "numeric" 
-      });
-    } catch (e) {
-      return dateString;
-    }
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   // DELETE - Delete publication by ID
   const deletePublikasi = async (id: string): Promise<boolean> => {
     try {
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         toast.error("Token tidak ditemukan, silakan login kembali");
         return false;
       }
-  
+
       const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Gagal menghapus publikasi.");
       }
-  
+
       return true;
     } catch (error) {
       console.error("Error deleting publikasi:", error);
@@ -369,7 +263,7 @@ export default function PublikasiPage() {
         toast.error("Gagal menghapus publikasi. Silakan coba lagi.");
       }
     }
-  };  
+  };
 
   const handleViewDetail = (id: string) => {
     navigate(`/publikasi/${id}`);
@@ -387,6 +281,16 @@ export default function PublikasiPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  if (loading) {
+    return (
+      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
+        <CardContent className="flex justify-center items-center h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mx-auto mt-6 max-w-[70rem] p-6">
@@ -427,17 +331,17 @@ export default function PublikasiPage() {
           </div>
           <div className="flex items-center gap-2">
             {/* Export Button */}
-            <Button 
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center gap-1" 
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center gap-1"
               onClick={exportToXlsx}
             >
               <Download className="h-4 w-4" />
               Unduh Publikasi
             </Button>
-            
+
             {/* Add Publication Button */}
-            <Button 
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" 
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto"
               onClick={() => setIsOpen(true)}
             >
               Tambah Publikasi
@@ -460,7 +364,7 @@ export default function PublikasiPage() {
             <TableBody>
               {displayedPublikasi.length > 0 ? (
                 displayedPublikasi.map((item, index) => (
-                  <TableRow 
+                  <TableRow
                     key={index}
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => handleViewDetail(item.id)}
@@ -468,10 +372,10 @@ export default function PublikasiPage() {
                     <TableCell className="font-medium">{item.judul}</TableCell>
                     <TableCell>{formatDate(item.tanggal)}</TableCell>
                     <TableCell>
-                      <a 
-                        href={item.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-blue-600 underline"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -508,14 +412,14 @@ export default function PublikasiPage() {
                         >
                           <Share2 className="w-4 h-4 text-green-500 hover:text-green-700" />
                         </Button>
-                        <Button 
-                         variant="ghost"
-                         size="icon"
-                         className="hover:bg-red-100 transition cursor-pointer"
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           handleDeletePublikasi(item.id);
-                         }}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-red-100 transition cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePublikasi(item.id);
+                          }}
                         >
                           <Trash2 className="w-4 h-4 text-red-600 hover:text-red-800" />
                         </Button>
@@ -547,9 +451,8 @@ export default function PublikasiPage() {
               <Button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`${
-                  currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                }`}
+                className={`${currentPage === i + 1 ? "bg-[#3A786D] text-white" : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                  }`}
               >
                 {i + 1}
               </Button>
