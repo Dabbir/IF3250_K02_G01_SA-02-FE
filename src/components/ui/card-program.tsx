@@ -64,8 +64,8 @@ const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete })
 
     return (
         <>
-            <div className="flex justify-between hover:scale-101" onClick={onClick}>
-                <div className="group flex flex-col h-full bg-white border border-gray-200 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70">
+            <div className="w-full hover:scale-101" onClick={onClick}>
+                <div className="group flex flex-col w-full h-[500px] bg-white border border-gray-200 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70">
                     
                     <div className="h-52 flex justify-center items-center">
                         <img
@@ -74,13 +74,13 @@ const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete })
                             alt="Program Logo"
                         />
                     </div>
-                    <div className="p-6 md:p-8">
+                    <div className="p-6 md:p-8 flex flex-col overflow-hidden">
                         <div>
 
                                 <p className="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-blue-500">
                                     {formatDate(program.waktu_mulai)} - {formatDate(program.waktu_selesai)}
                                 </p>
-                                <h3 className="cursor-default text-2xl font-semibold text-gray-800 dark:text-neutral-300 dark:hover:text-white">
+                                <h3 className="cursor-default text-2xl font-semibold text-gray-800 dark:text-neutral-300 dark:hover:text-white truncate">
                                     {program.nama_program}
                                 </h3>
                                 <div className={`mt-2 flex justify-center items-center font-semibold w-20 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${
@@ -90,7 +90,7 @@ const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete })
                                 </div>
                         </div>
 
-                        <p className="mt-2 text-gray-500 dark:text-neutral-500">
+                        <p className="mt-2 text-gray-500 dark:text-neutral-500 line-clamp-3">
                             {program.deskripsi_program}
                         </p>
                     </div>

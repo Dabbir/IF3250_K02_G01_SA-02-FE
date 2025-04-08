@@ -7,8 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-toastify";
-import { Banknote } from 'lucide-react';
-import { HandCoins } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -16,7 +16,7 @@ interface Program {
     id: number;
     nama_program: string;
     deskripsi_program: string;
-    pilar_program: string;
+    pilar_program: string[];
     kriteria_program: string;
     waktu_mulai: string;
     waktu_selesai: string;
@@ -38,6 +38,26 @@ interface Kegiatan {
     biayaImplementasi: string;
     deskripsi: string;
 }
+
+const pilarOptions = [
+    { id: 1, name: "Tanpa Kemiskinan" },
+    { id: 2, name: "Tanpa Kelaparan" },
+    { id: 3, name: "Kehidupan Sehat dan Sejahtera" },
+    { id: 4, name: "Pendidikan Berkualitas" },
+    { id: 5, name: "Kesetaraan Gender" },
+    { id: 6, name: "Air Bersih dan Sanitasi Layak" },
+    { id: 7, name: "Energi Bersih dan Terjangkau" },
+    { id: 8, name: "Pekerjaan Layak dan Pertumbuhan Ekonomi" },
+    { id: 9, name: "Industri, Inovasi dan Infrastruktur" },
+    { id: 10, name: "Berkurangnya Kesenjangan" },
+    { id: 11, name: "Kota dan Pemukiman yang Berkelanjutan" },
+    { id: 12, name: "Konsumsi dan Produksi yang Bertanggung Jawab" },
+    { id: 13, name: "Penanganan Perubahan Iklim" },
+    { id: 14, name: "Ekosistem Lautan" },
+    { id: 15, name: "Ekosistem Daratan" },
+    { id: 16, name: "Perdamaian, Keadilan dan Kelembagaan yang Tangguh" },
+    { id: 17, name: "Kemitraan untuk Mencapai Tujuan" },
+];
 
 const DetailProgram = () => {
     const { id } = useParams<{ id: string }>();
@@ -144,7 +164,10 @@ const DetailProgram = () => {
         if (!editedProgram) return;
         setSaving(true);
         try {
+            console.log("Edited Program", editedProgram);
+            console.log("Stringify", JSON.stringify(editedProgram))
             const token = localStorage.getItem("token");
+
             const response = await fetch(`${API_URL}/api/program/${id}`, {
                 method: "PUT",
                 headers: {
@@ -154,8 +177,15 @@ const DetailProgram = () => {
                 body: JSON.stringify(editedProgram),
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || "Gagal memperbarui program");
+            const updatedData = await fetch(`${API_URL}/api/program/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await updatedData.json();
+            console.log(data);
 
             setProgram(data);
             setIsEditing(false);
@@ -246,85 +276,130 @@ const DetailProgram = () => {
                             </div>
                         </div>
 
-                        <Table className="border border-t-0 border-l-0 border-r-0 last:border-b-0 overflow-hidden my-6">
+                        <Table className="border border-t-0 border-l-0 border-r-0 last:border-b-0 my-6 w-full">
                             <TableBody>
-                                <TableRow>
-                                    <TableHead>Deskripsi Program</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Deskripsi Program</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
                                             <Textarea
                                                 value={editedProgram?.deskripsi_program}
                                                 onChange={(e) => handleChange("deskripsi_program", e.target.value)}
+                                                className="w-full min-h-[120px]"
                                             />
                                         ) : (
-                                            String(program?.deskripsi_program)
+                                            <div className="whitespace-pre-wrap">{String(program?.deskripsi_program)}</div>
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Pilar Program</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Pilar Program</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
-                                            <Input
-                                                value={editedProgram?.pilar_program}
-                                                onChange={(e) => handleChange("pilar_program", e.target.value)}
-                                            />
+                                            <div className="grid grid-cols-1 max-h-[300px] overflow-y-auto p-2">
+                                                {pilarOptions.map((pilar) => (
+                                                    <div key={pilar.name} className="flex items-center space-x-2 py-1">
+                                                        <Checkbox 
+                                                            id={`pilar-${pilar.name}`} 
+                                                            checked={
+                                                                Array.isArray(editedProgram?.pilar_program) 
+                                                                ? editedProgram.pilar_program.includes(pilar.name)
+                                                                : false
+                                                            }
+                                                            onCheckedChange={(checked) => {
+                                                                const currentPilars = Array.isArray(editedProgram?.pilar_program) 
+                                                                    ? editedProgram.pilar_program 
+                                                                    : [];
+                                                                
+                                                                const newPilars = checked 
+                                                                    ? [...currentPilars, pilar.name]
+                                                                    : currentPilars.filter(p => p !== pilar.name);
+                                                                console.log("current pillars",currentPilars)
+                                                                setEditedProgram(prev => {
+                                                                    if (!prev) {
+                                                                        return null;
+                                                                    }
+                                                                    
+                                                                    return {
+                                                                        ...prev,
+                                                                        pilar_program: newPilars, 
+                                                                    };
+                                                                });
+                                                            }}
+                                                        />
+                                                        <Label 
+                                                            htmlFor={`pilar-${pilar.name}`}
+                                                            className="text-sm font-normal"
+                                                        >
+                                                            {pilar.name}
+                                                        </Label>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         ) : (
-                                            String(program?.pilar_program)
+                                            <div className="whitespace-pre-wrap">
+                                                {Array.isArray(program?.pilar_program) 
+                                                    ? program.pilar_program.join(', ') 
+                                                    : String(program?.pilar_program)}
+                                            </div>
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Kriteria Program</TableHead>
-                                    <TableCell>
-                                        <div className="flex items-center space-x-2">
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Kriteria Program</TableHead>
+                                    <TableCell className="w-full break-words">
+                                        <div className="flex items-center space-x-2 w-full">
                                             {isEditing ? (
                                                 <Input
                                                     value={editedProgram?.kriteria_program}
                                                     onChange={(e) => handleChange("kriteria_program", e.target.value)}
+                                                    className="w-full"
                                                 />
                                             ) : (
-                                                String(program?.kriteria_program)
+                                                <div className="whitespace-pre-wrap">{String(program?.kriteria_program)}</div>
                                             )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Tanggal Mulai</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Tanggal Mulai</TableHead>
+                                    <TableCell className="w-full">
                                         {isEditing ? (
                                             <Input
                                                 type="date"
                                                 value={editedProgram?.waktu_mulai}
                                                 onChange={(e) => handleChange("waktu_mulai", e.target.value)}
+                                                className="w-full md:w-auto"
                                             />
                                         ) : (
                                             String(program?.waktu_mulai)
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Tanggal Selesai</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Tanggal Selesai</TableHead>
+                                    <TableCell className="w-full">
                                         {isEditing ? (
                                             <Input
                                                 type="date"
                                                 value={editedProgram?.waktu_selesai}
                                                 onChange={(e) => handleChange("waktu_selesai", e.target.value)}
+                                                className="w-full md:w-auto"
                                             />
                                         ) : (
                                             String(program?.waktu_selesai)
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Rancangan Anggaran</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Rancangan Anggaran</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
                                             <Input
                                                 type="number"
                                                 value={editedProgram?.rancangan_anggaran}
                                                 onChange={(e) => handleChange("rancangan_anggaran", parseInt(e.target.value) || 0)}
+                                                className="w-full md:w-auto"
                                             />
                                         ) : (
                                             <span>
@@ -333,9 +408,9 @@ const DetailProgram = () => {
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Aktualisasi Anggaran</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Aktualisasi Anggaran</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
                                             <Input
                                                 type="number"
