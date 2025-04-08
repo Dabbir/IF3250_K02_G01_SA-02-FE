@@ -9,8 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-toastify";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Banknote } from 'lucide-react';
-import { HandCoins } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -169,6 +167,7 @@ const DetailProgram = () => {
             console.log("Edited Program", editedProgram);
             console.log("Stringify", JSON.stringify(editedProgram))
             const token = localStorage.getItem("token");
+
             const response = await fetch(`${API_URL}/api/program/${id}`, {
                 method: "PUT",
                 headers: {
@@ -178,9 +177,15 @@ const DetailProgram = () => {
                 body: JSON.stringify(editedProgram),
             });
 
-            const data = await response.json();
-            console.log("Data yang bakal diupdate", data);
-            if (!response.ok) throw new Error(data.message || "Gagal memperbarui program");
+            const updatedData = await fetch(`${API_URL}/api/program/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await updatedData.json();
+            console.log(data);
 
             setProgram(data);
             setIsEditing(false);
