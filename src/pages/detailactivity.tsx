@@ -51,8 +51,15 @@ export default function DetailKegiatan() {
 
     const formatRupiah = (amount: number): string => {
         const roundedAmount = Math.floor(amount);
-
         return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+    
+    const formatDisplayDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
     };
 
     useEffect(() => {
@@ -444,7 +451,7 @@ export default function DetailKegiatan() {
                                                 onChange={(e) => handleChange("tanggal_mulai", e.target.value)}
                                             />
                                         ) : kegiatan.tanggal_mulai ? (
-                                            new Date(kegiatan.tanggal_mulai).toLocaleDateString("id-ID")
+                                            formatDisplayDate(kegiatan.tanggal_mulai)
                                         ) : (
                                             "N/A"
                                         )}
@@ -464,7 +471,7 @@ export default function DetailKegiatan() {
                                                 onChange={(e) => handleChange("tanggal_selesai", e.target.value)}
                                             />
                                         ) : kegiatan.tanggal_selesai ? (
-                                            new Date(kegiatan.tanggal_selesai).toLocaleDateString("id-ID")
+                                            formatDisplayDate(kegiatan.tanggal_selesai)
                                         ) : (
                                             "N/A"
                                         )}
@@ -473,18 +480,18 @@ export default function DetailKegiatan() {
                                 <TableRow>
                                     <TableHead>Biaya Implementasi</TableHead>
                                     <TableCell>
-                                        <div className="flex items-center space-x-2">
-                                            <span>Rp.</span>
+                                        <div className="flex items-center">
                                             {isEditing ? (
-                                                <Input
-                                                    type="number"
-                                                    value={editedKegiatan?.biaya_implementasi || 0}
-                                                    onChange={(e) => handleChange("biaya_implementasi", Number(e.target.value))}
-                                                />
-                                            ) : kegiatan.biaya_implementasi ? (
-                                                kegiatan.biaya_implementasi.toLocaleString("id-ID")
+                                                <>
+                                                    <span>Rp</span>
+                                                    <Input
+                                                        type="number"
+                                                        value={editedKegiatan?.biaya_implementasi || 0}
+                                                        onChange={(e) => handleChange("biaya_implementasi", Number(e.target.value))}
+                                                    />
+                                                </>
                                             ) : (
-                                                kegiatan.biaya_implementasi ? formatRupiah(kegiatan.biaya_implementasi) : "0"
+                                                <>Rp{formatRupiah(kegiatan.biaya_implementasi)}</>
                                             )}
                                         </div>
                                     </TableCell>
