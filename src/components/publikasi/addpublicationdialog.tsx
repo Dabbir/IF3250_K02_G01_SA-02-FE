@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -13,23 +13,25 @@ const API_URL = import.meta.env.VITE_HOST_NAME
 
 interface Publikasi {
     judul: string;
-    media: "Televisi" | "Koran" | "Radio" | "Media Online" | "Sosial Media" | "Lainnya";
+    media: string;
     perusahaan: string;
     tanggal: string;
     link: string;
     prValue: number;
+    id_program?: number;
     nama_program?: string;
+    id_aktivitas?: number;
     nama_aktivitas?: string;
-    tone: "Positif" | "Netral" | "Negatif";
+    tone: string;
 }
 
 interface Program {
-    id: string;
+    id: number;
     nama_program: string;
 }
 
 interface Aktivitas {
-    id: string;
+    id: number;
     nama_aktivitas: string;
 }
 
@@ -41,19 +43,32 @@ interface AddPublicationDialogProps {
 
 export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: AddPublicationDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
-    const [programList, setProgramList] = useState<Program[]>([]);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const inputRefProgram = useRef<HTMLInputElement>(null);
+    const dropdownRefProgram = useRef<HTMLDivElement>(null);
+    const [filteredProgram, setFilteredProgram] = useState<Program[]>([]);
+    const [showDropdownProgram, setShowDropdownProgram] = useState(false);
+    const [programs, setPrograms] = useState<Program[]>([]);
+
+    const inputRefAktivitas = useRef<HTMLInputElement>(null);
+    const dropdownRefAktivitas = useRef<HTMLDivElement>(null);
+    const [filteredAktivitas, setFilteredAktivitas] = useState<Aktivitas[]>([]);
+    const [showDropdownAktivitas, setShowDropdownAktivitas] = useState(false);
     const [aktivitasList, setAktivitasList] = useState<Aktivitas[]>([]);
 
     const [newPublikasi, setNewPublikasi] = useState<Partial<Publikasi>>({
         judul: "",
-        media: "Media Online",
+        media: "",
         perusahaan: "",
-        tanggal: new Date().toISOString().split("T")[0],
+        tanggal: "",
         link: "",
         prValue: 0,
+        id_program: 0,
         nama_program: "",
+        id_aktivitas: 0,
         nama_aktivitas: "",
-        tone: "Netral"
+        tone: ""
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -70,40 +85,32 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         setNewPublikasi((prev) => ({ ...prev, [name]: value }));
     };
 
-    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const fetchProgram = async () => {
             try {
                 const token = localStorage.getItem("token");
-                
+
                 // Handle missing token case
                 if (!token) {
                     console.warn("Token tidak ditemukan");
                     return;
                 }
-                
-                const response = await fetch(`${API_URL}/api/program`, {
+
+                const response = await fetch(`${API_URL}/api/activity/idprogram`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`Gagal mengambil program: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
-                
-                if (data && Array.isArray(data)) {
-                    const formattedData: Program[] = data.map((item: any) => ({
-                        id: item.id || "",
-                        nama_program: item.nama_program || "",
-                    }));
-                    setProgramList(formattedData);
-                }
+                setPrograms(data.idProgram);
             } catch (error) {
                 console.error("Error fetching program:", error);
             }
@@ -112,33 +119,26 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         const fetchAktivitas = async () => {
             try {
                 const token = localStorage.getItem("token");
-                
+
                 if (!token) {
                     console.warn("Token tidak ditemukan");
                     return;
                 }
-                
-                const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
+
+                const response = await fetch(`${API_URL}/api/activity/idactivity`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
                     },
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`Gagal mengambil aktivitas: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
-                
-                if (data && data.activity && Array.isArray(data.activity)) {
-                    const formattedData: Aktivitas[] = data.activity.map((item: any) => ({
-                        id: item.id || "",
-                        nama_aktivitas: item.nama_aktivitas || "",
-                    }));
-                    setAktivitasList(formattedData);
-                }
+                setAktivitasList(data.idAktivitas || []);
             } catch (error) {
                 console.error("Error fetching aktivitas:", error);
             }
@@ -150,10 +150,58 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         }
     }, [isOpen]);
 
+    const handleInputChangeProgram = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setNewPublikasi({ ...newPublikasi, nama_program: value });
+        setShowDropdownProgram(true);
+        setFilteredProgram(programs.filter(p => p.nama_program.toLowerCase().includes(value.toLowerCase())));
+    };
+
+    const handleSelectProgram = (program: Program) => {
+        setNewPublikasi((prev) => ({ ...prev, nama_program: program.nama_program, id_program: program.id }));
+        setShowDropdownProgram(false);
+    };
+
+    const handleBlurProgram = (e: React.FocusEvent<HTMLDivElement>) => {
+        if (
+            !inputRefProgram.current?.contains(e.relatedTarget) &&
+            !dropdownRefProgram.current?.contains(e.relatedTarget)
+        ) {
+            setShowDropdownProgram(false);
+        }
+    };
+
+    const handleInputChangeActivity = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setNewPublikasi({ ...newPublikasi, nama_aktivitas: value });
+        setShowDropdownAktivitas(true);
+        setFilteredAktivitas(aktivitasList.filter(p => p.nama_aktivitas.toLowerCase().includes(value.toLowerCase())));
+    };
+
+    const handleSelectActivity = (aktivitas: Aktivitas) => {
+        setNewPublikasi((prev) => ({ ...prev, nama_aktivitas: aktivitas.nama_aktivitas, id_aktivitas: aktivitas.id }));
+        setShowDropdownAktivitas(false);
+    };
+
+    const handleBlurAktivitas = (e: React.FocusEvent<HTMLDivElement>) => {
+        if (
+            !inputRefAktivitas.current?.contains(e.relatedTarget) &&
+            !dropdownRefAktivitas.current?.contains(e.relatedTarget)
+        ) {
+            setShowDropdownAktivitas(false);
+        }
+    };
+
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
         if (!newPublikasi.judul) {
             newErrors.judul = "Judul publikasi wajib diisi!";
+        }
+        if (!newPublikasi.nama_program || !programs.some(p => p.nama_program === newPublikasi.nama_program)) {
+            newErrors.namaProgram = "Pilih program dari daftar!";
+        }
+        if (!newPublikasi.nama_aktivitas || !aktivitasList.some(p => p.nama_aktivitas === newPublikasi.nama_aktivitas)) {
+            newErrors.namaAktivitas = "Pilih aktivitas dari daftar!";
         }
         if (!newPublikasi.perusahaan) {
             newErrors.perusahaan = "Nama perusahaan media wajib diisi!";
@@ -166,6 +214,9 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         } else if (!/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(newPublikasi.link)) {
             newErrors.link = "Format link tidak valid";
         }
+        if (!newPublikasi.prValue) {
+            newErrors.prValue = "PR Value publikasi wajib diisi!";
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -177,12 +228,12 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         setIsSaving(true);
         try {
             const token = localStorage.getItem("token");
-            
+
             if (!token) {
                 toast.error("Token tidak ditemukan, silakan login kembali");
                 return;
             }
-            
+
             const response = await fetch(`${API_URL}/api/publikasi`, {
                 method: "POST",
                 headers: {
@@ -191,13 +242,13 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
                 },
                 body: JSON.stringify({
                     judul_publikasi: newPublikasi.judul,
-                    media_publikasi: newPublikasi.media,
+                    media_publikasi: newPublikasi.media || "Media Online",
                     nama_perusahaan_media: newPublikasi.perusahaan,
                     tanggal_publikasi: newPublikasi.tanggal,
                     url_publikasi: newPublikasi.link,
                     pr_value: newPublikasi.prValue,
-                    nama_program: newPublikasi.nama_program || "",
-                    nama_aktivitas: newPublikasi.nama_aktivitas || "",
+                    program_id: newPublikasi.id_program || "",
+                    aktivitas_id: newPublikasi.id_aktivitas || "",
                     tone: newPublikasi.tone || "Netral",
                 }),
             });
@@ -207,11 +258,11 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
             }
 
             toast.success("Publikasi berhasil ditambahkan!");
-            
+
             if (onSuccess) {
                 onSuccess();
             }
-            
+
             setIsOpen(false);
 
         } catch (error) {
@@ -226,17 +277,22 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
         if (!isOpen) {
             setNewPublikasi({
                 judul: "",
-                media: "Media Online",
+                media: "",
                 perusahaan: "",
-                tanggal: new Date().toISOString().split("T")[0],
+                tanggal: "",
                 link: "",
                 prValue: 0,
+                id_program: 0,
                 nama_program: "",
+                id_aktivitas: 0,
                 nama_aktivitas: "",
-                tone: "Netral"
+                tone: ""
             });
             setErrors({});
-            // Removed setImages([]) call as it's not needed
+            setPrograms([]);
+            setAktivitasList([]);
+            setShowDropdownProgram(false);
+            setShowDropdownAktivitas(false);
         }
     }, [isOpen]);
 
@@ -265,7 +321,7 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
 
                     <div className="space-y-2">
                         <Label htmlFor="media">Media Publikasi</Label>
-                        <Select 
+                        <Select
                             value={newPublikasi.media}
                             onValueChange={(value) => handleSelectChange("media", value)}
                         >
@@ -280,60 +336,110 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
                         </Select>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="nama_program">Program</Label>
-                        <Select 
+                    <div className="relative space-y-2" onBlur={handleBlurProgram}>
+                        <Label htmlFor="program">Nama Program</Label>
+                        <Input
+                            id="program"
+                            ref={inputRefProgram}
                             value={newPublikasi.nama_program || ""}
-                            onValueChange={(value) => handleSelectChange("nama_program", value)}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Pilih Program" />
-                            </SelectTrigger>
-                            <SelectContent className="w-full">
-                                {programList && programList.length > 0 ? (
-                                    programList.map((program) => (
-                                        <SelectItem 
-                                            key={program.id} 
-                                            value={program.nama_program || ""}
+                            onChange={handleInputChangeProgram}
+                            onFocus={() => setShowDropdownProgram(true)}
+                            placeholder="Pilih program"
+                            className="w-full"
+                        />
+                        {errors.namaProgram && <p className="text-red-500 text-[12px]">{errors.namaProgram}</p>}
+
+                        {showDropdownProgram && (
+                            <div
+                                ref={dropdownRefProgram}
+                                className="text-s absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
+                            >
+                                {filteredProgram.length > 0 ? (
+                                    filteredProgram.map((program) => (
+                                        <div
+                                            key={program.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleSelectProgram(program);
+                                            }}
                                         >
-                                            {program.nama_program || "Unnamed Program"}
-                                        </SelectItem>
+                                            {program.nama_program}
+                                        </div>
+                                    ))
+                                ) : programs.length > 0 ? (
+                                    programs.map((program) => (
+                                        <div
+                                            key={program.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleSelectProgram(program);
+                                            }}
+                                        >
+                                            {program.nama_program}
+                                        </div>
                                     ))
                                 ) : (
-                                    <SelectItem value="no-data" disabled>
-                                        Tidak ada data program
-                                    </SelectItem>
+                                    <div className="px-4 py-2 cursor-pointer text-gray-500">
+                                        Tidak ada program
+                                    </div>
                                 )}
-                            </SelectContent>
-                        </Select>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="nama_aktivitas">Aktivitas</Label>
-                        <Select 
+                    <div className="relative space-y-2" onBlur={handleBlurAktivitas}>
+                        <Label htmlFor="aktivitas">Nama Aktivitas</Label>
+                        <Input
+                            id="aktivitas"
+                            ref={inputRefAktivitas}
                             value={newPublikasi.nama_aktivitas || ""}
-                            onValueChange={(value) => handleSelectChange("nama_aktivitas", value)}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Pilih Aktivitas" />
-                            </SelectTrigger>
-                            <SelectContent className="w-full">
-                                {aktivitasList && aktivitasList.length > 0 ? (
-                                    aktivitasList.map((aktivitas) => (
-                                        <SelectItem 
-                                            key={aktivitas.id} 
-                                            value={aktivitas.nama_aktivitas || ""}
+                            onChange={handleInputChangeActivity}
+                            onFocus={() => setShowDropdownAktivitas(true)}
+                            placeholder="Pilih aktivitas"
+                            className="w-full"
+                        />
+                        {errors.namaAktivitas && <p className="text-red-500 text-[12px]">{errors.namaAktivitas}</p>}
+
+                        {showDropdownAktivitas && (
+                            <div
+                                ref={dropdownRefAktivitas}
+                                className="text-s absolute z-10 w-full bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-auto"
+                            >
+                                {filteredAktivitas.length > 0 ? (
+                                    filteredAktivitas.map((aktivitas) => (
+                                        <div
+                                            key={aktivitas.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleSelectActivity(aktivitas);
+                                            }}
                                         >
-                                            {aktivitas.nama_aktivitas || "Unnamed Activity"}
-                                        </SelectItem>
+                                            {aktivitas.nama_aktivitas}
+                                        </div>
+                                    ))
+                                ) : aktivitasList.length > 0 ? (
+                                    aktivitasList.map((aktivitas) => (
+                                        <div
+                                            key={aktivitas.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleSelectActivity(aktivitas);
+                                            }}
+                                        >
+                                            {aktivitas.nama_aktivitas}
+                                        </div>
                                     ))
                                 ) : (
-                                    <SelectItem value="no-data" disabled>
-                                        Tidak ada data aktivitas
-                                    </SelectItem>
+                                    <div className="px-4 py-2 cursor-pointer text-gray-500">
+                                        Tidak ada aktivitas
+                                    </div>
                                 )}
-                            </SelectContent>
-                        </Select>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -388,12 +494,13 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
                                 onChange={handleInputChange}
                                 className="pl-8 w-full"
                             />
+                            {errors.prValue && <p className="text-red-500 text-[12px]">{errors.prValue}</p>}
                         </div>
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="tone">Tone Publikasi</Label>
-                        <Select 
+                        <Select
                             value={newPublikasi.tone}
                             onValueChange={(value) => handleSelectChange("tone", value)}
                         >
@@ -409,8 +516,8 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         onClick={() => setIsOpen(false)}
                         className="border-[#3A786D] text-[#3A786D]"
                     >
