@@ -276,28 +276,29 @@ const DetailProgram = () => {
                             </div>
                         </div>
 
-                        <Table className="border border-t-0 border-l-0 border-r-0 last:border-b-0 overflow-hidden my-6">
+                        <Table className="border border-t-0 border-l-0 border-r-0 last:border-b-0 my-6 w-full">
                             <TableBody>
-                                <TableRow>
-                                    <TableHead>Deskripsi Program</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Deskripsi Program</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
                                             <Textarea
                                                 value={editedProgram?.deskripsi_program}
                                                 onChange={(e) => handleChange("deskripsi_program", e.target.value)}
+                                                className="w-full min-h-[120px]"
                                             />
                                         ) : (
-                                            String(program?.deskripsi_program)
+                                            <div className="whitespace-pre-wrap">{String(program?.deskripsi_program)}</div>
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Pilar Program</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Pilar Program</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
-                                            <div className="grid grid-cols-1 gap-2">
+                                            <div className="grid grid-cols-1 max-h-[300px] overflow-y-auto p-2">
                                                 {pilarOptions.map((pilar) => (
-                                                    <div key={pilar.name} className="flex items-center space-x-2">
+                                                    <div key={pilar.name} className="flex items-center space-x-2 py-1">
                                                         <Checkbox 
                                                             id={`pilar-${pilar.name}`} 
                                                             checked={
@@ -313,18 +314,17 @@ const DetailProgram = () => {
                                                                 const newPilars = checked 
                                                                     ? [...currentPilars, pilar.name]
                                                                     : currentPilars.filter(p => p !== pilar.name);
-                                                                    console.log("current pillars",currentPilars)
-                                                                    setEditedProgram(prev => {
-                                                                        if (!prev) {
-                                                                          return null;
-                                                                        }
-                                                                      
-                                                                        return {
-                                                                          ...prev,
-                                                                          pilar_program: newPilars, 
-                                                                        };
-                                                                    });
-
+                                                                console.log("current pillars",currentPilars)
+                                                                setEditedProgram(prev => {
+                                                                    if (!prev) {
+                                                                        return null;
+                                                                    }
+                                                                    
+                                                                    return {
+                                                                        ...prev,
+                                                                        pilar_program: newPilars, 
+                                                                    };
+                                                                });
                                                             }}
                                                         />
                                                         <Label 
@@ -337,63 +337,69 @@ const DetailProgram = () => {
                                                 ))}
                                             </div>
                                         ) : (
-                                            Array.isArray(program?.pilar_program) 
-                                                ? program.pilar_program.join(', ') 
-                                                : String(program?.pilar_program)
+                                            <div className="whitespace-pre-wrap">
+                                                {Array.isArray(program?.pilar_program) 
+                                                    ? program.pilar_program.join(', ') 
+                                                    : String(program?.pilar_program)}
+                                            </div>
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Kriteria Program</TableHead>
-                                    <TableCell>
-                                        <div className="flex items-center space-x-2">
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Kriteria Program</TableHead>
+                                    <TableCell className="w-full break-words">
+                                        <div className="flex items-center space-x-2 w-full">
                                             {isEditing ? (
                                                 <Input
                                                     value={editedProgram?.kriteria_program}
                                                     onChange={(e) => handleChange("kriteria_program", e.target.value)}
+                                                    className="w-full"
                                                 />
                                             ) : (
-                                                String(program?.kriteria_program)
+                                                <div className="whitespace-pre-wrap">{String(program?.kriteria_program)}</div>
                                             )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Tanggal Mulai</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Tanggal Mulai</TableHead>
+                                    <TableCell className="w-full">
                                         {isEditing ? (
                                             <Input
                                                 type="date"
                                                 value={editedProgram?.waktu_mulai}
                                                 onChange={(e) => handleChange("waktu_mulai", e.target.value)}
+                                                className="w-full md:w-auto"
                                             />
                                         ) : (
                                             String(program?.waktu_mulai)
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Tanggal Selesai</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Tanggal Selesai</TableHead>
+                                    <TableCell className="w-full">
                                         {isEditing ? (
                                             <Input
                                                 type="date"
                                                 value={editedProgram?.waktu_selesai}
                                                 onChange={(e) => handleChange("waktu_selesai", e.target.value)}
+                                                className="w-full md:w-auto"
                                             />
                                         ) : (
                                             String(program?.waktu_selesai)
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Rancangan Anggaran</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Rancangan Anggaran</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
                                             <Input
                                                 type="number"
                                                 value={editedProgram?.rancangan_anggaran}
                                                 onChange={(e) => handleChange("rancangan_anggaran", parseInt(e.target.value) || 0)}
+                                                className="w-full md:w-auto"
                                             />
                                         ) : (
                                             <span>
@@ -402,9 +408,9 @@ const DetailProgram = () => {
                                         )}
                                     </TableCell>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHead>Aktualisasi Anggaran</TableHead>
-                                    <TableCell>
+                                <TableRow className="flex flex-col md:table-row">
+                                    <TableHead className="w-full md:w-1/4 py-3">Aktualisasi Anggaran</TableHead>
+                                    <TableCell className="w-full break-words">
                                         {isEditing ? (
                                             <Input
                                                 type="number"
