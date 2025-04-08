@@ -49,22 +49,29 @@ export default function KegiatanPage() {
 
   const formatRupiah = (amount: number): string => {
     const roundedAmount = Math.floor(amount);
-
     return roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const formatDisplayDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   const shareToWhatsApp = (activity: Kegiatan) => {
     event?.stopPropagation();
 
-    const tanggalMulai = new Date(activity.tanggal_mulai).toLocaleDateString('id-ID');
-    const tanggalSelesai = new Date(activity.tanggal_selesai).toLocaleDateString('id-ID');
+    const tanggalMulai = formatDisplayDate(activity.tanggal_mulai);
+    const tanggalSelesai = formatDisplayDate(activity.tanggal_selesai);
 
     const shareText = `*Detail Kegiatan*\n\n` +
       `*Nama Kegiatan:* ${activity.nama_aktivitas}\n` +
       `*Tanggal Mulai:* ${tanggalMulai}\n` +
       `*Tanggal Selesai:* ${tanggalSelesai}\n` +
       `*Status:* ${activity.status}\n` +
-      `*Biaya Implementasi:* Rp ${formatRupiah(activity.biaya_implementasi)}\n` +
+      `*Biaya Implementasi:* Rp${formatRupiah(activity.biaya_implementasi)}\n` +
       (activity.deskripsi ? `*Deskripsi:* ${activity.deskripsi}\n` : '');
 
     const encodedText = encodeURIComponent(shareText);
@@ -194,20 +201,11 @@ export default function KegiatanPage() {
       return;
     }
 
-    const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    };
-
-    // Membentuk data sesuai struktur
     const data = activities.map(activity => ({
       "Nama Aktivitas": activity.nama_aktivitas,
       "Nama Program": activity.nama_program,
-      "Tanggal Mulai": formatDate(activity.tanggal_mulai),
-      "Tanggal Selesai": formatDate(activity.tanggal_selesai),
+      "Tanggal Mulai": formatDisplayDate(activity.tanggal_mulai),
+      "Tanggal Selesai": formatDisplayDate(activity.tanggal_selesai),
       "Biaya Implementasi": activity.biaya_implementasi,
       "Status": activity.status,
       "Deskripsi": activity.deskripsi
@@ -449,11 +447,7 @@ export default function KegiatanPage() {
                     <div>
                       <span className="block text-gray-500 text-xs">Tanggal Mulai</span>
                       <span className="text-[12px]">
-                        {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                        })}
+                        {formatDisplayDate(item.tanggal_mulai)}
                       </span>
                     </div>
                     <div>
@@ -466,16 +460,12 @@ export default function KegiatanPage() {
                     <div>
                       <span className="block text-gray-500 text-xs">Tanggal Selesai</span>
                       <span className="text-[12px]">
-                        {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                        })}
+                        {formatDisplayDate(item.tanggal_selesai)}
                       </span>
                     </div>
                     <div>
                       <span className="block text-gray-500 text-xs">Biaya Implementasi</span>
-                      <span className="font-medium">Rp {formatRupiah(item.biaya_implementasi)}</span>
+                      <span className="font-medium">Rp{formatRupiah(item.biaya_implementasi)}</span>
                     </div>
                   </div>
                 </div>
@@ -508,24 +498,16 @@ export default function KegiatanPage() {
                   >
                     <TableCell className="pl-7 truncate max-w-[180px]">{item.nama_aktivitas}</TableCell>
                     <TableCell className="text-center truncate">
-                      {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
+                      {formatDisplayDate(item.tanggal_mulai)}
                     </TableCell>
                     <TableCell className="text-center truncate">
-                      {new Date(item.tanggal_selesai).toLocaleDateString('id-ID', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
+                      {formatDisplayDate(item.tanggal_selesai)}
                     </TableCell>
                     <TableCell className="text-center">
                       {getStatusBadge(item.status)}
                     </TableCell>
                     <TableCell className="text-left truncate max-w-[180px]">
-                      Rp {formatRupiah(item.biaya_implementasi)}
+                      Rp{formatRupiah(item.biaya_implementasi)}
                     </TableCell>
                     <TableCell className="pr-5 text-right">
                       <div className="flex gap-2 justify-end">
