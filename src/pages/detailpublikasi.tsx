@@ -451,17 +451,19 @@ export default function DetailPublikasi() {
                 <TableRow>
                   <TableHead>PR Value</TableHead>
                   <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <span>Rp.</span>
+                    <div className="flex items-center">
                       {isEditing ? (
-                        <Input
-                          type="number"
-                          value={editedPublikasi?.prValue || 0}
-                          onChange={(e) => handleChange("prValue", Number(e.target.value))}
-                          className="w-full"
-                        />
+                        <div className="flex items-center w-full">
+                          <span className="mr-1">Rp</span>
+                          <Input
+                            type="number"
+                            value={editedPublikasi?.prValue || 0}
+                            onChange={(e) => handleChange("prValue", Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
                       ) : (
-                        publikasi.prValue.toLocaleString("id-ID")
+                        <span>Rp{Math.round(publikasi.prValue).toLocaleString("id-ID", { maximumFractionDigits: 0 })}</span>
                       )}
                     </div>
                   </TableCell>
