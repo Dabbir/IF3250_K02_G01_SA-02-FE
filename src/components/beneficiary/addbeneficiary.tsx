@@ -106,20 +106,20 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
         throw new Error(errorData.message || `Failed to create beneficiary: ${response.status}`);
       }
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (data) {
-        toast.success("Penerima manfaat berhasil ditambahkan!");
+      if (result.success) {
+        toast.success(result.message || "Penerima manfaat berhasil ditambahkan!");
         resetForm();
         setIsOpen(false);
         
         if (onSuccess) {
           onSuccess();
         } else {
-          navigate(`/penerima-manfaat/${data.id}`);
+          navigate(`/penerima-manfaat/${result.data.id}`);
         }
       } else {
-        throw new Error("Failed to create beneficiary");
+        throw new Error(result.message || "Failed to create beneficiary");
       }
     } catch (error) {
       console.error("Error creating beneficiary:", error);

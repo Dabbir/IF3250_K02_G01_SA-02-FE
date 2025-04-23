@@ -5,13 +5,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Building, Pencil, Trash2, Loader2, Menu, Share2, Plus, Phone, Mail } from "lucide-react";
+import { Search, Building, Pencil, Trash2, Loader2, Menu, Share2, Plus, Phone, Mail, HandCoins } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-// import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-// import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AddBeneficiary from "@/components/beneficiary/addbeneficiary";
 
 interface Beneficiary {
@@ -75,11 +73,10 @@ export default function BeneficiaryPage() {
 
         const data = await response.json();
         
-        // Adjust based on your API response structure
-        if (data && data.data) {
+        if (data.success) {
           setBeneficiaries(data.data || []);
         } else {
-          setBeneficiaries(data || []);
+          throw new Error(data.message || "Failed to fetch beneficiaries");
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -146,9 +143,9 @@ export default function BeneficiaryPage() {
 
       const data = await response.json();
 
-      if (data.message) {
+      if (data.success) {
         setBeneficiaries(beneficiaries.filter(beneficiary => beneficiary.id !== id));
-        toast.success("Penerima manfaat berhasil dihapus");
+        toast.success(data.message || "Penerima manfaat berhasil dihapus");
       } else {
         throw new Error(data.message || "Failed to delete beneficiary");
       }
@@ -223,7 +220,7 @@ export default function BeneficiaryPage() {
     <Card className="mx-auto mt-6 max-w-[70rem] md:p-6">
       <CardHeader>
         <div className="flex items-center space-x-2">
-          <Building className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
+          <HandCoins className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
           <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Penerima Manfaat</h2>
         </div>
       </CardHeader>

@@ -77,9 +77,14 @@ export default function DetailBeneficiary() {
           throw new Error(`Failed to fetch beneficiary: ${response.status}`);
         }
 
-        const data = await response.json();
-        setBeneficiary(data);
-        setEditedBeneficiary(data);
+        const result = await response.json();
+        
+        if (result.success) {
+          setBeneficiary(result.data);
+          setEditedBeneficiary(result.data);
+        } else {
+          throw new Error(result.message || "Failed to fetch beneficiary");
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         toast.error("Gagal memuat detail penerima manfaat!");
@@ -164,21 +169,21 @@ export default function DetailBeneficiary() {
         throw new Error(errorData.message || `Failed to ${isNewBeneficiary ? 'create' : 'update'} beneficiary: ${response.status}`);
       }
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (data) {
-        toast.success(`Penerima manfaat berhasil ${isNewBeneficiary ? 'ditambahkan' : 'diperbarui'}!`);
+      if (result.success) {
+        toast.success(result.message || `Penerima manfaat berhasil ${isNewBeneficiary ? 'ditambahkan' : 'diperbarui'}!`);
         
         if (isNewBeneficiary) {
-          navigate(`/penerima-manfaat/${data.id}`);
+          navigate(`/penerima-manfaat/${result.data.id}`);
         } else {
-          setBeneficiary({...data});
+          setBeneficiary({...result.data});
           setIsEditing(false);
           setSelectedImage(null);
           setImagePreview(null);
         }
       } else {
-        throw new Error(`Failed to ${isNewBeneficiary ? 'create' : 'update'} beneficiary`);
+        throw new Error(result.message || `Failed to ${isNewBeneficiary ? 'create' : 'update'} beneficiary`);
       }
     } catch (error) {
       console.error("Error saving beneficiary:", error);
