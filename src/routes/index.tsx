@@ -16,6 +16,8 @@ import Program from "@/pages/program.tsx";
 import DetailProgram from "@/pages/detailprogram.tsx";
 import AdminDashboard from "@/pages/admin-dashboard.tsx";
 import ViewerAccessManagement from "@/pages/viewer-access.tsx";
+import Beneficiary from "@/pages/beneficiary";
+import DetailBeneficiary from "@/pages/detailbeneficiary";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -78,6 +80,8 @@ const AppRoutes = () => (
         <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
         <Route path="/viewer-access" element={<ViewerAccessManagement />} />
+        <Route path="/penerima-manfaat" element={<Beneficiary />} />
+        <Route path="/penerima-manfaat/:id" element={<DetailBeneficiary />} />
       </Route>
     </Routes>
   </BrowserRouter>
