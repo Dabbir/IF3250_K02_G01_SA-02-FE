@@ -431,98 +431,138 @@ const Program = () => {
         const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
         saveAs(fileData, "Template_Program.xlsx");
     };
-
+    
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        
+
         setLoading(true);
         const reader = new FileReader();
-        
+
         reader.onload = async (event) => {
             try {
                 const data = new Uint8Array(event.target?.result as ArrayBuffer);
-                const workbook = XLSX.read(data, { 
-                    type: 'array',
-                    cellDates: true
+                const workbook = XLSX.read(data, {
+                    type: "array",
+                    cellDates: true,
                 });
-                
+
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                
+
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
-                
+
                 if (jsonData.length === 0) {
                     toast.error("File tidak mengandung data yang valid");
                     setLoading(false);
                     return;
                 }
-                
+
                 const token = localStorage.getItem("token");
+                
                 const transformedData = jsonData.map((row: any) => {
+                if (Object.keys(row).length > 9) {
+                    throw new Error("Data yang diisi melebihi jumlah kolom yang diminta");
+                }
+
+                if (!row.nama_program || !row.pilar_program || !row.tanggal_mulai || !row.tanggal_selesai) {
+                    throw new Error("Data tidak lengkap: nama program, pilar program, tanggal mulai, dan tanggal selesai wajib diisi");
+                }
+                    const rancangan_anggaran = Number(row.rancangan_anggaran);
+                    if (Number.isNaN(rancangan_anggaran) || rancangan_anggaran < 0 || !Number.isInteger(rancangan_anggaran)) {
+                        throw new Error("Rancangan anggaran harus berupa bilangan bulat positif.");
+                    }
+
+                    const aktualisasi_anggaran = Number(row.aktualisasi_anggaran);
+                    if (Number.isNaN(aktualisasi_anggaran) || aktualisasi_anggaran < 0 || !Number.isInteger(aktualisasi_anggaran)) {
+                        throw new Error("Aktualisasi anggaran harus berupa bilangan bulat positif.");
+                    }
                     
-                    if (!row.nama_program || !row.tanggal_mulai || !row.tanggal_selesai) {
-                        throw new Error("Data tidak lengkap: nama program, tanggal mulai, dan tanggal selesai wajib diisi");
+                if (row.status_program && row.status_program !== "Selesai" && row.status_program !== "Berjalan") {
+                    throw new Error("Status program tidak valid.");
+                }
+
+                const validPilarNames = new Set(pilarOptions.map((p) => p.name));
+
+                const isPilarProgramValid = (pilarProgram: string | undefined): boolean => {
+                    if (!pilarProgram) {
+                        return false;
+                    }
+
+                    const splitValues = pilarProgram.split(",").map((v) => v.trim());
+
+                    return splitValues.every((name) => validPilarNames.has(name));
+                };
+
+                    if (!isPilarProgramValid(row.pilar_program)) {
+                        throw new Error("Beberapa nilai pilar_program tidak valid.");
                     }
 
                     const parseExcelDate = (dateStr: string) => {
-                        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        if (typeof dateStr === "string" && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
                             return dateStr;
                         }
+
                         let date;
                         try {
-                            if (typeof dateStr === 'string') {
-                                if (dateStr.includes('/')) {
-                                    const parts = dateStr.split('/');
+                            if (typeof dateStr === "string") {
+                                if (dateStr.includes("/")) {
+                                    const parts = dateStr.split("/");
                                     if (parts.length === 3) {
-                                        date = new Date(
-                                            parseInt(parts[2]), 
-                                            parseInt(parts[1]) - 1,
-                                            parseInt(parts[0]) 
-                                        );
+                                        date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
                                     } else {
                                         date = new Date(dateStr);
                                     }
-                                } 
-                                else if (!isNaN(Number(dateStr))) {
+                                } else if (!isNaN(Number(dateStr))) {
                                     const excelEpoch = new Date(1899, 11, 30);
-                                    date = new Date(excelEpoch.getTime() + (Number(dateStr) * 24 * 60 * 60 * 1000));
-                                }
-                                else {
+                                    date = new Date(
+                                        excelEpoch.getTime() + Number(dateStr) * 24 * 60 * 60 * 1000
+                                    );
+                                } else {
                                     date = new Date(dateStr);
                                 }
                             } else {
                                 date = new Date(dateStr);
                             }
-                    
+
                             if (isNaN(date.getTime())) {
-                                throw new Error(`Format tanggal tidak valid: ${dateStr}`);
+                                throw new Error(`Format tanggal tidak valid`);
                             }
-                            
-                            return date.toISOString().split('T')[0];
+
+                            return date.toISOString().split("T")[0];
                         } catch (error) {
                             console.error(`Error parsing date "${dateStr}":`, error);
-                            throw new Error(`Format tanggal tidak valid: ${dateStr}`);
+                            throw new Error(`Format tanggal tidak valid`);
                         }
                     };
-                    
+
+                    const startDate = parseExcelDate(row.tanggal_mulai);
+                    const endDate = parseExcelDate(row.tanggal_selesai);
+
+                    if (endDate < startDate) {
+                        throw new Error("Tanggal selesai tidak boleh lebih awal dari tanggal mulai.");
+                    }
+
                     return {
                         nama_program: row.nama_program,
                         deskripsi_program: row.deskripsi_program || "",
-                        pilar_program: row.pilar_program ? row.pilar_program.split(",") : [],
+                        pilar_program: row.pilar_program
+                        ? row.pilar_program.split(",")
+                        : [],
                         kriteria_program: row.kriteria_program || "",
                         waktu_mulai: parseExcelDate(row.tanggal_mulai),
                         waktu_selesai: parseExcelDate(row.tanggal_selesai),
                         rancangan_anggaran: Number(row.rancangan_anggaran) || 0,
                         aktualisasi_anggaran: Number(row.aktualisasi_anggaran) || 0,
-                        status_program: row.status_program === "Selesai" ? "Selesai" : "Berjalan",
+                        status_program:
+                        row.status_program === "Selesai" ? "Selesai" : "Berjalan",
                         masjid_id: user.masjid_id,
-                        created_by: user.id
+                        created_by: user.id,
                     };
                 });
-                
+
                 let successCount = 0;
-                
+
                 for (const program of transformedData) {
                     try {
                         const response = await fetch(`${API_URL}/api/program`, {
@@ -530,10 +570,10 @@ const Program = () => {
                             headers: {
                                 Authorization: `Bearer ${token}`,
                                 "Content-Type": "application/json",
-                            },
+                        },
                             body: JSON.stringify(program),
                         });
-                        
+
                         if (response.ok) {
                             successCount++;
                         }
@@ -541,9 +581,7 @@ const Program = () => {
                         console.error("Error creating program:", error);
                     }
                 }
-                
                 await fetchPaginatedPrograms(currentPage);
-                
                 toast.success(`Berhasil menambahkan ${successCount} program dari ${transformedData.length} data`);
             } catch (error) {
                 console.error("Error processing upload:", error);
@@ -555,12 +593,12 @@ const Program = () => {
                 }
             }
         };
-        
+
         reader.onerror = () => {
-            toast.error("Gagal membaca file");
-            setLoading(false);
+        toast.error("Gagal membaca file");
+        setLoading(false);
         };
-        
+
         reader.readAsArrayBuffer(file);
     };
 

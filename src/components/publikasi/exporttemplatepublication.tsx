@@ -1,0 +1,422 @@
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Loader2, Upload, XCircle } from "lucide-react";
+import { toast } from "react-toastify";
+import { Card, CardContent } from "@/components/ui/card";
+
+const API_URL = import.meta.env.VITE_HOST_NAME;
+
+interface ExportTemplatePublicationProps {
+    isOpen: boolean;
+    setIsOpen: (open: boolean) => void;
+    onSuccess?: () => void;
+}
+
+interface PublikasiData {
+    judul: string,
+    media: string,
+    perusahaan: string,
+    tanggal: string,
+    link: string,
+    prValue: number,
+    nama_program: string,
+    nama_aktivitas: string,
+    tone: string
+}
+
+const ExportTemplatePublication = ({ isOpen, setIsOpen, onSuccess }: ExportTemplatePublicationProps) => {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [extractedData, setExtractedData] = useState<PublikasiData[] | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [programList, setProgramList] = useState<{id: string, nama_program: string}[]>([]);
+    const [aktivitasList, setAktivitasList] = useState<{id: string, nama_aktivitas: string}[]>([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchPrograms();
+            fetchActivities();
+        }
+    }, [isOpen]);
+
+    const fetchPrograms = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/program`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token || ""}`,
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil program: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data && Array.isArray(data)) {
+                const formattedData = data.map((item: any) => ({
+                    id: item.id || "",
+                    nama_program: item.nama_program || "",
+                }));
+                setProgramList(formattedData);
+            }
+        } catch (error) {
+            console.error("Error fetching program:", error);
+        }
+    };
+
+    const fetchActivities = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            
+            if (!token) {
+                console.warn("Token tidak ditemukan");
+                return;
+            }
+            
+            const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil aktivitas: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data && data.activity && Array.isArray(data.activity)) {
+                const formattedData = data.activity.map((item: any) => ({
+                    id: item.id || "",
+                    nama_aktivitas: item.nama_aktivitas || "",
+                }));
+                setAktivitasList(formattedData);
+            }
+        } catch (error) {
+            console.error("Error fetching aktivitas:", error);
+        }
+    };
+
+    const generateExcel = () => {
+        try {
+            const uploadData = [
+                ["judul", "media", "perusahaan", "tanggal", "link", "prValue", "nama_program", "nama_aktivitas", "tone"],
+                ["", "", "", "YYYY-MM-DD", "", 0, "", "", ""], 
+            ];
+            const wsUpload = XLSX.utils.aoa_to_sheet(uploadData);
+    
+            const mediaList = [["Media yang dapat digunakan"], ["Televisi"], ["Koran"], ["Radio"], ["Media Online"], ["Sosial Media"], ["Lainnya"]];
+            const wsMedia = XLSX.utils.aoa_to_sheet(mediaList);
+    
+            const toneList = [["Tone yang dapat digunakan"], ["Positif"], ["Netral"], ["Negatif"]];
+            const wsTone = XLSX.utils.aoa_to_sheet(toneList);
+    
+            const namaProgramList = programList.map((item: any) => [item.nama_program]);
+            const wsProgram = XLSX.utils.aoa_to_sheet([["Nama Program"], ...namaProgramList]);
+    
+            const namaAktivitasList = aktivitasList.map((item: any) => [item.nama_aktivitas]);
+            const wsActivity = XLSX.utils.aoa_to_sheet([["Nama Aktivitas"], ...namaAktivitasList]);
+
+            const columnWidths = [
+                { wch: 30 }, // Judul
+                { wch: 15 }, // Media
+                { wch: 20 }, // Perusahaan
+                { wch: 15 }, // Tanggal
+                { wch: 30 }, // Link
+                { wch: 15 }, // PR Value
+                { wch: 25 }, // Nama Program
+                { wch: 25 }, // Nama Aktivitas
+                { wch: 10 }  // Tone
+            ];
+    
+            wsUpload['!cols'] = columnWidths;
+    
+            wsUpload["!dataValidation"] = [
+                {
+                    sqref: "B2:B100",
+                    type: "list",
+                    formula1: "Info Media!A2:A7", 
+                    showDropDown: true,
+                },
+                {
+                    sqref: "I2:I100",
+                    type: "list",
+                    formula1: "Info Tone!A2:A4", 
+                    showDropDown: true,
+                },
+                {
+                    sqref: "G2:G100",
+                    type: "list",
+                    formula1: "Info Nama Program!A2:A" + (namaProgramList.length + 1), 
+                    showDropDown: true,
+                },
+                {
+                    sqref: "H2:H100",
+                    type: "list",
+                    formula1: "Info Nama Aktivitas!A2:A" + (namaAktivitasList.length + 1), 
+                    showDropDown: true,
+                },
+            ];
+    
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsUpload, "Upload Data");
+            XLSX.utils.book_append_sheet(wb, wsMedia, "Info Media");
+            XLSX.utils.book_append_sheet(wb, wsTone, "Info Tone");
+            XLSX.utils.book_append_sheet(wb, wsProgram, "Info Nama Program");
+            XLSX.utils.book_append_sheet(wb, wsActivity, "Info Nama Aktivitas");
+    
+            const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+            const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
+            saveAs(fileData, "Template_Publikasi.xlsx");
+        } catch (error) {
+            console.error("Error saat mengambil data atau membuat file:", error);
+            toast.error("Gagal membuat template. Silakan coba lagi.");
+        }
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files.length > 0) {
+            const file = event.target.files[0];
+            
+            // Validasi tipe file
+            const allowedExtensions = [".xlsx", ".csv"];
+            const isValidFile = allowedExtensions.some((ext) => 
+                file.name.toLowerCase().endsWith(ext)
+            );
+            
+            if (!isValidFile) {
+                toast.error("Hanya file dengan format .xlsx atau .csv yang diperbolehkan!");
+                event.target.value = "";
+                return;
+            }
+
+            setSelectedFile(null);
+            setExtractedData(null);
+
+            setTimeout(() => {
+                setSelectedFile(file);
+
+                const reader = new FileReader();
+                reader.readAsArrayBuffer(file);
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                        const workbook = XLSX.read(data, { type: "array" });
+                        
+                        // Verifikasi sheet name
+                        const sheetName = workbook.SheetNames[0];
+                        if (sheetName !== "Upload Data") {
+                            toast.error("Error: Pastikan tab pertama bernama 'Upload Data'");
+                            setSelectedFile(null);
+                            return;
+                        }
+                        
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json<PublikasiData>(worksheet, { raw: false });
+                        console.log("Data yang akan dikirim ke backend:", jsonData);
+                        setExtractedData(jsonData);
+                    } catch (error) {
+                        console.error("Error parsing file:", error);
+                        toast.error("Gagal membaca file. Pastikan format file sesuai template.");
+                        setSelectedFile(null);
+                    }
+                };
+            }, 0);
+
+            event.target.value = "";
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        setExtractedData(null);
+    };
+
+    const convertExcelDate = (value: any) => {
+        if (!value) return "";
+      
+        if (typeof value === "number") {
+            const date = XLSX.SSF.parse_date_code(value);
+            return `${date.y}-${String(date.m).padStart(2, "0")}-${String(date.d).padStart(2, "0")}`;
+        }
+      
+        if (typeof value === "string") {
+            const parts = value.split(/[\/\-\.]/).map((p) => p.padStart(2, "0"));
+      
+            if (parts.length === 3) {
+                let [day, month, year] = parts;
+          
+                if (year.length === 2) {
+                    year = `20${year}`; 
+                }
+          
+                if (parseInt(day) > 12 && parseInt(month) <= 12) {
+                    return `${year}-${month}-${day}`;
+                } else if (parseInt(month) > 12 && parseInt(day) <= 12) {
+                    return `${year}-${day}-${month}`;
+                } else {
+                    return `${year}-${month}-${day}`;
+                }
+            }
+        }
+      
+        return value; 
+    };
+
+    const parsePrValue = (value: any): number => {
+        if (typeof value === "number") return value; 
+      
+        if (typeof value === "string") {
+            let cleanValue = value.trim().replace(".", "").replace(",", "."); 
+            let parsedNumber = parseFloat(cleanValue); 
+            return isNaN(parsedNumber) ? 0 : parsedNumber; 
+        }
+      
+        return 0; 
+    };
+
+    const handleSubmit = async () => {
+        if (!extractedData || extractedData.length === 0) {
+            toast.error("Tidak ada data yang dapat diimpor.");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) throw new Error("Authentication token not found");
+
+            // Format data untuk API
+            const formattedData = extractedData.map(item => ({
+                judul_publikasi: item.judul || "",
+                media_publikasi: item.media || "Media Online",
+                nama_perusahaan_media: item.perusahaan || "",
+                tanggal_publikasi: convertExcelDate(item.tanggal) || new Date().toISOString().split("T")[0],
+                url_publikasi: item.link || "",
+                pr_value: parsePrValue(item.prValue),
+                nama_program: item.nama_program || "",
+                nama_aktivitas: item.nama_aktivitas || "",
+                tone: item.tone || "Netral",
+            }));
+
+            // Kirim data satu per satu
+            let successCount = 0;
+            for (const item of formattedData) {
+                try {
+                    const response = await fetch(`${API_URL}/api/publikasi`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(item),
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    }
+                } catch (error) {
+                    console.error("Error adding item:", error);
+                }
+            }
+
+            if (successCount > 0) {
+                toast.success(`Berhasil menambahkan ${successCount} publikasi dari ${formattedData.length} data!`);
+                
+                if (onSuccess) {
+                    onSuccess();
+                }
+                
+                setIsOpen(false);
+            } else {
+                toast.error("Tidak ada publikasi yang berhasil ditambahkan.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            toast.error("Gagal menambahkan publikasi! Cek koneksi atau format data.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!isOpen) {
+            setSelectedFile(null);
+            setExtractedData(null);
+            setIsSaving(false);
+        }
+    }, [isOpen]);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogContent className="max-w-[600px] max-h-[95vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle className="text-center">Import Data Publikasi</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <Button 
+                        onClick={generateExcel} 
+                        className="bg-[#3A786D] hover:bg-[var(--blue)] hover:scale-95 text-white"
+                    >
+                        Download Template
+                    </Button>
+                    <Card className="p-4 border border-gray-300 rounded-lg transition-transform duration-200 hover:scale-95 active:scale-90">
+                        <CardContent className="flex flex-col items-center justify-center gap-2">
+                            <input type="file" onChange={handleFileChange} className="hidden" id="file-upload-publikasi" accept=".xlsx,.csv" />
+                            <label
+                                htmlFor="file-upload-publikasi"
+                                className="cursor-pointer text-[#3A786D] transition-colors duration-200 hover:text-[var(--blue)] flex flex-col items-center justify-center gap-2"
+                            >
+                                <Upload className="h-7 w-7 text-gray-500 transition-transform duration-200 hover:scale-105 active:scale-95" />
+                                {!selectedFile && "Pilih File Excel"}
+                            </label>
+
+                            {selectedFile && (
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-gray-700">{selectedFile.name}</span>
+                                    <button onClick={handleRemoveFile} className="text-red-500 hover:text-red-700">
+                                        <XCircle className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+                <DialogFooter>
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setIsOpen(false)} 
+                        className="text-[#3A786D] border-[#3A786D] hover:scale-95"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={handleSubmit}
+                        className="bg-[#3A786D] hover:bg-[var(--blue)] hover:scale-95 text-white"
+                        disabled={isSaving || !selectedFile}
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Menyimpan...
+                            </>
+                        ) : (
+                            "Import Data"
+                        )}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+export default ExportTemplatePublication;

@@ -14,6 +14,7 @@ import { UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute } from "../u
 import DetailKegiatan from "@/pages/detailactivity.tsx";
 import Program from "@/pages/program.tsx";
 import DetailProgram from "@/pages/detailprogram.tsx";
+import DetailPublikasi from "@/pages/detailpublikasi.tsx";
 import AdminDashboard from "@/pages/admin-dashboard.tsx";
 import ViewerAccessManagement from "@/pages/viewer-access.tsx";
 import Beneficiary from "@/pages/beneficiary";
@@ -81,6 +82,7 @@ const AppRoutes = () => (
         <Route path="/viewer-access" element={<ViewerAccessManagement />} />
         <Route path="/penerima-manfaat" element={<Beneficiary />} />
         <Route path="/penerima-manfaat/:id" element={<DetailBeneficiary />} />
+        <Route path="/publikasi/:id" element={<DetailPublikasi />} />
       </Route>
     </Routes>
   </BrowserRouter>
