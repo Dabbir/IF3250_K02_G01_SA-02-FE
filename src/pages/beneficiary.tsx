@@ -247,7 +247,6 @@ export default function BeneficiaryPage() {
               className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" 
               onClick={() => setIsOpen(true)}
             >
-              <Plus className="h-4 w-4 mr-2" />
               Tambah Penerima
             </Button>
           </div>
