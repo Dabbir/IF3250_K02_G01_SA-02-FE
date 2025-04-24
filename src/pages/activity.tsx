@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Leaf, Pencil, Trash2, Loader2, Menu, Filter, Share2, ArrowUpDown } from "lucide-react";
+import { Search, Leaf, Pencil, Trash2, Loader2, Menu, Filter, Share2, Download, ArrowUpDown } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -396,13 +396,21 @@ export default function KegiatanPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={exportXlsx}>
-              Unduh Kegiatan
+            {/* Export Button */}
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center gap-1"
+              onClick={exportXlsx}
+            >
+              <Download className="h-4 w-4" />
+              Unduh Publikasi
             </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
-              Tambah Kegiatan
+
+            {/* Add Publication Button */}
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto"
+              onClick={() => setIsOpen(true)}
+            >
+              Tambah Publikasi
             </Button>
           </div>
         </div>
