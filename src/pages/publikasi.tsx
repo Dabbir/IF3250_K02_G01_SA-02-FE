@@ -110,22 +110,17 @@ export default function PublikasiPage() {
       toast.error("Tidak ada data untuk diekspor");
       return;
     }
-
+  
     try {
-      const data = publikasiList.map(item => ({
-        "Judul Publikasi": item.judul,
-        "Media Publikasi": item.media,
-        "Perusahaan Media": item.perusahaan,
-        "Tanggal Publikasi": formatDate(item.tanggal),
-        "Link Publikasi": item.link,
-        "PR Value": item.prValue,
-        "Nama Program": item.nama_program || "",
-        "Nama Aktivitas": item.nama_aktivitas || "",
-        "Tone": item.tone
-      }));
-
+      const worksheetData = [
+        ["judul_publikasi", "media_publikasi", "nama_perusahaan_media", "tanggal_publikasi", "url_publikasi", "pr_value", "nama_program", "nama_aktivitas", "tone"], 
+        ["(HAPUS TEKS INI) IKUTI PANDUAN PENGISIAN PADA SHEETS '(PENTING!) Panduan Unggah' DAN '(PENTING!) Media & Tone'"]
+      ];
+      
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+      
       const columnWidths = [
-        { wch: 30 },
+        { wch: 30 }, 
         { wch: 15 }, 
         { wch: 20 }, 
         { wch: 15 }, 
@@ -133,21 +128,85 @@ export default function PublikasiPage() {
         { wch: 15 }, 
         { wch: 20 }, 
         { wch: 20 }, 
-        { wch: 10 }  
+        { wch: 10 } 
       ];
-
-      const worksheet = XLSX.utils.json_to_sheet(data);
       worksheet['!cols'] = columnWidths;
-
+  
+      const mediaList = [
+        ["Media yang dapat digunakan"], 
+        ["Televisi"], 
+        ["Koran"], 
+        ["Radio"], 
+        ["Media Online"], 
+        ["Sosial Media"], 
+        ["Lainnya"]
+      ];
+      const wsMedia = XLSX.utils.aoa_to_sheet(mediaList);
+      
+      const toneList = [
+        ["Tone yang dapat digunakan"], 
+        ["Positif"], 
+        ["Netral"], 
+        ["Negatif"]
+      ];
+      const wsTone = XLSX.utils.aoa_to_sheet(toneList);
+      
+      const guidanceSheet = XLSX.utils.aoa_to_sheet([
+        ["Panduan Pengisian Data Publikasi dengan Mekanisme Unggah File"],
+        [""],
+        ["[1] Isi setiap kolom sesuai dengan kategori yang tertera. Perhatikan format pengisian data untuk setiap kolom sebagai berikut:"],
+        ["judul_publikasi : TEXT bebas (WAJIB)"],
+        ["media_publikasi : Pilih salah satu pilihan pada sheet '(PENTING!) Media & Tone' (WAJIB)"],
+        ["nama_perusahaan_media : TEXT bebas (WAJIB)"],
+        ["tanggal_publikasi : Format YYYY-MM-DD (WAJIB)"],
+        ["url_publikasi : TEXT url lengkap (WAJIB)"],
+        ["pr_value : ANGKA positif (WAJIB)"],
+        ["nama_program : TEXT bebas"],
+        ["nama_aktivitas : TEXT bebas"],
+        ["tone : Pilih salah satu pilihan pada sheet '(PENTING!) Media & Tone' (WAJIB)"],
+        [""],
+        ["[2] Hanya melakukan perubahan di sheet 'Template Publikasi' tanpa mengubah sheet lainnya"],
+        [""],
+        ["[3] Tidak diperbolehkan untuk memindah-mindahkan posisi sheet"],
+        [""],
+        ["[4] Simpan file dalam format xlsx atau xls dengan nama bebas"],
+        [""],
+        ["[5] Unggah file xlsx atau xls pada tombol 'Upload Data' di halaman Publikasi"],
+        [""],
+        ["[CONTOH]"]
+      ]);
+  
+      XLSX.utils.sheet_add_aoa(guidanceSheet, [
+        ["judul_publikasi", "media_publikasi", "nama_perusahaan_media", "tanggal_publikasi", "url_publikasi", "pr_value", "nama_program", "nama_aktivitas", "tone"],
+        ["Peluncuran Program Kebersihan Masjid", "Media Online", "Republika Online", "2025-03-15", "https://republika.co.id/berita/123456", "5000000", "Program Kebersihan", "Bersih-bersih Masjid", "Positif"],
+        ["Liputan Kegiatan Bakti Sosial", "Televisi", "Metro TV", "2025-03-20", "https://metrotv.com/watch/123456", "7500000", "Bakti Sosial", "Pembagian Sembako", "Positif"]
+      ], {origin: "A25"});
+  
+      worksheet["!dataValidation"] = [
+        {
+          sqref: "B2:B100",
+          type: "list",
+          formula1: "'(PENTING!) Media & Tone'!A2:A8",
+          showDropDown: true,
+        },
+        {
+          sqref: "I2:I100",
+          type: "list",
+          formula1: "'(PENTING!) Media & Tone'!A10:A12",
+          showDropDown: true,
+        }
+      ];
+      
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Publikasi");
-
-      XLSX.writeFile(workbook, "Publikasi.xlsx");
-
-      toast.success("Berhasil mengunduh data publikasi");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
+      XLSX.utils.book_append_sheet(workbook, guidanceSheet, "(PENTING!) Panduan Unggah");
+      XLSX.utils.book_append_sheet(workbook, wsMedia, "(PENTING!) Media & Tone");
+  
+      XLSX.writeFile(workbook, "Template_Publikasi.xlsx");
+      toast.success("Berhasil mengunduh template publikasi");
     } catch (error) {
-      console.error("Error exporting data:", error);
-      toast.error("Gagal mengunduh data publikasi");
+      console.error("Error exporting template:", error);
+      toast.error("Gagal mengunduh template publikasi");
     }
   };
 
