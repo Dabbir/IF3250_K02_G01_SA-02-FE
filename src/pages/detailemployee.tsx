@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Building, Pencil, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Save, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-toastify";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -37,126 +34,6 @@ interface Kegiatan {
     deskripsi: string;
 }
 
-const employees: Employee[] = [
-    {
-        id: "1",
-        nama: "Ahmad Fauzi",
-        telepon: "081234567890",
-        alamat: "Jl. Melati No. 10, Bandung",
-        email: "ahmad.fauzi@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-01-01T08:00:00Z",
-        updated_at: "2024-01-10T10:30:00Z"
-    },
-    {
-        id: "2",
-        nama: "Siti Rahmawati",
-        telepon: "089876543210",
-        alamat: "Jl. Kenanga No. 5, Jakarta",
-        email: "siti.rahma@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-02-15T09:15:00Z",
-        updated_at: "2024-02-20T11:45:00Z"
-    },
-    {
-        id: "3",
-        nama: "Budi Santoso",
-        telepon: "082112345678",
-        alamat: "Jl. Cendana No. 3, Surabaya",
-        email: "budi.santoso@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-03-01T07:45:00Z",
-        updated_at: "2024-03-05T08:20:00Z"
-    },
-    {
-        id: "4",
-        nama: "Ahmad Fauzi",
-        telepon: "081234567890",
-        alamat: "Jl. Melati No. 10, Bandung",
-        email: "ahmad.fauzi@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-01-01T08:00:00Z",
-        updated_at: "2024-01-10T10:30:00Z"
-    },
-    {
-        id: "5",
-        nama: "Siti Rahmawati",
-        telepon: "089876543210",
-        alamat: "Jl. Kenanga No. 5, Jakarta",
-        email: "siti.rahma@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-02-15T09:15:00Z",
-        updated_at: "2024-02-20T11:45:00Z"
-    },
-    {
-        id: "6",
-        nama: "Budi Santoso",
-        telepon: "082112345678",
-        alamat: "Jl. Cendana No. 3, Surabaya",
-        email: "budi.santoso@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-03-01T07:45:00Z",
-        updated_at: "2024-03-05T08:20:00Z"
-    },
-    {
-        id: "7",
-        nama: "Ahmad Fauzi",
-        telepon: "081234567890",
-        alamat: "Jl. Melati No. 10, Bandung",
-        email: "ahmad.fauzi@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-01-01T08:00:00Z",
-        updated_at: "2024-01-10T10:30:00Z"
-    },
-    {
-        id: "8",
-        nama: "Siti Rahmawati",
-        telepon: "089876543210",
-        alamat: "Jl. Kenanga No. 5, Jakarta",
-        email: "siti.rahma@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-02-15T09:15:00Z",
-        updated_at: "2024-02-20T11:45:00Z"
-    },
-    {
-        id: "9",
-        nama: "Budi Santoso",
-        telepon: "082112345678",
-        alamat: "Jl. Cendana No. 3, Surabaya",
-        email: "budi.santoso@example.com",
-        foto: "https://images.unsplash.com/photo-1510706019500-d23a509eecd4?q=80&w=2667&auto=format&fit=facearea&facepad=3&w=320&h=320&q=80&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        masjid_id: "1",
-        masjid_nama: "Masjid Salman",
-        created_by: "1",
-        created_at: "2024-03-01T07:45:00Z",
-        updated_at: "2024-03-05T08:20:00Z"
-    }
-]
-
 const DetailEmployee = () => {
     const { id } = useParams<{ id: string }>();
     const [loading, setLoading] = useState(true);
@@ -171,15 +48,57 @@ const DetailEmployee = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        setLoading(true);
-        setTimeout(() => {
-          const foundEmployee = employees.find(emp => emp.id === id);
-          if (foundEmployee) {
-            setEmployee(foundEmployee);
-            setEditedEmployee(foundEmployee);
-          }
-          setLoading(false);
-        }, 500);
+        const fetchEmployee = async () => {
+            setLoading(true);
+            try {
+                console.log("Fetch employee pertama kali")
+                const token = localStorage.getItem("token");
+
+                const response = await fetch(`${API_URL}/api/employee/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+        
+                const data = await response.json();
+                console.log("data", data);
+        
+                if (!response.ok) throw new Error(data.message || "Gagal memuat data karyawan");
+                const empData = data.data;
+
+                if (empData.masjid_id) {
+                    try {
+                        const masjidResponse = await fetch(`${API_URL}/api/masjid/${empData.masjid_id}`, {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                            },
+                        });
+                        
+                        if (masjidResponse.ok) {
+                            const masjidData = await masjidResponse.json();
+
+                            if (masjidData.success && masjidData.data) {
+                                empData.masjid_nama = masjidData.data.nama_masjid;
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error fetching masjid details:", error);
+                    }
+                }
+
+                setEmployee(empData);
+                setEditedEmployee(empData);
+            } catch (error) {
+                console.error("Error fetching employee:", error);
+                toast.error("Gagal memuat data karyawan");
+            } finally {
+                setLoading(false);
+            }
+        };        
+
+        fetchEmployee();
     }, [id]);
 
     useEffect(() => {
@@ -246,27 +165,61 @@ const DetailEmployee = () => {
         if (!editedEmployee) return;
         setSaving(true);
         
-        setTimeout(() => {
-            try {
-                const updatedEmployee = {
-                  ...editedEmployee,
-                  updated_at: new Date().toISOString()
-                };
-                
-                const updatedEmployees = employees.map(emp => 
-                  emp.id === updatedEmployee.id ? updatedEmployee : emp
-                );
-                
-                setEmployee(updatedEmployee);
-                setIsEditing(false);
-                toast.success("Karyawan berhasil diperbarui");
-            } catch (error) {
-                console.error("Error updating employee:", error);
-                toast.error("Gagal memperbarui data karyawan");
-            } finally {
-                setSaving(false);
-            }  
-        }, 1000);
+        try {
+            console.log("Edited Employee", editedEmployee);
+            console.log("Stringify", JSON.stringify(editedEmployee))
+            const token = localStorage.getItem("token");
+
+            const response = await fetch(`${API_URL}/api/employee/${id}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(editedEmployee),
+            });
+
+            const updatedData = await fetch(`${API_URL}/api/employee/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await updatedData.json();
+            console.log("data hasil update", data);
+            const updatedEmployee = data.data;
+
+            if (updatedEmployee.masjid_id) {
+                try {
+                    const masjidResponse = await fetch(`${API_URL}/api/masjid/${updatedEmployee.masjid_id}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    
+                    if (masjidResponse.ok) {
+                        const masjidData = await masjidResponse.json();
+
+                        if (masjidData.success && masjidData.data) {
+                            updatedEmployee.masjid_nama = masjidData.data.nama_masjid;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching masjid details:", error);
+                }
+            }
+
+            setEmployee(updatedEmployee);
+            setIsEditing(false);
+            toast.success("Data karyawan berhasil diperbarui");
+        } catch (error) {
+            console.error("Error updating employee:", error);
+            toast.error("Gagal memperbarui data karyawan");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const getInitials = (name: string) => {
@@ -278,26 +231,26 @@ const DetailEmployee = () => {
           .substring(0, 2);
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const maxSize = 2 * 1024 * 1024; // 2MB
-            if (file.size > maxSize) {
-                toast.error("Ukuran foto tidak boleh lebih dari 2MB");
-                return;
-            }
-            setSelectedFile(file);
+    // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     if (e.target.files && e.target.files[0]) {
+    //         const file = e.target.files[0];
+    //         const maxSize = 2 * 1024 * 1024; // 2MB
+    //         if (file.size > maxSize) {
+    //             toast.error("Ukuran foto tidak boleh lebih dari 2MB");
+    //             return;
+    //         }
+    //         setSelectedFile(file);
           
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setEditedEmployee(prev => prev ? {
-                ...prev,
-                foto: reader.result as string
-                } : null);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    //         const reader = new FileReader();
+    //         reader.onloadend = () => {
+    //             setEditedEmployee(prev => prev ? {
+    //             ...prev,
+    //             foto: reader.result as string
+    //             } : null);
+    //         };
+    //         reader.readAsDataURL(file);
+    //     }
+    // };
 
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
@@ -360,16 +313,14 @@ const DetailEmployee = () => {
                             )}
                         </div>
 
-                        <div className="flex justify-center items-center">
-                            <div className="h-48 w-48 overflow-hidden rounded-full border border-gray-200">
-                                <img
-                                    src={employee?.foto || "/logo-white.svg"}
-                                    alt={employee?.nama || "Foto Karyawan"}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
+                        <div className="shrink-0 flex justify-center items-center">
+                            <Avatar className="h-16 w-16">
+                                <AvatarImage src={employee.foto} alt={employee.nama} />
+                                <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
+                                    {getInitials(employee.nama)}
+                                </AvatarFallback>
+                            </Avatar>
                         </div>
-
 
                         <Table className="border border-t-0 border-l-0 border-r-0 last:border-b-0 my-6 w-full">
                             <TableBody>
@@ -393,11 +344,7 @@ const DetailEmployee = () => {
                                     <TableHead className="w-full md:w-1/4 py-3">Masjid</TableHead>
                                     <TableCell className="w-full break-words">
                                         <div className="flex items-center space-x-2 w-full">
-                                        {isEditing ? (
                                             <div className="whitespace-pre-wrap">{String(employee?.masjid_nama)}</div>
-                                        ) : (
-                                            <div className="whitespace-pre-wrap">{String(employee?.masjid_nama)}</div>
-                                        )}
                                         </div>
                                     </TableCell>
                                 </TableRow>

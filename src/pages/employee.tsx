@@ -1,13 +1,13 @@
 "use client"
 
 import React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import EmployeeCard from "@/components/karyawan/employeecard";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Users, Upload, Download, Loader2 } from "lucide-react";
+import { Search, Users, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,11 +29,6 @@ interface Employee {
     updated_at: string;
 }
 
-interface Masjid {
-    id: number;
-    nama_masjid: string;
-}
-
 interface userData {
     id: number;
     masjid_id: number;
@@ -45,6 +40,7 @@ const Employee = () => {
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [masjidName, setMasjidName] = useState("");
     const [isOpen, setIsOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [employeeList, setEmployeeList] = useState<Employee[]>([]);
@@ -67,6 +63,41 @@ const Employee = () => {
         foto: ""
     });
 
+    useEffect(() => {
+        const loadInitialData = async () => {
+          await fetchUser();
+          if (search.trim().length > 0) {
+            await fetchEmployees();
+          } else {
+            await fetchPaginatedEmployees(currentPage);
+          }
+        };
+        
+        loadInitialData();
+    }, []);
+
+    useEffect(() => {
+        if (user.masjid_id) {
+          fetchMasjidDetails();
+        }
+    }, [user.masjid_id]);
+
+    useEffect(() => {
+        if (search.trim().length > 0) {
+          fetchEmployees();
+        } else {
+          fetchPaginatedEmployees(currentPage);
+        }
+    }, [currentPage, search, masjidName]);
+
+    useEffect(() => {
+        if (search.trim().length > 0) {
+            fetchEmployees();
+        } else {
+            fetchPaginatedEmployees(currentPage);
+        }
+    }, [currentPage, search]);
+
     const fetchUser = async () => {
         try {
             const token = localStorage.getItem("token");
@@ -79,7 +110,6 @@ const Employee = () => {
 
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || "Gagal memuat data pengguna");
-
             const { id, masjid_id } = data.user;
             setUser({ id, masjid_id });
         } catch (error) {
@@ -99,9 +129,40 @@ const Employee = () => {
                     "Content-Type": "application/json",
                 },
             });
-    
+
+            if (user.masjid_id) {
+                try {
+                    const masjidResponse = await fetch(`${API_URL}/api/masjid/${user.masjid_id}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    
+                    if (masjidResponse.ok) {
+                        const masjidData = await masjidResponse.json();
+
+                        if (masjidData.success && masjidData.data) {
+                            const masjid_nama = masjidData.data.nama_masjid;
+                            setMasjidName(masjid_nama);
+                            console.log("nama masjid: ", masjidName);
+                        }
+                        
+                    }
+                } catch (error) {
+                    console.error("Error fetching masjid details:", error);
+                }
+            }
+
             const data = await response.json();
-            setEmployeeList(data || []);
+
+            const updatedEmployees = data.map((employee: Employee) => ({
+                ...employee,
+                masjid_nama: masjidName
+            }));
+    
+            console.log("respons fetch employee", data);
+            setEmployeeList(updatedEmployees);
             setTotalEmployees(data.length || 0);
         } catch (error) {
             console.error("Error fetching all employees:", error);
@@ -123,7 +184,33 @@ const Employee = () => {
             });
 
             const data = await response.json();
+            
             console.log("fetch data data", data.data)
+
+            if (user.masjid_id) {
+                try {
+                    const masjidResponse = await fetch(`${API_URL}/api/masjid/${user.masjid_id}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    
+                    if (masjidResponse.ok) {
+                        const masjidData = await masjidResponse.json();
+
+                        if (masjidData.success && masjidData.data) {
+                            const masjid_nama = masjidData.data.nama_masjid;
+                            setMasjidName(masjid_nama);
+                            console.log("nama masjid: ", masjidName);
+                        }
+                        
+                    }
+                } catch (error) {
+                    console.error("Error fetching masjid details:", error);
+                }
+            }
+
             console.log("fetch data total", data.total)
             setEmployeeList(data.data || []);
             setTotalEmployees(data.total || 0);
@@ -135,13 +222,26 @@ const Employee = () => {
         }
     };
 
-    useEffect(() => {
-        if (search.trim().length > 0) {
-            fetchEmployees();
-        } else {
-            fetchPaginatedEmployees(currentPage);
+    const fetchMasjidDetails = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const masjidResponse = await fetch(`${API_URL}/api/masjid/${user.masjid_id}`, {
+                headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                },
+            });
+          
+            if (masjidResponse.ok) {
+                const masjidData = await masjidResponse.json();
+                if (masjidData.success && masjidData.data) {
+                setMasjidName(masjidData.data.nama_masjid);
+                }
+            }
+        } catch (error) {
+          console.error("Error fetching masjid details:", error);
         }
-    }, [currentPage, search]);
+    };
 
     const filteredEmployees = employeeList.filter(employee => 
         employee.nama.toLowerCase().includes(search.toLowerCase())
@@ -164,10 +264,6 @@ const Employee = () => {
         setNewEmployee(prev => ({ ...prev, [name]: value }));
     };
     
-    const handleSelectChange = (name: string, value: string) => {
-        setNewEmployee(prev => ({ ...prev, [name]: value }));
-    };
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
@@ -372,6 +468,7 @@ const Employee = () => {
                         >
                             <EmployeeCard 
                                 employee={employee}
+                                masjidNameParam={employee.masjid_nama || masjidName}
                                 onClick={() => navigate(`/karyawan/${employee.id}`)}
                                 onEdit={() => handleEdit(employee)}
                                 onDelete={() => handleDelete(employee.id)}

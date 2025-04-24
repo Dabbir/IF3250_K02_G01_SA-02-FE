@@ -24,12 +24,13 @@ interface Employee {
 
 interface EmployeeCardProps {
   employee: Employee;
+  masjidNameParam: string;
   onClick: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick, onEdit, onDelete}) => {
+const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, onClick, onEdit, onDelete}) => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -61,7 +62,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick, onEdit, 
             </h1>
             <div className="flex items-center space-x-2">
                 <Building className='h-3 w-3 flex-shrink-0 text-gray-500'/>
-                <p className='text-sm text-gray-500'>{employee.masjid_nama || "Masjid Salman"}</p>
+                <p className='text-sm text-gray-500'>{masjidNameParam}</p>
             </div>
             <div className="flex items-center space-x-2">
                 <Mail className='h-3 w-3 flex-shrink-0 text-gray-500'/>
