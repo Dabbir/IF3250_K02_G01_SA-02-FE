@@ -20,6 +20,7 @@ import ViewerAccessManagement from "@/pages/viewer-access.tsx";
 import StakeholderPage from "@/pages/stakeholders.tsx";
 import Beneficiary from "@/pages/beneficiary";
 import DetailBeneficiary from "@/pages/detailbeneficiary";
+import DetailStakeholder from "@/pages/detailstakeholder.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -75,6 +76,7 @@ const AppRoutes = () => (
         <Route path="/kegiatan" element={<Kegiatan />} />
         <Route path="/kegiatan/:id" element={<DetailKegiatan />} />
         <Route path="/stakeholder" element={<StakeholderPage />} />
+        <Route path="/stakeholder/:id" element={<DetailStakeholder />} />
         <Route path="/karyawan" element={<div className="p-4">Karyawan Content</div>} />
         <Route path="/galeri" element={<div className="p-4">Galeri Content</div>} />
         <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
