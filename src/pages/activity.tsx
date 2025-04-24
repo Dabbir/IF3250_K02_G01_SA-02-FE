@@ -169,8 +169,8 @@ export default function KegiatanPage() {
 
   // Then sort the filtered activities
   const sortedActivities = [...filteredActivities].sort((a, b) => {
-    let valueA = a[sortColumn as keyof Kegiatan];
-    let valueB = b[sortColumn as keyof Kegiatan];
+    const valueA = a[sortColumn as keyof Kegiatan];
+    const valueB = b[sortColumn as keyof Kegiatan];
   
     // Handle date sorting
     if (sortColumn === "tanggal_mulai" || sortColumn === "tanggal_selesai") {
