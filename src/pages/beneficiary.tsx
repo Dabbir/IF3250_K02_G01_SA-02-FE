@@ -237,10 +237,10 @@ export default function BeneficiaryPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-2">
             {/* Export Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center gap-1"
+              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center gap-1"
               onClick={exportXlsx}
             >
               <Download className="h-4 w-4" />
@@ -249,7 +249,7 @@ export default function BeneficiaryPage() {
 
             {/* Add Publication Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto"
+              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center"
               onClick={() => setIsOpen(true)}
             >
               Tambah Publikasi

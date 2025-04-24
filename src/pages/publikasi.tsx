@@ -439,23 +439,36 @@ export default function PublikasiPage() {
             />
           </div>
           
-          <div className="flex gap-2">
+          {/* Mobile Filter button */}
+          <div className="flex mb-2">
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex-1 flex items-center justify-center" 
+              className="w-full flex items-center justify-center" 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
             >
               <Menu className="w-4 h-4 mr-2" /> 
               Filter
             </Button>
+          </div>
+          
+          {/* Mobile Export and Add buttons - stacked vertically */}
+          <div className="flex flex-col gap-2">
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center gap-1"
+              size="sm"
+              onClick={exportToXlsx}
+            >
+              <Download className="h-4 w-4" />
+              Unduh Publikasi
+            </Button>
             
             <Button
-              className="bg-[#3A786D] text-white flex-1 text-[14px] flex items-center justify-center"
+              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center"
               size="sm"
               onClick={() => setIsOpen(true)}
             >
-              Tambah
+              Tambah Publikasi
             </Button>
           </div>
           
@@ -489,18 +502,6 @@ export default function PublikasiPage() {
                     {sortOrder === "asc" ? "Asc" : "Desc"}
                   </Button>
                 </div>
-              </div>
-              
-              <div className="flex justify-between gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center justify-center flex-1"
-                  onClick={exportToXlsx}
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Unduh
-                </Button>
               </div>
             </div>
           )}

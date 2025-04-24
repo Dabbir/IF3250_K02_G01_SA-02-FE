@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Leaf, Pencil, Trash2, Loader2, Menu, ArrowUpDown, Filter } from "lucide-react";
+import { Search, Leaf, Pencil, Trash2, Loader2, Menu, ArrowUpDown, Filter, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -251,7 +251,7 @@ export default function StakeholderPage() {
         <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
             <CardHeader>
                 <div className="flex items-center space-x-2">
-                    <Leaf className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
+                    <Users className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
                     <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Stakeholder</h2>
                 </div>
             </CardHeader>
