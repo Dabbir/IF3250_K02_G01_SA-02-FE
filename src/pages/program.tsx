@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CardProgram from "@/components/ui/card-program";
-import { Database, Loader2 } from "lucide-react";
+import { Database, Loader2, Search, Download, Upload, ArrowUpDown, ArrowUp, ArrowDown} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, ArrowUpDown, Download, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,6 +38,13 @@ interface Program {
 interface userData {
     id: number;
     masjid_id: number;
+}
+
+interface SortControlsProps {
+    sortBy: keyof Program;
+    sortOrder: "ASC" | "DESC";
+    onSortByChange: (val: keyof Program) => void;
+    onSortOrderToggle: () => void;
 }
 
 const pilarOptions = [
@@ -73,6 +79,8 @@ const Program = () => {
     const [totalPrograms, setTotalPrograms] = useState(0);
     const [programList, setProgramList] = useState<Program[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [sortBy, setSortBy]       = useState<keyof Program>("created_at");
+    const [sortOrder, setSortOrder] = useState<"ASC"|"DESC">("DESC");
     const [user, setUser] = useState<userData>({
         id: 0,
         masjid_id: 0,
@@ -95,76 +103,46 @@ const Program = () => {
         updated_at: ""
     });
 
-    const fetchPrograms = async () => {
+    const fetchPrograms = async (
+        page: number,
+        searchTerm: string,
+        sortField: keyof Program,
+        order: "ASC" | "DESC"
+    ) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/api/program`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-    
-            const data = await response.json();
-            setProgramList(data || []);
-            setTotalPrograms(data.length || 0);
-        } catch (error) {
-            console.error("Error fetching all programs:", error);
-            toast.error("Gagal memuat semua program");
-        } finally {
-            setLoading(false);
-        }
-    };    
-
-    const fetchPaginatedPrograms = async (page: number) => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/api/program/paginated?page=${page}&limit=${ITEMS_PER_PAGE}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const data = await response.json();
-            setProgramList(data.data || []);
-            setTotalPrograms(data.total || 0);
-        } catch (error) {
-            console.error("Error fetching programs:", error);
+        const token = localStorage.getItem("token");
+        const qs = new URLSearchParams({
+            page:  page.toString(),
+            limit: ITEMS_PER_PAGE.toString(),
+            ...(searchTerm && { search: searchTerm }),
+            sortBy:    sortField,
+            sortOrder: order,
+        });
+        
+        const res  = await fetch(`${API_URL}/api/program?${qs}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const { data, total } = await res.json();
+        setProgramList(data);
+        setTotalPrograms(total);
+        } catch (e) {
+            console.error(e);
             toast.error("Gagal memuat data program");
         } finally {
             setLoading(false);
         }
-    };
+      };      
     
     useEffect(() => {
-        if (search.trim().length > 0) {
-            fetchPrograms();
-        } else {
-            fetchPaginatedPrograms(currentPage);
-        }
-    }, [currentPage, search]);
+        fetchPrograms(currentPage, search.trim(), sortBy, sortOrder);
+    }, [currentPage, search, sortBy, sortOrder]);
 
-    const filteredProgram = programList.filter((item) =>
-    item.nama_program.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const totalPages = Math.ceil(
-        (search ? filteredProgram.length : totalPrograms) / ITEMS_PER_PAGE
-    );
-
-    const displayedProgram = search
-        ? filteredProgram.slice(
-            (currentPage - 1) * ITEMS_PER_PAGE,
-            currentPage * ITEMS_PER_PAGE
-        )
-        : programList;
+    const totalPages = Math.ceil( totalPrograms / ITEMS_PER_PAGE);
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toISOString().split("T")[0]; // Keeps only 'YYYY-MM-DD'
+        return date.toISOString().split("T")[0];
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -302,7 +280,7 @@ const Program = () => {
                 toast.success("Program berhasil ditambahkan");
                 setIsOpen(false);
                 resetForm();
-                fetchPaginatedPrograms(currentPage);
+                fetchPrograms(currentPage, "", sortBy, sortOrder);
             } else {
                 throw new Error(data.message || "Terjadi kesalahan");
             }
@@ -405,7 +383,6 @@ const Program = () => {
             ["[CONTOH]"]
         ]);
         
-        // Create workbook and add all sheets
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Template Program");
         XLSX.utils.book_append_sheet(workbook, guidanceSheet, "(PENTING!) Panduan Unggah");
@@ -580,7 +557,7 @@ const Program = () => {
                         console.error("Error creating program:", error);
                     }
                 }
-                await fetchPaginatedPrograms(currentPage);
+                await fetchPrograms(currentPage, "", sortBy, sortOrder);
                 toast.success(`Berhasil menambahkan ${successCount} program dari ${transformedData.length} data`);
             } catch (error) {
                 console.error("Error processing upload:", error);
@@ -600,6 +577,48 @@ const Program = () => {
 
         reader.readAsArrayBuffer(file);
     };
+
+    const SortControls: React.FC<SortControlsProps> = ({
+        sortBy,
+        sortOrder,
+        onSortByChange,
+        onSortOrderToggle,
+      }) => (
+        <div className="flex items-center space-x-1">
+          <Select value={sortBy} onValueChange={(v) => onSortByChange(v as keyof Program)}>
+            <SelectTrigger className="h-8 px-2 flex items-center space-x-1 text-sm">
+              <ArrowUpDown className="w-4 h-4" />
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent className="w-32 py-1">
+              <SelectItem value="nama_program" className="px-2 py-1 text-sm">
+                Nama Program
+              </SelectItem>
+              <SelectItem value="waktu_mulai" className="px-2 py-1 text-sm">
+                Waktu Mulai
+              </SelectItem>
+              <SelectItem value="waktu_selesai" className="px-2 py-1 text-sm">
+                Waktu Selesai
+              </SelectItem>
+              <SelectItem value="created_at" className="px-2 py-1 text-sm">
+                Created At
+              </SelectItem>
+            </SelectContent>
+          </Select>
+      
+          <button
+            onClick={onSortOrderToggle}
+            className="h-8 w-8 flex items-center justify-center border rounded text-sm"
+            aria-label="Toggle sort order"
+          >
+            {sortOrder === "ASC" ? (
+              <ArrowUp className="w-4 h-4" />
+            ) : (
+              <ArrowDown className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+      );
 
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
@@ -621,6 +640,14 @@ const Program = () => {
                             className="pl-10"
                         />
                     </div>
+                    <SortControls
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortByChange={setSortBy}
+                        onSortOrderToggle={() =>
+                            setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"))
+                        }
+                    />
                     <div className="flex items-center gap-2">
                         <Button variant="outline" onClick={downloadTemplate} ><Download className="w-4 h-4 mr-2" /> Download Template</Button>
                         <Button variant="outline" onClick={handleButtonClick}><Upload className="w-4 h-4 mr-2" /> Upload Data</Button>
@@ -642,9 +669,9 @@ const Program = () => {
                     <div className="flex justify-center items-center h-64">
                         <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
                     </div>
-                ) : displayedProgram.length > 0 ? (
+                ) : programList.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {displayedProgram.map((program) => (
+                        {programList.map((program) => (
                             <CardProgram 
                                 key={program.id} 
                                 program={program} 
