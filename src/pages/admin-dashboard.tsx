@@ -473,6 +473,7 @@ export default function AdminDashboard() {
         year: "numeric" 
       });
     } catch (e) {
+      console.log("Error parsing date:", e);
       return dateString;
     }
   };
