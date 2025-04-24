@@ -17,6 +17,8 @@ import DetailProgram from "@/pages/detailprogram.tsx";
 import DetailPublikasi from "@/pages/detailpublikasi.tsx";
 import AdminDashboard from "@/pages/admin-dashboard.tsx";
 import ViewerAccessManagement from "@/pages/viewer-access.tsx";
+import Employee from "@/pages/employee.tsx";
+import DetailEmployee from "@/pages/detailemployee.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -73,7 +75,8 @@ const AppRoutes = () => (
         <Route path="/kegiatan/:id" element={<DetailKegiatan />} />
         <Route path="/stakeholder" element={<div className="p-4">Stakeholder Content</div>} />
         <Route path="/penerima-manfaat" element={<div className="p-4">Penerima Manfaat Content</div>} />
-        <Route path="/karyawan" element={<div className="p-4">Karyawan Content</div>} />
+        <Route path="/karyawan" element={<Employee/>} />
+        <Route path="/karyawan/:id" element={<DetailEmployee/>} />
         <Route path="/galeri" element={<div className="p-4">Galeri Content</div>} />
         <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
         <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
