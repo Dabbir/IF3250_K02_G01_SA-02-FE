@@ -29,7 +29,7 @@ interface Program {
     waktu_selesai: string;
     rancangan_anggaran: number;
     aktualisasi_anggaran: number;
-    status_program: "Berjalan" | "Selesai";
+    status_program: "Belum Mulai" | "Berjalan" | "Selesai";
     masjid_id: number;
     created_by: number;
     created_at: string;
@@ -88,7 +88,7 @@ const Program = () => {
         waktu_selesai: "",
         rancangan_anggaran: 0,
         aktualisasi_anggaran: 0,
-        status_program: "Berjalan",
+        status_program: "Belum Mulai",
         masjid_id: 0,
         created_by: 0,
         created_at:"",
@@ -208,7 +208,7 @@ const Program = () => {
             waktu_selesai: "",
             rancangan_anggaran: 0,
             aktualisasi_anggaran: 0,
-            status_program: "Berjalan",
+            status_program: "Belum Mulai",
             masjid_id: 0,
             created_by: 0,
             created_at:"",
@@ -390,7 +390,7 @@ const Program = () => {
             ["tanggal_selesai : Format YYYY-MM-DD"],
             ["rancangan_anggaran : ANGKA positif"],
             ["aktualisasi_anggaran : ANGKA positif"],
-            ["status_program : Berjalan/Selesai"],
+            ["status_program : Belum Mulai/Berjalan/Selesai"],
             [""],
             ["[2] Hanya melakukan perubahan di sheets 'Template Program' tanpa mengubah sheets lainnya (sheets '(PENTING!) Pilar Program' dan sheets '(PENTING!) Panduan Unggah')"],
             [""],
@@ -478,7 +478,7 @@ const Program = () => {
                         throw new Error("Aktualisasi anggaran harus berupa bilangan bulat positif.");
                     }
                     
-                if (row.status_program && row.status_program !== "Selesai" && row.status_program !== "Berjalan") {
+                if (row.status_program && row.status_program !== "Selesai" && row.status_program !== "Berjalan" && row.status_program !== "Belum Mulai") {
                     throw new Error("Status program tidak valid.");
                 }
 
@@ -554,8 +554,7 @@ const Program = () => {
                         waktu_selesai: parseExcelDate(row.tanggal_selesai),
                         rancangan_anggaran: Number(row.rancangan_anggaran) || 0,
                         aktualisasi_anggaran: Number(row.aktualisasi_anggaran) || 0,
-                        status_program:
-                        row.status_program === "Selesai" ? "Selesai" : "Berjalan",
+                        status_program: String(row.status_program) || "Belum Mulai",
                         masjid_id: user.masjid_id,
                         created_by: user.id,
                     };
@@ -804,6 +803,7 @@ const Program = () => {
                                             <SelectValue placeholder="Pilih status" />
                                         </SelectTrigger>
                                         <SelectContent>
+                                            <SelectItem value="Belum Mulai">Belum Mulai</SelectItem>
                                             <SelectItem value="Berjalan">Berjalan</SelectItem>
                                             <SelectItem value="Selesai">Selesai</SelectItem>
                                         </SelectContent>

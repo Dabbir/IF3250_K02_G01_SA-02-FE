@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-toastify";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -22,9 +23,9 @@ interface Program {
     waktu_selesai: string;
     rancangan_anggaran: number;
     aktualisasi_anggaran: number;
-    status_program: "Berjalan" | "Selesai";
+    status_program: "Belum Mulai" | "Berjalan" | "Selesai";
     masjid_id: number;
-    created_by: string;
+    created_by: number;
     created_at: string;
     updated_at: string;
 }
@@ -65,10 +66,41 @@ const DetailProgram = () => {
     const [kegiatanLoading, setKegiatanLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [program, setProgram] = useState<Program | null>(null);
     const [editedProgram, setEditedProgram] = useState<Program | null>(null);
     const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
     const navigate = useNavigate();
+    const [program, setProgram] = useState<Program>({
+        id: 0,
+        nama_program: "",
+        deskripsi_program: "",
+        pilar_program: [],
+        kriteria_program: "",
+        waktu_mulai: "",
+        waktu_selesai: "",
+        rancangan_anggaran: 0,
+        aktualisasi_anggaran: 0,
+        status_program: "Belum Mulai",
+        masjid_id: 0,
+        created_by: 0,
+        created_at:"",
+        updated_at: ""
+    });
+
+    const statusBg = {
+        "Berjalan":    "bg-[#ECA72C]",
+        "Selesai": "bg-[#3A786D]",
+        "Belum Mulai":   "bg-slate-500",
+    }[program.status_program] || "bg-gray-200";
+
+    const STATUS_BG_MAP: Record<Program["status_program"], string> = {
+        "Belum Mulai": "bg-slate-500",
+        Berjalan:      "bg-[#ECA72C]",
+        Selesai:       "bg-[#3A786D]",
+      };
+
+    const editedStatusBg = editedProgram
+    ? STATUS_BG_MAP[editedProgram.status_program]
+    : "";    
 
     useEffect(() => {
         const fetchProgram = async () => {
@@ -162,6 +194,32 @@ const DetailProgram = () => {
 
     const handleSaveClick = async () => {
         if (!editedProgram) return;
+
+        const now   = new Date();
+        const start = new Date(editedProgram.waktu_mulai);
+        const end   = new Date(editedProgram.waktu_selesai);
+
+        switch (editedProgram.status_program) {
+            case "Belum Mulai":
+            if (start <= now) {
+                toast.error("Status “Belum Mulai” hanya boleh jika tanggal mulai di masa depan.");
+                return;
+            }
+            break;
+            case "Berjalan":
+            if (start > now || end < now) {
+                toast.error("Status “Berjalan” hanya boleh jika sekarang berada di antara tanggal mulai dan selesai.");
+                return;
+            }
+            break;
+            case "Selesai":
+            if (end >= now) {
+                toast.error("Status “Selesai” hanya boleh jika tanggal selesai sudah terlewati.");
+                return;
+            }
+            break;
+        }
+
         setSaving(true);
         try {
             console.log("Edited Program", editedProgram);
@@ -232,9 +290,44 @@ const DetailProgram = () => {
                             <div className="flex justify-between align-baseline">
                                 <div className="space-y-4 align-bottom">
                                     <h1 className="text-3xl font-semibold">{String(program?.nama_program ?? "Program Masjid")}</h1>
-                                    <div className="mt-2 flex justify-center items-center font-semibold w-20 h-6 md:w-22 md:h-8 rounded-xl md:rounded-2xl text-sm md:text-base text-white bg-[#ECA72C]">
-                                            Berjalan
-                                    </div>
+                                    {isEditing ? (
+                                        <Select
+                                            value={editedProgram?.status_program}
+                                            onValueChange={(value) =>
+                                            handleChange("status_program", value as Program["status_program"])
+                                            }
+                                        >
+                                            <SelectTrigger
+                                            className={`
+                                                w-32 flex items-center justify-between
+                                                ${editedStatusBg} text-white
+                                            `}
+                                            >
+                                            <SelectValue placeholder="Pilih status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                            {(
+                                                ["Belum Mulai", "Berjalan", "Selesai"] as Program["status_program"][]
+                                            ).map((status) => (
+                                                <SelectItem
+                                                key={status}
+                                                value={status}
+                                                className={`
+                                                    flex items-center px-2 py-1text-white rounded
+                                                `}
+                                                >
+                                                {status}
+                                                </SelectItem>
+                                            ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <div
+                                        className={`mt-2 flex justify-center items-center font-semibold w-28 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${statusBg}`}
+                                        >
+                                        {program.status_program}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex justify-end mt-6">
                                     {!isEditing ? (

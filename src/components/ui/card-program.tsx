@@ -20,7 +20,7 @@ interface Program {
     waktu_selesai: string;
     rancangan_anggaran: number;
     aktualisasi_anggaran: number;
-    status_program: "Berjalan" | "Selesai";
+    status_program: "Belum Mulai" | "Berjalan" | "Selesai";
     masjid_id: number;
     created_by: number;
     created_at: string;
@@ -42,6 +42,12 @@ const formatDate = (dateString: string): string => {
 const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete }) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const statusBg = {
+        "Berjalan":    "bg-[#ECA72C]",
+        "Selesai": "bg-[#3A786D]",
+        "Belum Mulai":   "bg-slate-500",
+      }[program.status_program] || "bg-gray-200";
 
     const handleDelete = async () => {
         try {
@@ -83,10 +89,10 @@ const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete })
                                 <h3 className="cursor-default text-2xl font-semibold text-gray-800 dark:text-neutral-300 dark:hover:text-white truncate">
                                     {program.nama_program}
                                 </h3>
-                                <div className={`mt-2 flex justify-center items-center font-semibold w-20 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${
-                                    program.status_program === "Berjalan" ? "bg-[#ECA72C]" : "bg-[#3A786D]"
-                                }`}>
-                                    {program.status_program}
+                                <div
+                                className={`mt-2 flex justify-center items-center font-semibold w-28 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${statusBg}`}
+                                >
+                                {program.status_program}
                                 </div>
                         </div>
 
