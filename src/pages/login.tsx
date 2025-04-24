@@ -10,7 +10,6 @@ const API_URL = import.meta.env.VITE_HOST_NAME;
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isChecked, setIsChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   
@@ -23,11 +22,6 @@ const Login = () => {
   
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!isChecked) {
-      setError("Anda harus menyetujui syarat & ketentuan.");
-      return;
-    }
 
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -106,18 +100,6 @@ const Login = () => {
 
             {/* Checkbox Terms & Conditions */}
             <div className="mb-6">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  className="mr-2"
-                  checked={isChecked}
-                  onChange={(e) => setIsChecked(e.target.checked)}
-                />
-                <label htmlFor="terms" className="text-sm">
-                  Saya menyetujui Syarat & Ketentuan aplikasi
-                </label>
-              </div>
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
 
