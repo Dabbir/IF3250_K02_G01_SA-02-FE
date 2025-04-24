@@ -135,9 +135,18 @@ export default function DetailKegiatan() {
 
     const handleRemoveImage = (index: number) => {
         const imageToRemove = dokumentasiList[index]
+        const isNewUpload = imageToRemove.startsWith('blob:')
 
         setDokumentasiList((prev) => prev.filter((_, i) => i !== index))
-        setDeletedImages((prev) => [...prev, imageToRemove])
+        
+        if (!isNewUpload) {
+            setDeletedImages((prev) => [...prev, imageToRemove])
+        }
+        
+        if (isNewUpload) {
+            setImages((prev) => prev.filter((img) => img.url !== imageToRemove))
+        }
+        
         setPrevDokumentasi((prev) => prev.filter((_, i) => i !== index))
     }
 
@@ -561,7 +570,7 @@ export default function DetailKegiatan() {
                                     {(isEditing ? dokumentasiList : dokumentasiList).map((url, index) => (
                                         <div key={index} className="relative w-full">
                                             <img
-                                                src={url || "/placeholder.svg"}
+                                                src={url}
                                                 alt={`Dokumentasi ${index + 1}`}
                                                 className="w-full h-40 object-cover rounded-lg border"
                                             />
