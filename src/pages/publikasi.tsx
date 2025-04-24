@@ -30,7 +30,8 @@ interface Publikasi {
 }
 
 const formatRupiah = (value: number) => {
-  return `Rp ${value.toLocaleString("id-ID")}`;
+  const valueInt = Math.round(value);
+  return `Rp${valueInt.toLocaleString("id-ID", { maximumFractionDigits: 0 })}`;
 };
 
 const ITEMS_PER_PAGE = 20;
