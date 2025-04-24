@@ -268,7 +268,6 @@ export default function StakeholderPage() {
                                 className="pl-10 max-md:h-8 max-md:text-[12px]"
                             />
                         </div>
-                    </div>
 
                     <Popover open={filterOpen} onOpenChange={setFilterOpen}>
                         <PopoverTrigger asChild>
@@ -316,6 +315,7 @@ export default function StakeholderPage() {
                             </div>
                         </PopoverContent>
                     </Popover>
+                    </div>
 
                     <div className="flex items-center gap-2">
                         <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>

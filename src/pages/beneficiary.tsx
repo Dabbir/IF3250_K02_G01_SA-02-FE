@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Building, Pencil, Trash2, Loader2, Menu, Share2, Phone, Mail, HandCoins } from "lucide-react";
+import { Search, Building, Pencil, Trash2, Loader2, Menu, Share2, Phone, Mail, HandCoins, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -238,16 +238,21 @@ export default function BeneficiaryPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={exportXlsx}>
-              Unduh Data
+            {/* Export Button */}
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center gap-1"
+              onClick={exportXlsx}
+            >
+              <Download className="h-4 w-4" />
+              Unduh Publikasi
             </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" 
+
+            {/* Add Publication Button */}
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto"
               onClick={() => setIsOpen(true)}
             >
-              Tambah Penerima
+              Tambah Publikasi
             </Button>
           </div>
         </div>
