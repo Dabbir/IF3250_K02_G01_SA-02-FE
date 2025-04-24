@@ -87,12 +87,18 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick, onEdit, 
                 <span>Edit</span>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-red-600">
+            <DropdownMenuItem 
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }} 
+              className="cursor-pointer text-red-600"
+            >
               <div className='flex'>
                 <Trash2 className="h-4 w-4 mr-2 text-red-500" />
                 <span>Hapus</span>
               </div>
-            </DropdownMenuItem>
+          </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
