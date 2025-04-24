@@ -180,44 +180,68 @@ export default function DetailPublikasi() {
 
   const handleSaveClick = async () => {
     if (!editedPublikasi) return;
-
+  
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-
+  
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
+  
+      let formattedDate = editedPublikasi.tanggal;
+      if (editedPublikasi.tanggal) {
+        const date = new Date(editedPublikasi.tanggal);
+        if (!isNaN(date.getTime())) {
+          formattedDate = date.toISOString().split('T')[0];
+        }
+      }
+  
+      const prValue = typeof editedPublikasi.prValue === 'string' 
+        ? parseFloat(editedPublikasi.prValue) 
+        : editedPublikasi.prValue;
+  
+      const requestBody = {
+        judul_publikasi: editedPublikasi.judul || "",
+        media_publikasi: editedPublikasi.media || "Media Online",
+        nama_perusahaan_media: editedPublikasi.perusahaan || "",
+        tanggal_publikasi: formattedDate || "",
+        url_publikasi: editedPublikasi.link || "",
+        pr_value: prValue || 0,
+        nama_program: editedPublikasi.nama_program || "",
+        nama_aktivitas: editedPublikasi.nama_aktivitas || "",
+        tone: editedPublikasi.tone || "Netral"
+      };
+  
       const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          judul_publikasi: editedPublikasi.judul,
-          media_publikasi: editedPublikasi.media,
-          nama_perusahaan_media: editedPublikasi.perusahaan,
-          tanggal_publikasi: editedPublikasi.tanggal,
-          url_publikasi: editedPublikasi.link,
-          pr_value: editedPublikasi.prValue,
-          nama_program: editedPublikasi.nama_program,
-          nama_aktivitas: editedPublikasi.nama_aktivitas,
-          tone: editedPublikasi.tone,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to update publication: ${response.status}`);
+      const contentType = response.headers.get("content-type");
+      let errorDetails = "";
+      
+      if (contentType && contentType.includes("application/json")) {
+        const errorResponse = await response.json();
+        errorDetails = errorResponse.message || JSON.stringify(errorResponse);
+      } else {
+        errorDetails = await response.text();
       }
-
+  
+      if (!response.ok) {
+        throw new Error(`Failed to update publication: ${response.status} - ${errorDetails}`);
+      }
+  
       setPublikasi(editedPublikasi);
       setIsEditing(false);
       toast.success("Publikasi berhasil diperbarui!");
     } catch (error) {
       console.error("Error updating publication:", error);
-      toast.error("Gagal memperbarui publikasi!");
+      toast.error(`Gagal memperbarui publikasi: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setSaving(false);
     }
