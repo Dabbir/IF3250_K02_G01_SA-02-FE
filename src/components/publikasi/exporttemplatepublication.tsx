@@ -113,86 +113,121 @@ const ExportTemplatePublication = ({ isOpen, setIsOpen, onSuccess }: ExportTempl
 
     const generateExcel = () => {
         try {
-            const uploadData = [
-                ["judul", "media", "perusahaan", "tanggal", "link", "prValue", "nama_program", "nama_aktivitas", "tone"],
-                ["", "", "", "YYYY-MM-DD", "", 0, "", "", ""],
-            ];
-            const wsUpload = XLSX.utils.aoa_to_sheet(uploadData);
-
-            const mediaList = [["Media yang dapat digunakan"], ["Televisi"], ["Koran"], ["Radio"], ["Media Online"], ["Sosial Media"], ["Lainnya"]];
-            const wsMedia = XLSX.utils.aoa_to_sheet(mediaList);
-
-            const toneList = [["Tone yang dapat digunakan"], ["Positif"], ["Netral"], ["Negatif"]];
-            const wsTone = XLSX.utils.aoa_to_sheet(toneList);
-
-            const namaProgramList = programList.map((item: { 
-                id: string; 
-                nama_program: string 
-            }) => [item.nama_program]);
-
-            const wsProgram = XLSX.utils.aoa_to_sheet([["Nama Program"], ...namaProgramList]);
-
-            const namaAktivitasList = aktivitasList.map((item: { 
-                id: string; 
-                nama_aktivitas: string 
-            }) => [item.nama_aktivitas]);
-            
-            const wsActivity = XLSX.utils.aoa_to_sheet([["Nama Aktivitas"], ...namaAktivitasList]);
-
-            const columnWidths = [
-                { wch: 30 }, // Judul
-                { wch: 15 }, // Media
-                { wch: 20 }, // Perusahaan
-                { wch: 15 }, // Tanggal
-                { wch: 30 }, // Link
-                { wch: 15 }, // PR Value
-                { wch: 25 }, // Nama Program
-                { wch: 25 }, // Nama Aktivitas
-                { wch: 10 }  // Tone
-            ];
-
-            wsUpload['!cols'] = columnWidths;
-
-            wsUpload["!dataValidation"] = [
-                {
-                    sqref: "B2:B100",
-                    type: "list",
-                    formula1: "Info Media!A2:A7",
-                    showDropDown: true,
-                },
-                {
-                    sqref: "I2:I100",
-                    type: "list",
-                    formula1: "Info Tone!A2:A4",
-                    showDropDown: true,
-                },
-                {
-                    sqref: "G2:G100",
-                    type: "list",
-                    formula1: "Info Nama Program!A2:A" + (namaProgramList.length + 1),
-                    showDropDown: true,
-                },
-                {
-                    sqref: "H2:H100",
-                    type: "list",
-                    formula1: "Info Nama Aktivitas!A2:A" + (namaAktivitasList.length + 1),
-                    showDropDown: true,
-                },
-            ];
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, wsUpload, "Upload Data");
-            XLSX.utils.book_append_sheet(wb, wsMedia, "Info Media");
-            XLSX.utils.book_append_sheet(wb, wsTone, "Info Tone");
-            XLSX.utils.book_append_sheet(wb, wsProgram, "Info Nama Program");
-            XLSX.utils.book_append_sheet(wb, wsActivity, "Info Nama Aktivitas");
-
-            const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-            const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
-            saveAs(fileData, "Template_Publikasi.xlsx");
+          const worksheetData = [
+            ["judul_publikasi", "media_publikasi", "nama_perusahaan_media", "tanggal_publikasi", "url_publikasi", "pr_value", "nama_program", "nama_aktivitas", "tone"], 
+            ["(HAPUS TEKS INI) IKUTI PANDUAN PENGISIAN PADA SHEETS '(PENTING!) Panduan Unggah' DAN '(PENTING!) Media & Tone'"]
+          ];
+          
+          const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+          
+          const mediaList = [
+            ["Media yang dapat digunakan"], 
+            ["Televisi"], 
+            ["Koran"], 
+            ["Radio"], 
+            ["Media Online"], 
+            ["Sosial Media"], 
+            ["Lainnya"],
+            [""],
+            ["Tone yang dapat digunakan"], 
+            ["Positif"], 
+            ["Netral"], 
+            ["Negatif"]
+          ];
+          const wsMediaTone = XLSX.utils.aoa_to_sheet(mediaList);
+          
+          const namaProgramList = programList.map((item: any) => [item.nama_program]);
+          const wsProgram = XLSX.utils.aoa_to_sheet([["Nama Program yang tersedia"], ...namaProgramList]);
+          
+          const namaAktivitasList = aktivitasList.map((item: any) => [item.nama_aktivitas]);
+          const wsActivity = XLSX.utils.aoa_to_sheet([["Nama Aktivitas yang tersedia"], ...namaAktivitasList]);
+      
+          const columnWidths = [
+            { wch: 30 }, 
+            { wch: 15 }, 
+            { wch: 20 }, 
+            { wch: 15 }, 
+            { wch: 30 }, 
+            { wch: 15 }, 
+            { wch: 20 }, 
+            { wch: 20 }, 
+            { wch: 10 }  
+          ];
+          worksheet['!cols'] = columnWidths;
+          
+          const guidanceSheet = XLSX.utils.aoa_to_sheet([
+            ["Panduan Pengisian Data Publikasi dengan Mekanisme Unggah File"],
+            [""],
+            ["[1] Isi setiap kolom sesuai dengan kategori yang tertera. Perhatikan format pengisian data untuk setiap kolom sebagai berikut:"],
+            ["judul_publikasi : TEXT bebas (WAJIB)"],
+            ["media_publikasi : Pilih salah satu pilihan pada sheet '(PENTING!) Media & Tone' (WAJIB)"],
+            ["nama_perusahaan_media : TEXT bebas (WAJIB)"],
+            ["tanggal_publikasi : Format YYYY-MM-DD (WAJIB)"],
+            ["url_publikasi : TEXT url lengkap (WAJIB)"],
+            ["pr_value : ANGKA positif (WAJIB)"],
+            ["nama_program : TEXT bebas, disarankan menggunakan nama program yang tersedia"],
+            ["nama_aktivitas : TEXT bebas, disarankan menggunakan nama aktivitas yang tersedia"],
+            ["tone : Pilih salah satu pilihan pada sheet '(PENTING!) Media & Tone' (WAJIB)"],
+            [""],
+            ["[2] Hanya melakukan perubahan di sheet 'Upload Data' tanpa mengubah sheet lainnya"],
+            [""],
+            ["[3] Tidak diperbolehkan untuk memindah-mindahkan posisi sheet"],
+            [""],
+            ["[4] Simpan file dalam format xlsx atau xls dengan nama bebas"],
+            [""],
+            ["[5] Unggah file xlsx atau xls pada tombol 'Upload Data' di halaman Publikasi"],
+            [""],
+            ["[CONTOH]"]
+          ]);
+      
+          XLSX.utils.sheet_add_aoa(guidanceSheet, [
+            ["judul_publikasi", "media_publikasi", "nama_perusahaan_media", "tanggal_publikasi", "url_publikasi", "pr_value", "nama_program", "nama_aktivitas", "tone"],
+            ["Peluncuran Program Kebersihan Masjid", "Media Online", "Republika Online", "2025-03-15", "https://republika.co.id/berita/123456", "5000000", "Program Kebersihan", "Bersih-bersih Masjid", "Positif"],
+            ["Liputan Kegiatan Bakti Sosial", "Televisi", "Metro TV", "2025-03-20", "https://metrotv.com/watch/123456", "7500000", "Bakti Sosial", "Pembagian Sembako", "Positif"]
+          ], {origin: "A25"});
+      
+          worksheet["!dataValidation"] = [
+            {
+              sqref: "B2:B100",
+              type: "list",
+              formula1: "'(PENTING!) Media & Tone'!A2:A7", 
+              showDropDown: true,
+            },
+            {
+              sqref: "I2:I100",
+              type: "list",
+              formula1: "'(PENTING!) Media & Tone'!A10:A12", 
+              showDropDown: true,
+            },
+            {
+              sqref: "G2:G100",
+              type: "list",
+              formula1: "'(PENTING!) Nama Program'!A2:A" + (namaProgramList.length + 1), 
+              showDropDown: true,
+            },
+            {
+              sqref: "H2:H100",
+              type: "list",
+              formula1: "'(PENTING!) Nama Aktivitas'!A2:A" + (namaAktivitasList.length + 1), 
+              showDropDown: true,
+            },
+          ];
+          
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, worksheet, "Upload Data");
+          XLSX.utils.book_append_sheet(wb, guidanceSheet, "(PENTING!) Panduan Unggah");
+          XLSX.utils.book_append_sheet(wb, wsMediaTone, "(PENTING!) Media & Tone");
+          XLSX.utils.book_append_sheet(wb, wsProgram, "(PENTING!) Nama Program");
+          XLSX.utils.book_append_sheet(wb, wsActivity, "(PENTING!) Nama Aktivitas");
+          
+          const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+          const fileData = new Blob([excelBuffer], { type: "application/octet-stream" });
+          saveAs(fileData, "Template_Publikasi.xlsx");
+          
+          toast.success("Berhasil mengunduh template publikasi");
         } catch (error) {
-            console.error("Error saat mengambil data atau membuat file:", error);
-            toast.error("Gagal membuat template. Silakan coba lagi.");
+          console.error("Error saat mengambil data atau membuat file:", error);
+          toast.error("Gagal membuat template. Silakan coba lagi.");
         }
     };
 
