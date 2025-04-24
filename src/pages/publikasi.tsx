@@ -418,7 +418,7 @@ export default function PublikasiPage() {
   }
 
   return (
-    <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[70rem] p-2 md:p-6">
+    <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
       <CardHeader className="px-2 md:px-6">
         <div className="flex items-center space-x-2">
           <BookOpen className="h-6 w-6 text-slate-700" />

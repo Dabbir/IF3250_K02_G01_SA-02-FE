@@ -326,7 +326,7 @@ export default function KegiatanPage() {
   }
 
   return (
-    <Card className="mx-auto mt-6 max-w-[70rem] md:p-6">
+    <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <Leaf className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
