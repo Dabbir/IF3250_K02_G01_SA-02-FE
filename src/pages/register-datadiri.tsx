@@ -120,7 +120,6 @@ const RegisterDataDiri = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     masjid_id: masjidId,
-                    nama_masjid, 
                     alasan_bergabung,
                     short_bio
                 }),

@@ -22,7 +22,7 @@ interface Kegiatan {
     tanggal_mulai: string
     tanggal_selesai: string
     biaya_implementasi: number
-    status: "Unstarted" | "Ongoing" | "Finished"
+    status: "Belum Mulai" | "Berjalan" | "Selesai"
     created_at?: string
     updated_at?: string
 }
@@ -501,13 +501,13 @@ export default function DetailKegiatan() {
                                     <TableCell>
                                         {isEditing ? (
                                             <select
-                                                value={editedKegiatan?.status || "Unstarted"}
-                                                onChange={(e) => handleChange("status", e.target.value as "Unstarted" | "Ongoing" | "Finished")}
+                                                value={editedKegiatan?.status || "Belum Mulai"}
+                                                onChange={(e) => handleChange("status", e.target.value as "Belum Mulai" | "Berjalan" | "Finished")}
                                                 className="w-full p-2 border border-gray-300 rounded-md"
                                             >
-                                                <option value="Unstarted">Unstarted</option>
-                                                <option value="Ongoing">Ongoing</option>
-                                                <option value="Finished">Finished</option>
+                                                <option value="Belum Mulai">Belum Mulai</option>
+                                                <option value="Berjalan">Berjalan</option>
+                                                <option value="Selesai">Selesai</option>
                                             </select>
                                         ) : (
                                             kegiatan.status
