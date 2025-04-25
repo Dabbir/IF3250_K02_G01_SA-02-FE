@@ -350,9 +350,9 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                 <SelectValue placeholder="Pilih Status" />
                             </SelectTrigger>
                             <SelectContent className="w-full">
-                                <SelectItem value="Unstarted">Unstarted</SelectItem>
-                                <SelectItem value="Ongoing">Ongoing</SelectItem>
-                                <SelectItem value="Finished">Finished</SelectItem>
+                                <SelectItem value="Belum Mulai">Belum Mulai</SelectItem>
+                                <SelectItem value="Berjalan">Berjalan</SelectItem>
+                                <SelectItem value="Selesai">Selesai</SelectItem>
                             </SelectContent>
                         </Select>
                         {errors.status && <p className="text-red-500 text-[12px]">{errors.status}</p>}

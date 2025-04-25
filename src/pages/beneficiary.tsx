@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Building, Pencil, Trash2, Loader2, Menu, Share2, Plus, Phone, Mail, HandCoins } from "lucide-react";
+import { Search, Building, Pencil, Trash2, Loader2, Menu, Share2, Phone, Mail, HandCoins, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -217,7 +217,7 @@ export default function BeneficiaryPage() {
   }
 
   return (
-    <Card className="mx-auto mt-6 max-w-[70rem] md:p-6">
+    <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <HandCoins className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
@@ -237,17 +237,22 @@ export default function BeneficiaryPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={exportXlsx}>
-              Unduh Data
+          <div className="flex flex-col md:flex-row items-center gap-2">
+            {/* Export Button */}
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center gap-1"
+              onClick={exportXlsx}
+            >
+              <Download className="h-4 w-4" />
+              Unduh Publikasi
             </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" 
+
+            {/* Add Publication Button */}
+            <Button
+              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center"
               onClick={() => setIsOpen(true)}
             >
-              Tambah Penerima
+              Tambah Publikasi
             </Button>
           </div>
         </div>
@@ -275,7 +280,7 @@ export default function BeneficiaryPage() {
                 className="overflow-hidden hover:shadow-md transition cursor-pointer"
                 onClick={() => navigate(`/penerima-manfaat/${beneficiary.id}`)}
               >
-                <div className="h-36 bg-slate-100 flex items-center justify-center overflow-hidden">
+                <div className="w-full h-50 bg-slate-100 overflow-hidden">
                   {beneficiary.foto ? (
                     <img 
                       src={beneficiary.foto} 
@@ -283,7 +288,9 @@ export default function BeneficiaryPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <Building className="h-16 w-16 text-slate-300" />
+                    <div className="h-full w-full flex items-center justify-center">
+                      <Building className="h-16 w-16 text-slate-300" />
+                    </div>
                   )}
                 </div>
                 <CardContent className="p-4">
@@ -296,13 +303,17 @@ export default function BeneficiaryPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => e.stopPropagation()}
+                          className="h-8 w-8 relative z-10"
+                          onClick={(e) => {e.stopPropagation();}}
                         >
                           <Menu className="h-4 w-4" />
                         </Button>
                       </SheetTrigger>
-                      <SheetContent side="bottom" className="h-auto max-h-[30vh] rounded-t-xl">
+                      <SheetContent 
+                        side="bottom" 
+                        className="h-auto max-h-[30vh] rounded-t-xl"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="grid gap-4 py-4">
                           <Button
                             className="w-full flex justify-start items-center space-x-2 bg-transparent text-blue-500 hover:bg-blue-50"
@@ -357,32 +368,6 @@ export default function BeneficiaryPage() {
                         <span className="truncate">{beneficiary.email}</span>
                       </div>
                     )}
-                  </div>
-                  
-                  <div className="flex justify-end gap-2 mt-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="hover:bg-blue-50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/penerima-manfaat/${beneficiary.id}`);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 text-blue-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="hover:bg-red-50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBeneficiary(beneficiary);
-                        setShowDeleteDialog(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
