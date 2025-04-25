@@ -326,7 +326,7 @@ export default function KegiatanPage() {
   }
 
   return (
-    <Card className="mx-auto mt-6 max-w-[70rem] md:p-6">
+    <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <Leaf className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
@@ -395,22 +395,22 @@ export default function KegiatanPage() {
             </Popover>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-2">
             {/* Export Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center gap-1"
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center gap-1"
               onClick={exportXlsx}
             >
               <Download className="h-4 w-4" />
-              Unduh Publikasi
+              Unduh Kegiatan
             </Button>
 
-            {/* Add Publication Button */}
+            {/* Add Kegiatan Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto"
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center"
               onClick={() => setIsOpen(true)}
             >
-              Tambah Publikasi
+              Tambah Kegiatan
             </Button>
           </div>
         </div>
