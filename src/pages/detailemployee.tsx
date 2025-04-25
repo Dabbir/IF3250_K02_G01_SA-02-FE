@@ -34,6 +34,7 @@ const DetailEmployee = () => {
     const [editedEmployee, setEditedEmployee] = useState<Employee | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [deletePhoto, setDeletePhoto] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -96,7 +97,7 @@ const DetailEmployee = () => {
             const maxSize = 5 * 1024 * 1024;
 
             if (file.size > maxSize) {
-                toast.error("Ukuran foto tidak boleh lebih dari 2MB");
+                toast.error("Ukuran foto tidak boleh lebih dari 5MB");
                 return;
             }
             setSelectedFile(file);
@@ -111,6 +112,15 @@ const DetailEmployee = () => {
 
     }
 
+    const handleDeletePhoto = () => {
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setDeletePhoto(true);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
     const handleChange = (field: keyof Employee, value: string | number) => {
         setEditedEmployee((prev) => ({ ...prev!, [field]: value }));
     };
@@ -122,6 +132,7 @@ const DetailEmployee = () => {
     const handleCancel = () => {
         setEditedEmployee(employee);
         setIsEditing(false);
+        setDeletePhoto(false);
     };
 
     const handleSaveClick = async () => {
@@ -129,9 +140,6 @@ const DetailEmployee = () => {
         setSaving(true);
         
         try {
-            console.log("Edited Employee", editedEmployee);
-            console.log("Stringify", JSON.stringify(editedEmployee))
-
             const token = localStorage.getItem("token");
 
             const formData = new FormData();
@@ -142,9 +150,18 @@ const DetailEmployee = () => {
             if (editedEmployee.alamat) {
                 formData.append("alamat", editedEmployee.alamat);
             }
+
+            if (deletePhoto) {
+                formData.append("deletePhoto", "true");
+            }
             
             if (selectedFile) {
                 formData.append("foto", selectedFile);
+            }
+
+            console.log("Isi FormData:");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
             }
 
             const response = await fetch(`${API_URL}/api/employee/${id}`, {
@@ -195,6 +212,7 @@ const DetailEmployee = () => {
             setSelectedFile(null);
             setPreviewUrl(null);
             setIsEditing(false);
+            setDeletePhoto(false);
             toast.success("Data karyawan berhasil diperbarui");
         } catch (error) {
             console.error("Error updating employee:", error);
@@ -276,7 +294,7 @@ const DetailEmployee = () => {
 
                         <div className="flex justify-center items-center">
                             {isEditing ? (
-                                <div className="flex flex-col gap-4 mt-2">
+                                <div className="flex flex-col gap-4 mt-2 items-center">
                                     {previewUrl ? (
                                         <div className="relative">
                                             <img 
@@ -301,27 +319,60 @@ const DetailEmployee = () => {
                                                 </Button>
                                             </div>
                                         </div>
-                                    ) : (
-                                        employee.foto && (
-                                            <div>
-                                                <Avatar className="h-32 w-32">
-                                                    <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover'/>
-                                                    <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
-                                                        {getInitials(employee.nama)}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                            </div>
-                                        )
-                                    )}
+                                    ) : !deletePhoto && employee.foto ? (
+                                        <Avatar className="h-32 w-32">
+                                            <AvatarImage
+                                            src={employee.foto}
+                                            alt={employee.nama}
+                                            className="w-full h-full object-cover"
+                                            />
+                                            <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
+                                            {getInitials(employee.nama)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    ) : null}
 
-                                    <Input
-                                        id="foto"
-                                        name="foto"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                        ref={fileInputRef}
-                                    />
+                                    <div className="flex flex-col items-center gap-2">
+                                        {!previewUrl && !deletePhoto && employee.foto && (
+                                        <Button
+                                            size="sm"
+                                            type="button"
+                                            className="w-[110px] h-[32px] bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={handleDeletePhoto}
+                                        >
+                                            Hapus Foto
+                                        </Button>
+                                        )}
+
+                                        <Button
+                                            size="sm"
+                                            type="button"
+                                            className="w-[110px] h-[32px] bg-blue-600 hover:bg-blue-700 text-white"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            >
+                                            Pilih Foto
+                                        </Button>
+
+                                        <input
+                                            id="foto"
+                                            name="foto"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                        />
+
+                                        {selectedFile && (
+                                            <span className="text-sm text-gray-600">{selectedFile.name}</span>
+                                        )}
+
+                                        {deletePhoto && (
+                                            <div className="text-sm text-red-500 text-center">
+                                                Foto akan dihapus setelah menyimpan perubahan
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="shrink-0">
