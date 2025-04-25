@@ -21,6 +21,7 @@ import StakeholderPage from "@/pages/stakeholders.tsx";
 import Beneficiary from "@/pages/beneficiary";
 import DetailBeneficiary from "@/pages/detailbeneficiary";
 import DetailStakeholder from "@/pages/detailstakeholder.tsx";
+import GalleryPage from "@/pages/galeri.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -78,7 +79,7 @@ const AppRoutes = () => (
         <Route path="/stakeholder" element={<StakeholderPage />} />
         <Route path="/stakeholder/:id" element={<DetailStakeholder />} />
         <Route path="/karyawan" element={<div className="p-4">Karyawan Content</div>} />
-        <Route path="/galeri" element={<div className="p-4">Galeri Content</div>} />
+        <Route path="/galeri" element={<GalleryPage />} />
         <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
         <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
