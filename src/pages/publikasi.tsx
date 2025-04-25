@@ -5,16 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil, Loader2, Menu } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil, Loader2, Menu, Filter } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import ChooseMethodPublication from "@/components/publikasi/choosemethodpublication";
 import * as XLSX from "xlsx";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
-const SORTABLE_COLUMNS = ["judul", "tanggal", "link", "prValue", "tone"];
+const TONE_OPTIONS = ["Positif", "Netral", "Negatif"];
 
 interface Publikasi {
   id: string;
@@ -31,7 +35,7 @@ interface Publikasi {
 
 const formatRupiah = (value: number) => {
   const valueInt = Math.round(value);
-  return `Rp${valueInt.toLocaleString("id-ID", { maximumFractionDigits: 0 })}`;
+  return valueInt.toLocaleString("id-ID", { maximumFractionDigits: 0 });
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -42,9 +46,28 @@ export default function PublikasiPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
   const [publikasiList, setPublikasiList] = useState<Publikasi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  
+  // Sort states
   const [sortColumn, setSortColumn] = useState<string>("tanggal");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Filter states
+  const [toneFilters, setToneFilters] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     refreshData();
@@ -56,6 +79,7 @@ export default function PublikasiPage() {
       setPublikasiList(publikasiData);
     } catch (error) {
       console.error("Error refreshing data:", error);
+      setError(error instanceof Error ? error.message : "An error occurred");
       toast.error("Gagal memuat data, silakan coba lagi");
     }
   };
@@ -69,20 +93,45 @@ export default function PublikasiPage() {
     }
   };
 
-  const filteredPublikasi = publikasiList.filter((item) =>
-    item.judul?.toLowerCase().includes(search.toLowerCase()) ?? false
-  );
+  const toggleToneFilter = (tone: string) => {
+    setToneFilters(prev => {
+      if (prev.includes(tone)) {
+        return prev.filter(t => t !== tone);
+      } else {
+        return [...prev, tone];
+      }
+    });
+    setCurrentPage(1);
+  };
 
+  // Filter publikasi by search and tone
+  const filteredPublikasi = publikasiList.filter((item) => {
+    const matchesSearch = item.judul?.toLowerCase().includes(search.toLowerCase()) ?? false;
+    const matchesTone = toneFilters.length === 0 || toneFilters.includes(item.tone);
+    
+    return matchesSearch && matchesTone;
+  });
+
+  // Sort the filtered publikasi
   const sortedPublikasi = [...filteredPublikasi].sort((a, b) => {
     let valueA = a[sortColumn as keyof Publikasi];
     let valueB = b[sortColumn as keyof Publikasi];
 
+    // Handle date sorting
+    if (sortColumn === "tanggal") {
+      const dateA = new Date(valueA as string).getTime();
+      const dateB = new Date(valueB as string).getTime();
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    }
+
+    // Handle string sorting
     if (typeof valueA === "string" && typeof valueB === "string") {
       return sortOrder === "asc"
         ? valueA.localeCompare(valueB)
         : valueB.localeCompare(valueA);
     }
 
+    // Handle number sorting
     if (typeof valueA === "number" && typeof valueB === "number") {
       return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
     }
@@ -90,6 +139,7 @@ export default function PublikasiPage() {
     return 0;
   });
 
+  // Apply pagination to sorted publikasi
   const displayedPublikasi = sortedPublikasi.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -98,11 +148,25 @@ export default function PublikasiPage() {
   const totalPages = Math.ceil(filteredPublikasi.length / ITEMS_PER_PAGE);
 
   const shareToWhatsApp = (item: Publikasi) => {
-    const message = `Cek publikasi ini: ${item.judul} - ${item.link}`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    event?.stopPropagation();
+    
+    const formattedDate = formatDisplayDate(item.tanggal);
+    
+    const shareText = `*Detail Publikasi*\n\n` +
+      `*Judul:* ${item.judul}\n` +
+      `*Media:* ${item.media}\n` +
+      `*Perusahaan:* ${item.perusahaan}\n` +
+      `*Tanggal:* ${formattedDate}\n` +
+      `*PR Value:* Rp${formatRupiah(item.prValue)}\n` +
+      `*Tone:* ${item.tone}\n` +
+      `*Link:* ${item.link}\n` +
+      (item.nama_program ? `*Program:* ${item.nama_program}\n` : '') +
+      (item.nama_aktivitas ? `*Aktivitas:* ${item.nama_aktivitas}\n` : '');
 
-    window.open(whatsappUrl, "_blank");
+    const encodedText = encodeURIComponent(shareText);
+    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+
+    window.open(whatsappUrl, '_blank');
   };
 
   const exportToXlsx = () => {
@@ -210,8 +274,6 @@ export default function PublikasiPage() {
     }
   };
 
-  const [loading, setLoading] = useState(false);
-
   const fetchPublikasi = async (): Promise<Publikasi[]> => {
     try {
       setLoading(true);
@@ -260,15 +322,14 @@ export default function PublikasiPage() {
       }
     } catch (error) {
       console.error("Error fetching publikasi:", error);
-      toast.error("Gagal memuat data publikasi");
-      return [];
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
   // Format date for display
-  const formatDate = (dateString: string) => {
+  const formatDisplayDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -317,99 +378,33 @@ export default function PublikasiPage() {
     }
   };
 
-  const handleViewDetail = (id: string) => {
-    navigate(`/publikasi/${id}`);
-  };
-
-  const getToneColor = (tone: string) => {
+  const getToneBadge = (tone: string) => {
+    let color = "";
+  
     switch (tone) {
       case "Positif":
-        return "bg-green-100 text-green-800";
+        color = "bg-emerald-50 text-emerald-700 border border-emerald-200";
+        break;
       case "Netral":
-        return "bg-blue-100 text-blue-800";
+        color = "bg-blue-50 text-blue-700 border border-blue-200";
+        break;
       case "Negatif":
-        return "bg-red-100 text-red-800";
+        color = "bg-red-50 text-red-700 border border-red-200";
+        break;
       default:
-        return "bg-gray-100 text-gray-800";
+        color = "bg-gray-100 text-gray-700 border border-gray-200";
     }
+  
+    return (
+      <Badge className={`px-3 py-1 text-xs font-medium rounded-md min-w-[90px] text-center ${color}`}>
+        {tone}
+      </Badge>
+    );
   };
-
-  // Mobile card component for each publikasi item
-  const PublikasiCard = ({ item }: { item: Publikasi }) => (
-    <div 
-      className="border rounded-lg p-4 mb-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => handleViewDetail(item.id)}
-    >
-      <h3 className="font-medium text-base mb-2 line-clamp-2">{item.judul}</h3>
-      
-      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-sm mb-3">
-        <div className="text-gray-500">Tanggal:</div>
-        <div>{formatDate(item.tanggal)}</div>
-        
-        <div className="text-gray-500">PR Value:</div>
-        <div>{formatRupiah(item.prValue)}</div>
-        
-        <div className="text-gray-500">Tone:</div>
-        <div>
-          <span className={`px-2 py-1 rounded-full text-xs ${getToneColor(item.tone)}`}>
-            {item.tone}
-          </span>
-        </div>
-      </div>
-      
-      <div className="flex items-center space-x-1 mb-2">
-        <a
-          href={item.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline text-sm truncate max-w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {item.link.length > 40 ? `${item.link.substring(0, 40)}...` : item.link}
-        </a>
-      </div>
-      
-      <div className="flex justify-end gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hover:bg-blue-100 transition cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/publikasi/${item.id}`);
-          }}
-        >
-          <Pencil className="h-4 w-4 text-blue-500" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hover:bg-green-100 transition cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            shareToWhatsApp(item);
-          }}
-        >
-          <Share2 className="w-4 h-4 text-green-500" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hover:bg-red-100 transition cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeletePublikasi(item.id);
-          }}
-        >
-          <Trash2 className="w-4 h-4 text-red-600" />
-        </Button>
-      </div>
-    </div>
-  );
 
   if (loading) {
     return (
-      <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[70rem] p-3 md:p-6">
+      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
         <CardContent className="flex justify-center items-center h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
         </CardContent>
@@ -417,136 +412,107 @@ export default function PublikasiPage() {
     );
   }
 
+  if (error) {
+    return (
+      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
+        <CardContent className="flex justify-center items-center h-[400px]">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-[#3A786D] text-white"
+            >
+              Try Again
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
-      <CardHeader className="px-2 md:px-6">
+      <CardHeader>
         <div className="flex items-center space-x-2">
-          <BookOpen className="h-6 w-6 text-slate-700" />
-          <h2 className="text-xl font-medium text-[var(--blue)]">Publikasi</h2>
+          <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
+          <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Publikasi</h2>
         </div>
       </CardHeader>
-      <CardContent className="px-2 md:px-6">
-        {/* Mobile View: Search and Filter */}
-        <div className="md:hidden mb-4">
-          <div className="relative w-full mb-2">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          {/* Mobile Filter button */}
-          <div className="flex mb-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full flex items-center justify-center" 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-            >
-              <Menu className="w-4 h-4 mr-2" /> 
-              Filter
-            </Button>
-          </div>
-          
-          {/* Mobile Export and Add buttons - stacked vertically */}
-          <div className="flex flex-col gap-2">
-            <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center gap-1"
-              size="sm"
-              onClick={exportToXlsx}
-            >
-              <Download className="h-4 w-4" />
-              Unduh Publikasi
-            </Button>
-            
-            <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center"
-              size="sm"
-              onClick={() => setIsOpen(true)}
-            >
-              Tambah Publikasi
-            </Button>
-          </div>
-          
-          {isFilterOpen && (
-            <div className="mt-2 p-3 border rounded-md bg-white shadow-sm space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-xs font-medium mb-1">Sort By</p>
-                  <Select value={sortColumn} onValueChange={setSortColumn}>
-                    <SelectTrigger className="text-sm h-8">
-                      <SelectValue placeholder="Pilih Kolom" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SORTABLE_COLUMNS.map((col) => (
-                        <SelectItem key={col} value={col}>
-                          {col.charAt(0).toUpperCase() + col.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+      <CardContent>
+        <div className="flex flex-col md:flex-row justify-between mb-4 gap-4 md:items-center">
+          <div className="flex flex-col md:flex-row w-full md:w-2/3 gap-2">
+            <div className="relative flex-grow items-top">
+              <Search className="absolute left-3 top-2.5 w-3 h-3 md:w-4 md:h-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder="Search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 max-md:h-8 max-md:text-[12px]"
+              />
+            </div>
+
+            <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="max-md:h-8 flex items-center gap-1 md:w-auto">
+                  <Filter className="h-3 w-3 md:-h4 md:w-4" />
+                  <span className="max-md:text-[12px]">Filter Tone</span>
+                  {toneFilters.length > 0 && (
+                    <Badge className="ml-1 bg-[#3A786D]">{toneFilters.length}</Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-4">
+                <h4 className="text-[12px] font-medium mb-3">Filter berdasarkan tone</h4>
+                <div className="space-y-2">
+                  {TONE_OPTIONS.map((tone) => (
+                    <div key={tone} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`tone-${tone}`}
+                        checked={toneFilters.includes(tone)}
+                        onCheckedChange={() => toggleToneFilter(tone)}
+                      />
+                      <Label htmlFor={`tone-${tone}`} className="flex items-center">
+                        {getToneBadge(tone)}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
-                
-                <div>
-                  <p className="text-xs font-medium mb-1">Order</p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleSortChange(sortColumn)}
-                    className="flex items-center justify-center w-full h-8 text-sm"
+                <div className="flex justify-between mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setToneFilters([])}
+                    disabled={toneFilters.length === 0}
+                    className="text-[12px]"
                   >
-                    <ArrowUpDown className="w-4 h-4 mr-1" /> 
-                    {sortOrder === "asc" ? "Asc" : "Desc"}
+                    Clear All
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setFilterOpen(false)}
+                    className="bg-[#3A786D] text-[12px]"
+                  >
+                    Apply
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop View: Search and Filter */}
-        <div className="hidden md:flex justify-between mb-4 items-center">
-          <div className="flex relative w-3/5 gap-2">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-            <Select value={sortColumn} onValueChange={setSortColumn}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Pilih Kolom" />
-              </SelectTrigger>
-              <SelectContent>
-                {SORTABLE_COLUMNS.map((col) => (
-                  <SelectItem key={col} value={col}>
-                    {col.charAt(0).toUpperCase() + col.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" onClick={() => handleSortChange(sortColumn)} className="flex items-center">
-              <ArrowUpDown className="w-4 h-4 mr-2" /> Sort
-              {sortOrder === "asc" ? " Ascending" : " Descending"}
-            </Button>
+              </PopoverContent>
+            </Popover>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex flex-col md:flex-row items-center gap-2">
+            {/* Export Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center gap-1"
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center gap-1"
               onClick={exportToXlsx}
             >
               <Download className="h-4 w-4" />
               Unduh Publikasi
             </Button>
 
+            {/* Add Publikasi Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto"
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center"
               onClick={() => setIsOpen(true)}
             >
               Tambah Publikasi
@@ -554,43 +520,200 @@ export default function PublikasiPage() {
           </div>
         </div>
 
-        {/* Mobile Cards View */}
-        <div className="md:hidden">
-          {displayedPublikasi.length > 0 ? (
-            displayedPublikasi.map((item, index) => (
-              <PublikasiCard key={index} item={item} />
-            ))
-          ) : (
-            <div className="text-center py-8 border rounded-lg">
-              Tidak ada data publikasi
-            </div>
-          )}
-        </div>
+        {filteredPublikasi.length === 0 ? (
+          <div className="text-center py-8 border rounded-lg">
+            <p className="text-gray-500">No publications found</p>
+            {(toneFilters.length > 0 || search) && (
+              <div className="mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setToneFilters([]);
+                    setSearch("");
+                  }}
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : isMobileView ? (
+          // Mobile card view
+          <div className="space-y-4">
+            {displayedPublikasi.map((item) => (
+              <div
+                key={item.id}
+                className="border rounded-lg p-4 space-y-3 bg-white"
+                onClick={() => navigate(`/publikasi/${item.id}`)}
+              >
+                <div className="flex justify-between items-start">
+                  <h3 className="font-medium text-[var(--blue)] truncate pr-2">{item.judul}</h3>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Menu className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-auto max-h-[30vh] rounded-t-xl">
+                      <div className="grid gap-4 py-4">
+                        <Button
+                          className="w-full flex justify-start items-center space-x-2 bg-transparent text-blue-500 hover:bg-blue-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/publikasi/${item.id}`);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          <span>Edit Publikasi</span>
+                        </Button>
+                        <Button
+                          className="w-full flex justify-start items-center space-x-2 bg-transparent text-green-500 hover:bg-green-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareToWhatsApp(item);
+                          }}
+                        >
+                          <Share2 className="h-4 w-4" />
+                          <span>Bagikan ke WhatsApp</span>
+                        </Button>
+                        <Button
+                          className="w-full flex justify-start items-center space-x-2 bg-transparent text-red-500 hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePublikasi(item.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Hapus Publikasi</span>
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden md:block border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-100">
-                <TableHead>Judul Publikasi</TableHead>
-                <TableHead>Tanggal Publikasi</TableHead>
-                <TableHead>Link Publikasi</TableHead>
-                <TableHead>PR Value</TableHead>
-                <TableHead>Tone</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedPublikasi.length > 0 ? (
-                displayedPublikasi.map((item, index) => (
-                  <TableRow
-                    key={index}
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleViewDetail(item.id)}
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="space-y-4">
+                    <div>
+                      <span className="block text-gray-500 text-xs">Tanggal</span>
+                      <span className="text-[12px]">
+                        {formatDisplayDate(item.tanggal)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500 text-xs">Tone</span>
+                      {getToneBadge(item.tone)}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <span className="block text-gray-500 text-xs">Media</span>
+                      <span className="text-[12px]">
+                        {item.media}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500 text-xs">PR Value</span>
+                      <span className="font-medium">Rp{formatRupiah(item.prValue)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="block text-gray-500 text-xs">Link</span>
+                  <a 
+                    href={item.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline text-sm truncate block"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <TableCell className="font-medium">{item.judul}</TableCell>
-                    <TableCell>{formatDate(item.tanggal)}</TableCell>
-                    <TableCell>
+                    {item.link.length > 40 ? `${item.link.substring(0, 40)}...` : item.link}
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Desktop table view
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead 
+                    className="pl-7 w-[200px] cursor-pointer"
+                    onClick={() => handleSortChange("judul")}
+                  >
+                    <div className="flex items-center">
+                      Judul Publikasi
+                      {sortColumn === "judul" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[120px] text-center cursor-pointer"
+                    onClick={() => handleSortChange("tanggal")}
+                  >
+                    <div className="flex items-center justify-center">
+                      Tanggal
+                      {sortColumn === "tanggal" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[180px]">
+                    <div className="flex items-center">
+                      Link
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[150px] cursor-pointer"
+                    onClick={() => handleSortChange("prValue")}
+                  >
+                    <div className="flex items-center">
+                      PR Value
+                      {sortColumn === "prValue" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[120px] text-center cursor-pointer"
+                    onClick={() => handleSortChange("tone")}
+                  >
+                    <div className="flex items-center justify-center">
+                      Tone
+                      {sortColumn === "tone" && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[140px] text-right pr-9">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {displayedPublikasi.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    className="border-b cursor-pointer hover:bg-gray-100 transition"
+                    onClick={() => {
+                      navigate(`/publikasi/${item.id}`);
+                    }}
+                  >
+                    <TableCell className="pl-7 truncate max-w-[180px]">{item.judul}</TableCell>
+                    <TableCell className="text-center truncate">
+                      {formatDisplayDate(item.tanggal)}
+                    </TableCell>
+                    <TableCell className="truncate max-w-[180px]">
                       <a
                         href={item.link}
                         target="_blank"
@@ -601,25 +724,26 @@ export default function PublikasiPage() {
                         {item.link.length > 25 ? `${item.link.substring(0, 25)}...` : item.link}
                       </a>
                     </TableCell>
-                    <TableCell>{formatRupiah(item.prValue)}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getToneColor(item.tone)}`}>
-                        {item.tone}
-                      </span>
+                    <TableCell className="text-left truncate max-w-[180px]">
+                      Rp{formatRupiah(item.prValue)}
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2">
+                    <TableCell className="text-center">
+                      {getToneBadge(item.tone)}
+                    </TableCell>
+                    <TableCell className="pr-5 text-right">
+                      <div className="flex gap-2 justify-end">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="hover:bg-blue-100 transition cursor-pointer"
+                          className="hover:bg-gray-200 transition cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/publikasi/${item.id}`);
                           }}
                         >
-                          <Pencil className="h-4 w-4 text-blue-500 hover:text-blue-700" />
+                          <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
                         </Button>
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -631,6 +755,7 @@ export default function PublikasiPage() {
                         >
                           <Share2 className="w-4 h-4 text-green-500 hover:text-green-700" />
                         </Button>
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -645,99 +770,42 @@ export default function PublikasiPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
-                    Tidak ada data publikasi
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
-        {totalPages > 0 && (
-          <div className="flex justify-center mt-4 space-x-2 flex-wrap">
+        {totalPages > 1 && (
+          <div className="flex flex-wrap justify-center mt-4 gap-2">
             <Button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(currentPage - 1)}
-              className="bg-[#3A786D] text-white"
-              size="sm"
+              className="bg-[#3A786D] text-white h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm"
             >
               Previous
             </Button>
-            
-            {totalPages <= 5 ? (
-              // Show all pages if there are 5 or fewer
-              Array.from({ length: totalPages }, (_, i) => (
-                <Button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`${
-                    currentPage === i + 1 
-                      ? "bg-[#3A786D] text-white" 
-                      : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${currentPage === i + 1
+                  ? "bg-[#3A786D] text-white"
+                  : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
                   }`}
-                  size="sm"
-                >
-                  {i + 1}
-                </Button>
-              ))
-            ) : (
-              // Show first, current, and last page with ellipsis when appropriate
-              <>
-                <Button
-                  onClick={() => setCurrentPage(1)}
-                  className={`${
-                    currentPage === 1 
-                      ? "bg-[#3A786D] text-white" 
-                      : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                  }`}
-                  size="sm"
-                >
-                  1
-                </Button>
-                
-                {currentPage > 3 && <span className="px-2">...</span>}
-                
-                {currentPage > 2 && currentPage < totalPages && (
-                  <Button
-                    onClick={() => setCurrentPage(currentPage)}
-                    className="bg-[#3A786D] text-white"
-                    size="sm"
-                  >
-                    {currentPage}
-                  </Button>
-                )}
-                
-                {currentPage < totalPages - 2 && <span className="px-2">...</span>}
-                
-                <Button
-                  onClick={() => setCurrentPage(totalPages)}
-                  className={`${
-                    currentPage === totalPages 
-                      ? "bg-[#3A786D] text-white" 
-                      : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                  }`}
-                  size="sm"
-                >
-                  {totalPages}
-                </Button>
-              </>
-            )}
-            
+              >
+                {i + 1}
+              </Button>
+            ))}
             <Button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(currentPage + 1)}
-              className="bg-[#3A786D] text-white"
-              size="sm"
+              className="bg-[#3A786D] text-white h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm"
             >
               Next
             </Button>
           </div>
         )}
-
         <ChooseMethodPublication
           isOpen={isOpen}
           setIsOpen={setIsOpen}
