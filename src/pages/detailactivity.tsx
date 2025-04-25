@@ -142,20 +142,20 @@ export default function DetailKegiatan() {
                     setEditedKegiatan(data.activity)
                     setDokumentasiList(getDokumentasiList(data.activity?.dokumentasi))
 
-                    if (data.activity.stakeholders) {
-                        setStakeholders(data.activity.stakeholders)
+                    if (data.activity.stakeholder) {
+                        setStakeholders(data.activity.stakeholder)
                     } else {
                         setStakeholders([])
                     }
 
-                    if (data.activity.penerima_manfaat) {
-                        setBeneficiaries(data.activity.penerima_manfaat)
+                    if (data.activity.beneficiary) {
+                        setBeneficiaries(data.activity.beneficiary)
                     } else {
                         setBeneficiaries([])
                     }
 
-                    if (data.activity.karyawan) {
-                        setKaryawan(data.activity.karyawan)
+                    if (data.activity.employee) {
+                        setKaryawan(data.activity.employee)
                     } else {
                         setKaryawan([])
                     }
@@ -949,7 +949,6 @@ export default function DetailKegiatan() {
                                 stakeholders.map((stakeholder, index) => (
                                     <div key={`stakeholder-${index}`} className="mb-6 p-4 border rounded-lg bg-gray-50">
                                         <div className="flex justify-between items-center mb-3">
-                                            <h3 className="font-medium">Stakeholder {index + 1}</h3>
                                             {isEditing && (
                                                 <Button
                                                     variant="ghost"
@@ -1045,7 +1044,6 @@ export default function DetailKegiatan() {
                                 beneficiaries.map((beneficiary, index) => (
                                     <div key={`beneficiary-${index}`} className="mb-6 p-4 border rounded-lg bg-gray-50">
                                         <div className="flex justify-between items-center mb-3">
-                                            <h3 className="font-medium">Penerima Manfaat {index + 1}</h3>
                                             {isEditing && (
                                                 <Button
                                                     variant="ghost"
@@ -1143,7 +1141,6 @@ export default function DetailKegiatan() {
                                 karyawan.map((employee, index) => (
                                     <div key={`employee-${index}`} className="mb-6 p-4 border rounded-lg bg-gray-50">
                                         <div className="flex justify-between items-center mb-3">
-                                            <h3 className="font-medium">Karyawan {index + 1}</h3>
                                             {isEditing && (
                                                 <Button
                                                     variant="ghost"
