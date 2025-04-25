@@ -26,11 +26,10 @@ interface EmployeeCardProps {
   employee: Employee;
   masjidNameParam: string;
   onClick: () => void;
-  onEdit: () => void;
   onDelete: () => void;
 }
 
-const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, onClick, onEdit, onDelete}) => {
+const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, onClick, onDelete}) => {
   const getInitials = (name: string) => {
       return name
         .split(' ')
@@ -58,7 +57,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, 
 
         <div className="grow overflow-hidden">
             <h1 className="text-base font-medium text-gray-800 dark:text-neutral-200 truncate">
-              {truncateText(employee.nama, 20)}
+              {truncateText(employee.nama, 15)}
             </h1>
             <div className="flex items-center space-x-2">
                 <Building className='h-3 w-3 flex-shrink-0 text-gray-500'/>
@@ -75,33 +74,16 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, 
         </div>
       </div>
       <div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-2 rounded-full hover:bg-gray-100">
-              <MoreVertical className='h-5 w-5 text-gray-500' />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
-              <div className='flex'>
-                <Pencil className="h-4 w-4 mr-2 text-blue-500" />
-                <span>Edit</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }} 
-              className="cursor-pointer text-red-600"
-            >
-              <div className='flex'>
-                <Trash2 className="h-4 w-4 mr-2 text-red-500" />
-                <span>Hapus</span>
-              </div>
-          </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1 rounded hover:bg-red-50 transition-colors"
+          aria-label="Hapus karyawan"
+        >
+          <Trash2 className="w-3 h-3 text-red-600 hover:text-red-800 cursor-pointer" />
+        </button>
       </div>
     </div>
   );
