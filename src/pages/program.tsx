@@ -213,7 +213,7 @@ const Program = () => {
   }
 
   return (
-    <Card className="mx-auto mt-6 max-w-[70rem] p-6">
+    <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <Database className="h-6 w-6 text-slate-700" />
