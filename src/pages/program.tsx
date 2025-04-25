@@ -45,6 +45,7 @@ interface Program {
   rancangan_anggaran: number;
   aktualisasi_anggaran: number;
   status_program: "Belum Mulai" | "Berjalan" | "Selesai";
+  cover_image: string | null; 
   masjid_id: number;
   created_by: number;
   created_at: string;
@@ -58,7 +59,7 @@ interface SortControlsProps {
   onSortOrderToggle: () => void;
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 15;
 
 const Program = () => {
   const [search, setSearch] = useState("");
@@ -233,7 +234,6 @@ const Program = () => {
             />
           </div>
 
-          {/* Filter Status (styled like Sort) */}
           <Popover open={filterOpen} onOpenChange={setFilterOpen}>
             <PopoverTrigger asChild>
               <button
@@ -284,7 +284,6 @@ const Program = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Sort */}
           <SortControls
             sortBy={sortBy}
             sortOrder={sortOrder}
@@ -294,7 +293,6 @@ const Program = () => {
             }
           />
 
-          {/* “Tambah Program” + Import/XLSX chooser */}
           <div className="ml-auto flex items-center gap-2">
             <Button
               className="bg-[#3A786D] text-white h-8 px-4 text-sm"

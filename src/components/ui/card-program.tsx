@@ -21,6 +21,7 @@ interface Program {
     rancangan_anggaran: number;
     aktualisasi_anggaran: number;
     status_program: "Belum Mulai" | "Berjalan" | "Selesai";
+    cover_image: string | null;
     masjid_id: number;
     created_by: number;
     created_at: string;
@@ -47,7 +48,9 @@ const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete })
         "Berjalan":    "bg-[#ECA72C]",
         "Selesai": "bg-[#3A786D]",
         "Belum Mulai":   "bg-slate-500",
-      }[program.status_program] || "bg-gray-200";
+    }[program.status_program] || "bg-gray-200";
+
+    const imgSrc = program.cover_image || "/logo-white.svg";
 
     const handleDelete = async () => {
         try {
@@ -75,7 +78,7 @@ const CardProgram: React.FC<CardProgramProps> = ({ program, onClick, onDelete })
                     
                     <div className="h-52 flex justify-center items-center">
                         <img
-                            src="/logo-white.svg"
+                            src={imgSrc}
                             className="w-full h-full object-cover rounded-t-xl"
                             alt="Program Logo"
                         />

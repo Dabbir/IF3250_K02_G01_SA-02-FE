@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Building, Pencil, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Building, Pencil, Save, Loader2, X, Upload } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@/components/ui/table";
@@ -24,6 +24,7 @@ interface Program {
     rancangan_anggaran: number;
     aktualisasi_anggaran: number;
     status_program: "Belum Mulai" | "Berjalan" | "Selesai";
+    cover_image: string | null;
     masjid_id: number;
     created_by: number;
     created_at: string;
@@ -68,6 +69,8 @@ const DetailProgram = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedProgram, setEditedProgram] = useState<Program | null>(null);
     const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
+    const [coverFile,    setCoverFile]    = useState<File|null>(null);
+    const [coverPreview, setCoverPreview] = useState<string|null>(null);
     const navigate = useNavigate();
     const [program, setProgram] = useState<Program>({
         id: 0,
@@ -80,6 +83,7 @@ const DetailProgram = () => {
         rancangan_anggaran: 0,
         aktualisasi_anggaran: 0,
         status_program: "Belum Mulai",
+        cover_image: null,
         masjid_id: 0,
         created_by: 0,
         created_at:"",
@@ -120,6 +124,7 @@ const DetailProgram = () => {
         
                 setProgram(data);
                 setEditedProgram(data);
+                setCoverPreview(data.cover_image);
             } catch (error) {
                 console.error("Error fetching program:", error);
                 toast.error("Gagal memuat data program");
@@ -131,7 +136,6 @@ const DetailProgram = () => {
         fetchProgram();
     }, [id]);
 
-    // Fetch kegiatan data
     useEffect(() => {
         const fetchKegiatan = async () => {
             setKegiatanLoading(true);
@@ -222,17 +226,37 @@ const DetailProgram = () => {
 
         setSaving(true);
         try {
-            console.log("Edited Program", editedProgram);
-            console.log("Stringify", JSON.stringify(editedProgram))
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token")!;
+            const headers: Record<string,string> = { Authorization: `Bearer ${token}` };
+            let body: string | FormData;
+
+            if (coverFile) {
+                const form = new FormData();
+                form.append("cover_image", coverFile);
+
+                for (const key of Object.keys(editedProgram) as (keyof Program)[]) {
+                    if (key === "cover_image") continue;
+
+                    if (key === "pilar_program") {
+                    form.append(key, JSON.stringify(editedProgram.pilar_program));
+                    } else {
+                    form.append(key, String((editedProgram as any)[key]));
+                    }
+                }
+
+                body = form;
+            } else {
+                if (coverPreview === null) {
+                    (editedProgram as any).cover_image = "";
+                    }
+                headers["Content-Type"] = "application/json";
+                body = JSON.stringify(editedProgram);
+            }
 
             const response = await fetch(`${API_URL}/api/program/${id}`, {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(editedProgram),
+            method: "PUT",
+            headers,
+            body,
             });
 
             if (!response.ok) {
@@ -240,14 +264,7 @@ const DetailProgram = () => {
                 throw new Error(errorData.message || "Gagal memperbarui program");
             }
 
-            const updatedData = await fetch(`${API_URL}/api/program/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const data = await updatedData.json();
+            const data = await response.json();
             console.log(data);
 
             setProgram(data);
@@ -258,6 +275,14 @@ const DetailProgram = () => {
             toast.error("Gagal memperbarui program");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        if (file) {
+            setCoverFile(file);
+            setCoverPreview(URL.createObjectURL(file));
         }
     };
 
@@ -292,6 +317,44 @@ const DetailProgram = () => {
                 ) : (
                     <>
                         <div className='space-y-2'>
+                            <div className="mb-4">
+                                {coverPreview ? (
+                                    <div className="relative w-full h-96 overflow-hidden rounded-lg">
+                                    <img
+                                        src={coverPreview}
+                                        className="w-full h-full object-cover"
+                                        alt="Cover"
+                                    />
+                                    {isEditing && (
+                                        <button
+                                        className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
+                                        onClick={() => {
+                                            setCoverFile(null);
+                                            setCoverPreview(null);
+                                        }}
+                                        >
+                                        <X className="w-4 h-4 text-red-500" />
+                                        </button>
+                                    )}
+                                    </div>
+                                ) : (
+                                    isEditing && (
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center">
+                                        <input
+                                        id="cover-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleCoverChange}
+                                        className="hidden"
+                                        />
+                                        <label htmlFor="cover-upload" className="flex items-center gap-2 text-[var(--green)] cursor-pointer">
+                                        <Upload className="w-5 h-5" />
+                                        <span>Unggah Cover Program</span>
+                                        </label>
+                                    </div>
+                                    )
+                                )}
+                            </div>
                             <div className="flex justify-between align-baseline">
                                 <div className="space-y-4 align-bottom">
                                     <h1 className="text-3xl font-semibold">{String(program?.nama_program ?? "Program Masjid")}</h1>

@@ -1,12 +1,24 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
@@ -57,6 +69,10 @@ export default function AddProgramDialog({
     status_program: "Belum Mulai" as Status,
   });
 
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof data, string>>>({});
+
   const reset = () => {
     setData({
       nama_program: "",
@@ -69,6 +85,8 @@ export default function AddProgramDialog({
       aktualisasi_anggaran: 0,
       status_program: "Belum Mulai",
     });
+    setCoverFile(null);
+    setCoverPreview(null);
     setIsSaving(false);
   };
 
@@ -76,26 +94,88 @@ export default function AddProgramDialog({
     if (!isOpen) reset();
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!data.waktu_mulai || !data.waktu_selesai) return;
+  
+    const now   = new Date();
+    const start = new Date(data.waktu_mulai);
+    const end   = new Date(data.waktu_selesai);
+  
+    let autoStatus: Status;
+    if (start > now) {
+      autoStatus = "Belum Mulai";
+    } else if (end < now) {
+      autoStatus = "Selesai";
+    } else {
+      autoStatus = "Berjalan";
+    }
+  
+    setData((d) => ({ ...d, status_program: autoStatus }));
+  }, [data.waktu_mulai, data.waktu_selesai]);
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setCoverFile(file);
+    if (file) {
+      setCoverPreview(URL.createObjectURL(file));
+    } else {
+      setCoverPreview(null);
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!data.nama_program || !data.waktu_mulai || !data.waktu_selesai) {
-      toast.error("Nama, tanggal mulai, dan tanggal selesai wajib diisi.");
+    const newErrors: typeof errors = {};
+    if (!data.nama_program.trim()) newErrors.nama_program = "Nama wajib diisi.";
+    if (!data.waktu_mulai) newErrors.waktu_mulai = "Tanggal mulai wajib diisi.";
+    if (!data.waktu_selesai) newErrors.waktu_selesai = "Tanggal selesai wajib diisi.";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length) return;
+
+    const now = new Date();
+    const start = new Date(data.waktu_mulai);
+    const end = new Date(data.waktu_selesai);
+
+    if (data.status_program === "Belum Mulai" && start <= now) {
+      setErrors({ waktu_mulai: "Mulai harus di masa depan untuk status Belum Mulai." });
       return;
     }
+
+    if (data.status_program === "Berjalan" && (start > now || end < now)) {
+      setErrors({ waktu_selesai: "Sekarang harus di antara tanggal mulai dan selesai." });
+      return;
+    }
+
+    if (data.status_program === "Selesai" && end >= now) {
+      setErrors({ waktu_selesai: "Selesai harus di masa lalu untuk status Selesai." });
+      return;
+    }
+
     setIsSaving(true);
+
     try {
       const token = localStorage.getItem("token");
-      const payload = {
-        ...data,
-        pilar_program: data.pilar_program,
-      };
+      const form = new FormData();
+      form.append("nama_program", data.nama_program);
+      form.append("deskripsi_program", data.deskripsi_program);
+      form.append("pilar_program", JSON.stringify(data.pilar_program));
+      form.append("kriteria_program", data.kriteria_program);
+      form.append("waktu_mulai", data.waktu_mulai);
+      form.append("waktu_selesai", data.waktu_selesai);
+      form.append("rancangan_anggaran", String(data.rancangan_anggaran));
+      form.append("aktualisasi_anggaran", String(data.aktualisasi_anggaran));
+      form.append("status_program", data.status_program);
+      if (coverFile) {
+        form.append("cover_image", coverFile);
+      }
+
       const res = await fetch(`${API_URL}/api/program`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: form,
       });
+
       if (!res.ok) throw new Error("Gagal menyimpan program");
       toast.success("Program berhasil ditambahkan");
       setIsOpen(false);
@@ -116,18 +196,27 @@ export default function AddProgramDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label>Nama Program<span className="text-red-500">*</span></Label>
+            <Label>
+              Nama Program<span className="text-red-500">*</span>
+            </Label>
             <Input
               value={data.nama_program}
-              onChange={(e) => setData(d => ({ ...d, nama_program: e.target.value }))}
+              onChange={(e) =>
+                setData((d) => ({ ...d, nama_program: e.target.value }))
+              }
             />
+            {errors.nama_program && (
+              <p className="text-red-500 text-sm">{errors.nama_program}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
             <Label>Deskripsi Program</Label>
             <Textarea
               value={data.deskripsi_program}
-              onChange={(e) => setData(d => ({ ...d, deskripsi_program: e.target.value }))}
+              onChange={(e) =>
+                setData((d) => ({ ...d, deskripsi_program: e.target.value }))
+              }
               className="min-h-[100px]"
             />
           </div>
@@ -135,18 +224,18 @@ export default function AddProgramDialog({
           <div className="grid gap-2">
             <Label>Pilar Program</Label>
             <div className="max-h-48 overflow-y-auto border rounded-md p-3 grid grid-cols-1 gap-1">
-              {pilarOptions.map(p => (
+              {pilarOptions.map((p) => (
                 <label key={p} className="inline-flex items-center space-x-2">
                   <Checkbox
                     checked={data.pilar_program.includes(p)}
                     onCheckedChange={(chk) => {
-                      setData(d => {
+                      setData((d) => {
                         const arr = d.pilar_program;
                         return {
                           ...d,
                           pilar_program: chk
                             ? [...arr, p]
-                            : arr.filter(x => x !== p),
+                            : arr.filter((x) => x !== p),
                         };
                       });
                     }}
@@ -161,26 +250,42 @@ export default function AddProgramDialog({
             <Label>Kriteria Program</Label>
             <Input
               value={data.kriteria_program}
-              onChange={(e) => setData(d => ({ ...d, kriteria_program: e.target.value }))}
+              onChange={(e) =>
+                setData((d) => ({ ...d, kriteria_program: e.target.value }))
+              }
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label>Tanggal Mulai<span className="text-red-500">*</span></Label>
+              <Label>
+                Tanggal Mulai<span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="date"
                 value={data.waktu_mulai}
-                onChange={(e) => setData(d => ({ ...d, waktu_mulai: e.target.value }))}
+                onChange={(e) =>
+                  setData((d) => ({ ...d, waktu_mulai: e.target.value }))
+                }
               />
+              {errors.waktu_mulai && (
+              <p className="text-red-500 text-sm">{errors.waktu_mulai}</p>
+            )}
             </div>
             <div className="grid gap-2">
-              <Label>Tanggal Selesai<span className="text-red-500">*</span></Label>
+              <Label>
+                Tanggal Selesai<span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="date"
                 value={data.waktu_selesai}
-                onChange={(e) => setData(d => ({ ...d, waktu_selesai: e.target.value }))}
+                onChange={(e) =>
+                  setData((d) => ({ ...d, waktu_selesai: e.target.value }))
+                }
               />
+              {errors.waktu_selesai && (
+              <p className="text-red-500 text-sm">{errors.waktu_selesai}</p>
+            )}
             </div>
           </div>
 
@@ -190,7 +295,12 @@ export default function AddProgramDialog({
               <Input
                 type="number"
                 value={data.rancangan_anggaran}
-                onChange={(e) => setData(d => ({ ...d, rancangan_anggaran: +e.target.value }))}
+                onChange={(e) =>
+                  setData((d) => ({
+                    ...d,
+                    rancangan_anggaran: +e.target.value,
+                  }))
+                }
               />
             </div>
             <div className="grid gap-2">
@@ -198,8 +308,53 @@ export default function AddProgramDialog({
               <Input
                 type="number"
                 value={data.aktualisasi_anggaran}
-                onChange={(e) => setData(d => ({ ...d, aktualisasi_anggaran: +e.target.value }))}
+                onChange={(e) =>
+                  setData((d) => ({
+                    ...d,
+                    aktualisasi_anggaran: +e.target.value,
+                  }))
+                }
               />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="cover_image">Cover Image</Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center hover:bg-gray-50">
+              <input
+                id="cover_image"
+                type="file"
+                accept="image/*"
+                onChange={handleCoverChange}
+                className="hidden"
+              />
+              <label
+                htmlFor="cover_image"
+                className="text-[var(--green)] flex items-center space-x-2 cursor-pointer hover:text-[var(--blue)]"
+              >
+                <Upload className="h-5 w-5" />
+                <span>
+                  {coverPreview ? "Ganti Cover" : "Unggah Cover Program"}
+                </span>
+              </label>
+              {coverPreview && (
+                <div className="mt-4 relative">
+                  <img
+                    src={coverPreview}
+                    alt="Cover Preview"
+                    className="w-48 h-32 object-cover rounded-md"
+                  />
+                  <button
+                    className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"
+                    onClick={() => {
+                      setCoverFile(null);
+                      setCoverPreview(null);
+                    }}
+                  >
+                    <X className="h-4 w-4 text-red-500" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -207,7 +362,9 @@ export default function AddProgramDialog({
             <Label>Status Program</Label>
             <Select
               value={data.status_program}
-              onValueChange={(val) => setData(d => ({ ...d, status_program: val as Status }))}
+              onValueChange={(val) =>
+                setData((d) => ({ ...d, status_program: val as Status }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih Status" />
