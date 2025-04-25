@@ -8,7 +8,7 @@ import EmployeeCard from "@/components/karyawan/employeecard";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search, Users, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -99,6 +99,9 @@ const Employee = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [sortColumn, setSortColumn] = useState<string>("created_at");
     const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [user, setUser] = useState<userData>({
         id: 0,
@@ -424,6 +427,33 @@ const Employee = () => {
         }
     };
 
+    const handleDeleteEmployee = async () => {
+        if (!deletingEmployee) return;
+        
+        setIsDeleting(true);
+        try {
+        const success = await handleDelete(deletingEmployee.id);
+        
+        if (success) {
+            toast.success(`Karyawan "${deletingEmployee.nama}" berhasil dihapus`);
+        } else {
+            toast.error("Gagal menghapus karyawan");
+        }
+        } catch (error) {
+            console.error("Error deleting employee:", error);
+            toast.error("Terjadi kesalahan saat menghapus karyawan");
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteDialog(false);
+            setDeletingEmployee(null);
+        }
+    };
+
+    const confirmDeleteEmployee = (employee: Employee) => {
+        setDeletingEmployee(employee);
+        setShowDeleteDialog(true);
+    };
+
     const handleSubmit = async () => {
         if (!newEmployee.nama || !newEmployee.email || !newEmployee.telepon) {
             toast.error("Nama, email, dan telepon wajib diisi");
@@ -498,16 +528,6 @@ const Employee = () => {
         }
     };
 
-    const handleSortChange = (column: string) => {
-        if (sortColumn === column) {
-            setSortOrder(sortOrder === "ASC" ? "DESC" : "ASC");
-        } else {
-            setSortColumn(column);
-            setSortOrder("DESC");
-        }
-        setCurrentPage(1);
-    };
-
     return (
         <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
             <CardHeader>
@@ -567,8 +587,7 @@ const Employee = () => {
                                 employee={employee}
                                 masjidNameParam={employee.masjid_nama || masjidName}
                                 onClick={() => navigate(`/karyawan/${employee.id}`)}
-                                onEdit={() => handleEdit(employee)}
-                                onDelete={() => handleDelete(employee.id)}
+                                onDelete={() => confirmDeleteEmployee(employee)}
                             />
                         </div>
                         ))}
@@ -717,6 +736,40 @@ const Employee = () => {
                                 ) : (
                                 isEditMode ? "Perbarui" : "Simpan"
                                 )}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Hapus Karyawan</DialogTitle>
+                            <DialogDescription>
+                                Apakah Anda yakin ingin menghapus karyawan "{deletingEmployee?.nama}"? Tindakan ini tidak dapat dibatalkan.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="flex justify-between sm:justify-between mt-4">
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => setShowDeleteDialog(false)}
+                                disabled={isDeleting}
+                            >
+                                Batal
+                            </Button>
+                            <Button 
+                                type="button" 
+                                variant="destructive" 
+                                onClick={handleDeleteEmployee}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
+                                    Menghapus...
+                                </>
+                                ) : "Hapus Karyawan"}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
