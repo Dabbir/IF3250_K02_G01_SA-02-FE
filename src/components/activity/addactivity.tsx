@@ -22,8 +22,8 @@ interface Kegiatan {
     biayaImplementasi: string;
     deskripsi: string;
     stakeholders: Stakeholder[];
-    penerimaBeneficiaries: Beneficiary[];
-    karyawans: Karyawan[];
+    beneficiary: Beneficiary[];
+    employee: Employee[];
 }
 
 type ImageData = {
@@ -37,21 +37,21 @@ interface AddKegiatanDialogProps {
 }
 
 interface Stakeholder {
-    nama: string
+    nama_stakeholder: string
     jenis: "Individu" | "Organisasi" | "Perusahaan"
     telepon: string
     email: string
 }
 
 interface Beneficiary {
-    namaInstansi: string
-    namaKontak: string
+    nama_instansi: string
+    nama_kontak: string
     telepon: string
     email: string
     alamat: string
 }
 
-interface Karyawan {
+interface Employee {
     nama: string
     email: string
     telepon: string
@@ -71,9 +71,9 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         status: "",
         biayaImplementasi: "",
         deskripsi: "",
-        stakeholders: [{ nama: "", jenis: "Individu", telepon: "", email: "" }],
-        penerimaBeneficiaries: [{ namaInstansi: "", namaKontak: "", telepon: "", email: "", alamat: "" }],
-        karyawans: [{ nama: "", email: "", telepon: "", alamat: "" }],
+        stakeholders: [],
+        beneficiary: [],
+        employee: [],
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -87,16 +87,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     const addStakeholder = () => {
         setNewKegiatan({
             ...newKegiatan,
-            stakeholders: [...newKegiatan.stakeholders, { nama: "", jenis: "Individu", telepon: "", email: "" }],
+            stakeholders: [...newKegiatan.stakeholders, { nama_stakeholder: "", jenis: "Individu", telepon: "", email: "" }],
         })
     }
 
     const addBeneficiary = () => {
         setNewKegiatan({
             ...newKegiatan,
-            penerimaBeneficiaries: [
-                ...newKegiatan.penerimaBeneficiaries,
-                { namaInstansi: "", namaKontak: "", telepon: "", email: "", alamat: "" },
+            beneficiary: [
+                ...newKegiatan.beneficiary,
+                { nama_instansi: "", nama_kontak: "", telepon: "", email: "", alamat: "" },
             ],
         })
     }
@@ -104,7 +104,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     const addKaryawan = () => {
         setNewKegiatan({
             ...newKegiatan,
-            karyawans: [...newKegiatan.karyawans, { nama: "", email: "", telepon: "", alamat: "" }],
+            employee: [...newKegiatan.employee, { nama: "", email: "", telepon: "", alamat: "" }],
         })
     }
 
@@ -115,35 +115,35 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     }
 
     const handleBeneficiaryChange = (index: number, field: keyof Beneficiary, value: string) => {
-        const updatedBeneficiaries = [...newKegiatan.penerimaBeneficiaries]
+        const updatedBeneficiaries = [...newKegiatan.beneficiary]
         updatedBeneficiaries[index] = { ...updatedBeneficiaries[index], [field]: value }
-        setNewKegiatan({ ...newKegiatan, penerimaBeneficiaries: updatedBeneficiaries })
+        setNewKegiatan({ ...newKegiatan, beneficiary: updatedBeneficiaries })
     }
 
-    const handleKaryawanChange = (index: number, field: keyof Karyawan, value: string) => {
-        const updatedKaryawans = [...newKegiatan.karyawans]
-        updatedKaryawans[index] = { ...updatedKaryawans[index], [field]: value }
-        setNewKegiatan({ ...newKegiatan, karyawans: updatedKaryawans })
+    const handleKaryawanChange = (index: number, field: keyof Employee, value: string) => {
+        const updatedemployee = [...newKegiatan.employee]
+        updatedemployee[index] = { ...updatedemployee[index], [field]: value }
+        setNewKegiatan({ ...newKegiatan, employee: updatedemployee })
     }
 
     const removeStakeholder = (index: number) => {
-        if (newKegiatan.stakeholders.length > 1) {
+        if (newKegiatan.stakeholders.length > 0) {
             const updatedStakeholders = newKegiatan.stakeholders.filter((_, i) => i !== index)
             setNewKegiatan({ ...newKegiatan, stakeholders: updatedStakeholders })
         }
     }
 
     const removeBeneficiary = (index: number) => {
-        if (newKegiatan.penerimaBeneficiaries.length > 1) {
-            const updatedBeneficiaries = newKegiatan.penerimaBeneficiaries.filter((_, i) => i !== index)
-            setNewKegiatan({ ...newKegiatan, penerimaBeneficiaries: updatedBeneficiaries })
+        if (newKegiatan.beneficiary.length > 0) {
+            const updatedBeneficiaries = newKegiatan.beneficiary.filter((_, i) => i !== index)
+            setNewKegiatan({ ...newKegiatan, beneficiary: updatedBeneficiaries })
         }
     }
 
     const removeKaryawan = (index: number) => {
-        if (newKegiatan.karyawans.length > 1) {
-            const updatedKaryawans = newKegiatan.karyawans.filter((_, i) => i !== index)
-            setNewKegiatan({ ...newKegiatan, karyawans: updatedKaryawans })
+        if (newKegiatan.employee.length > 0) {
+            const updatedemployee = newKegiatan.employee.filter((_, i) => i !== index)
+            setNewKegiatan({ ...newKegiatan, employee: updatedemployee })
         }
     }
 
@@ -256,28 +256,97 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             firstErrorField = firstErrorField || "deskripsi"
         }
 
-        // Validate stakeholders
-        const invalidStakeholders = newKegiatan.stakeholders.some((s) => !s.nama || !s.telepon || !s.email)
-        if (invalidStakeholders) {
-            newErrors.stakeholders = "Semua field stakeholder harus diisi!"
-            firstErrorField = firstErrorField || "stakeholders"
-        }
+        // Validate each stakeholder individually
+        newKegiatan.stakeholders.forEach((stakeholder, index) => {
+            if (!stakeholder.nama_stakeholder) {
+                newErrors[`stakeholder_${index}_nama`] = "Nama stakeholder wajib diisi!"
+                firstErrorField = firstErrorField || `stakeholder_${index}_nama`
+            }
 
-        // Validate beneficiaries
-        const invalidBeneficiaries = newKegiatan.penerimaBeneficiaries.some(
-            (b) => !b.namaInstansi || !b.namaKontak || !b.telepon || !b.email || !b.alamat,
-        )
-        if (invalidBeneficiaries) {
-            newErrors.beneficiaries = "Semua field penerima manfaat harus diisi!"
-            firstErrorField = firstErrorField || "beneficiaries"
-        }
+            if (!stakeholder.jenis) {
+                newErrors[`stakeholder_${index}_jenis`] = "Jenis stakeholder wajib diisi!"
+                firstErrorField = firstErrorField || `stakeholder_${index}_jenis`
+            }
 
-        // Validate karyawan
-        const invalidKaryawans = newKegiatan.karyawans.some((k) => !k.nama || !k.email || !k.telepon || !k.alamat)
-        if (invalidKaryawans) {
-            newErrors.karyawans = "Semua field karyawan harus diisi!"
-            firstErrorField = firstErrorField || "karyawans"
-        }
+            if (!stakeholder.telepon || stakeholder.telepon.trim() === "") {
+                newErrors[`stakeholder_${index}_telepon`] = "Telepon wajib diisi!"
+                firstErrorField = firstErrorField || `stakeholder_${index}_telepon`
+            } else if (!/^\d{10,15}$/.test(stakeholder.telepon)) {
+                newErrors[`stakeholder_${index}_telepon`] = "Nomor telepon harus berupa angka (10-15 digit)!"
+                firstErrorField = firstErrorField || `stakeholder_${index}_telepon`
+            }
+
+            if (!stakeholder.email.trim()) {
+                newErrors[`stakeholder_${index}_email`] = "Email tidak boleh kosong!"
+                firstErrorField = firstErrorField || `stakeholder_${index}_email`
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(stakeholder.email)) {
+                newErrors[`stakeholder_${index}_email`] = "Format email tidak valid!"
+                firstErrorField = firstErrorField || `stakeholder_${index}_email`
+            }
+        })
+
+        // Validate each beneficiary individually
+        newKegiatan.beneficiary.forEach((beneficiary, index) => {
+            if (!beneficiary.nama_instansi) {
+                newErrors[`beneficiary_${index}_instansi`] = "Nama instansi wajib diisi!"
+                firstErrorField = firstErrorField || `beneficiary_${index}_instansi`
+            }
+
+            if (!beneficiary.nama_kontak) {
+                newErrors[`beneficiary_${index}_kontak`] = "Nama kontak wajib diisi!"
+                firstErrorField = firstErrorField || `beneficiary_${index}_kontak`
+            }
+
+            if (!beneficiary.telepon) {
+                newErrors[`beneficiary_${index}_telepon`] = "Telepon wajib diisi!"
+                firstErrorField = firstErrorField || `beneficiary_${index}_telepon`
+            } else if (!/^\d{10,15}$/.test(beneficiary.telepon)) {
+                newErrors[`beneficiary_${index}_telepon`] = "Nomor telepon harus berupa angka (10-15 digit)!"
+                firstErrorField = firstErrorField || `beneficiary_${index}_telepon`
+            }
+
+            if (!beneficiary.email) {
+                newErrors[`beneficiary_${index}_email`] = "Email wajib diisi!"
+                firstErrorField = firstErrorField || `beneficiary_${index}_email`
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(beneficiary.email)) {
+                newErrors[`beneficiary_${index}_email`] = "Format email tidak valid!"
+                firstErrorField = firstErrorField || `beneficiary_${index}_email`
+            }
+
+            if (!beneficiary.alamat) {
+                newErrors[`beneficiary_${index}_alamat`] = "Alamat wajib diisi!"
+                firstErrorField = firstErrorField || `beneficiary_${index}_alamat`
+            }
+        })
+
+        // Validate each employee individually
+        newKegiatan.employee.forEach((employee, index) => {
+            if (!employee.nama) {
+                newErrors[`employee_${index}_nama`] = "Nama karyawan wajib diisi!"
+                firstErrorField = firstErrorField || `employee_${index}_nama`
+            }
+
+            if (!employee.email) {
+                newErrors[`employee_${index}_email`] = "Email wajib diisi!"
+                firstErrorField = firstErrorField || `employee_${index}_email`
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employee.email)) {
+                newErrors[`employee_${index}_email`] = "Format email tidak valid!"
+                firstErrorField = firstErrorField || `employee_${index}_email`
+            }
+
+            if (!employee.telepon) {
+                newErrors[`employee_${index}_telepon`] = "Telepon wajib diisi!"
+                firstErrorField = firstErrorField || `employee_${index}_telepon`
+            } else if (!/^\d{10,15}$/.test(employee.telepon)) {
+                newErrors[`employee_${index}_telepon`] = "Nomor telepon harus berupa angka (10-15 digit)!"
+                firstErrorField = firstErrorField || `employee_${index}_telepon`
+            }
+
+            if (!employee.alamat) {
+                newErrors[`employee_${index}_alamat`] = "Alamat wajib diisi!"
+                firstErrorField = firstErrorField || `employee_${index}_alamat`
+            }
+        })
 
         setErrors(newErrors)
 
@@ -312,10 +381,10 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             formData.append("stakeholders", JSON.stringify(newKegiatan.stakeholders))
 
             // Add beneficiaries
-            formData.append("penerimaBeneficiaries", JSON.stringify(newKegiatan.penerimaBeneficiaries))
+            formData.append("beneficiary", JSON.stringify(newKegiatan.beneficiary))
 
-            // Add karyawans
-            formData.append("karyawans", JSON.stringify(newKegiatan.karyawans))
+            // Add employee
+            formData.append("employee", JSON.stringify(newKegiatan.employee))
 
             images.forEach((image) => {
                 formData.append("dokumentasi", image.file);
@@ -340,7 +409,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             console.log("Data berhasil dikirim");
 
             setIsOpen(false);
-            // setTimeout(() => window.location.reload(), 500)
+            setTimeout(() => window.location.reload(), 500)
 
             toast.success("Kegiatan berhasil ditambahkan!")
 
@@ -363,9 +432,9 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                 status: "",
                 biayaImplementasi: "",
                 deskripsi: "",
-                stakeholders: [{ nama: "", jenis: "Individu", telepon: "", email: "" }],
-                penerimaBeneficiaries: [{ namaInstansi: "", namaKontak: "", telepon: "", email: "", alamat: "" }],
-                karyawans: [{ nama: "", email: "", telepon: "", alamat: "" }],
+                stakeholders: [],
+                beneficiary: [],
+                employee: [],
             })
             setErrors({})
             setImages([])
@@ -543,49 +612,6 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                             )}
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="dokumentasi">Upload Dokumentasi</Label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center hover:bg-gray-50">
-                                <input
-                                    id="dokumentasi"
-                                    type="file"
-                                    multiple
-                                    accept="image/jpeg, image/png, image/gif, image/webp, image/svg+xml"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                />
-                                <label htmlFor="dokumentasi" className="text-gray-600">
-                                    <div className="mb-3 text-[var(--green)] flex items-center justify-center space-x-2 text-[12px] cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-blue-900">
-                                        <Upload className="h-4 w-4" />
-                                        <span>Klik untuk mengunggah dokumentasi!</span>
-                                    </div>
-                                </label>
-
-                                {images.length > 0 && (
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {images.map((img, index) => (
-                                            <div key={index} className="relative">
-                                                <img
-                                                    src={img.url || "/placeholder.svg"}
-                                                    alt="Preview"
-                                                    className="w-full h-32 object-cover rounded-lg"
-                                                />
-                                                <Button
-                                                    size="icon"
-                                                    className="cursor-pointer absolute top-1 right-1 bg-red-500 text-white hover:bg-red-600"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        removeImage(index)
-                                                    }}
-                                                >
-                                                    <X size={16} />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                     </div>
                     {/* Stakeholder Section */}
                     <div className="space-y-4 mt-6 border-t pt-4">
@@ -604,7 +630,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
 
                         {newKegiatan.stakeholders.map((stakeholder, index) => (
                             <div key={`stakeholder-${index}`} className="p-4 border rounded-md space-y-3 relative">
-                                {newKegiatan.stakeholders.length > 1 && (
+                                {newKegiatan.stakeholders.length > 0 && (
                                     <Button
                                         type="button"
                                         onClick={() => removeStakeholder(index)}
@@ -621,10 +647,20 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                         <Label htmlFor={`stakeholder-nama-${index}`}>Nama Stakeholder</Label>
                                         <Input
                                             id={`stakeholder-nama-${index}`}
-                                            value={stakeholder.nama}
-                                            onChange={(e) => handleStakeholderChange(index, "nama", e.target.value)}
+                                            value={stakeholder.nama_stakeholder}
+                                            onChange={(e) => handleStakeholderChange(index, "nama_stakeholder", e.target.value)}
                                             placeholder="Nama stakeholder"
                                         />
+                                        {errors[`stakeholder_${index}_nama`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`stakeholder_${index}_nama`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`stakeholder_${index}_nama`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -644,6 +680,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                                 <SelectItem value="Perusahaan">Perusahaan</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        {errors[`stakeholder_${index}_jenis`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`stakeholder_${index}_jenis`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`stakeholder_${index}_jenis`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -654,6 +700,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             onChange={(e) => handleStakeholderChange(index, "telepon", e.target.value)}
                                             placeholder="No telepon"
                                         />
+                                        {errors[`stakeholder_${index}_telepon`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`stakeholder_${index}_telepon`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`stakeholder_${index}_telepon`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -665,13 +721,18 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             onChange={(e) => handleStakeholderChange(index, "email", e.target.value)}
                                             placeholder="Email"
                                         />
+                                        {errors[`stakeholder_${index}_email`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`stakeholder_${index}_email`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`stakeholder_${index}_email`]}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
-                                {errors.stakeholders && (
-                                    <p ref={(el) => { (errorRefs.current.stakeholders = el) }} className="text-red-500 text-[12px]">
-                                        {errors.stakeholders}
-                                    </p>
-                                )}
                             </div>
                         ))}
                     </div>
@@ -691,9 +752,9 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                             </Button>
                         </div>
 
-                        {newKegiatan.penerimaBeneficiaries.map((beneficiary, index) => (
+                        {newKegiatan.beneficiary.map((beneficiary, index) => (
                             <div key={`beneficiary-${index}`} className="p-4 border rounded-md space-y-3 relative">
-                                {newKegiatan.penerimaBeneficiaries.length > 1 && (
+                                {newKegiatan.beneficiary.length > 0 && (
                                     <Button
                                         type="button"
                                         onClick={() => removeBeneficiary(index)}
@@ -710,20 +771,40 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                         <Label htmlFor={`beneficiary-instansi-${index}`}>Nama Instansi/Lembaga</Label>
                                         <Input
                                             id={`beneficiary-instansi-${index}`}
-                                            value={beneficiary.namaInstansi}
-                                            onChange={(e) => handleBeneficiaryChange(index, "namaInstansi", e.target.value)}
+                                            value={beneficiary.nama_instansi}
+                                            onChange={(e) => handleBeneficiaryChange(index, "nama_instansi", e.target.value)}
                                             placeholder="Nama instansi/lembaga"
                                         />
+                                        {errors[`beneficiary_${index}_instansi`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`beneficiary_${index}_instansi`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`beneficiary_${index}_instansi`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
                                         <Label htmlFor={`beneficiary-kontak-${index}`}>Nama Kontak Personil</Label>
                                         <Input
                                             id={`beneficiary-kontak-${index}`}
-                                            value={beneficiary.namaKontak}
-                                            onChange={(e) => handleBeneficiaryChange(index, "namaKontak", e.target.value)}
+                                            value={beneficiary.nama_kontak}
+                                            onChange={(e) => handleBeneficiaryChange(index, "nama_kontak", e.target.value)}
                                             placeholder="Nama kontak personil"
                                         />
+                                        {errors[`beneficiary_${index}_kontak`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`beneficiary_${index}_kontak`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`beneficiary_${index}_kontak`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -734,6 +815,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             onChange={(e) => handleBeneficiaryChange(index, "telepon", e.target.value)}
                                             placeholder="No telepon"
                                         />
+                                        {errors[`beneficiary_${index}_telepon`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`beneficiary_${index}_telepon`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`beneficiary_${index}_telepon`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -745,6 +836,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             onChange={(e) => handleBeneficiaryChange(index, "email", e.target.value)}
                                             placeholder="Email"
                                         />
+                                        {errors[`beneficiary_${index}_email`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`beneficiary_${index}_email`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`beneficiary_${index}_email`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2 md:col-span-2">
@@ -756,13 +857,18 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             placeholder="Alamat lengkap"
                                             rows={2}
                                         />
+                                        {errors[`beneficiary_${index}_alamat`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`beneficiary_${index}_alamat`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`beneficiary_${index}_alamat`]}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
-                                {errors.beneficiaries && (
-                                    <p ref={(el) => { (errorRefs.current.beneficiaries = el) }} className="text-red-500 text-[12px]">
-                                        {errors.beneficiaries}
-                                    </p>
-                                )}
                             </div>
                         ))}
                     </div>
@@ -776,9 +882,9 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                             </Button>
                         </div>
 
-                        {newKegiatan.karyawans.map((karyawan, index) => (
+                        {newKegiatan.employee.map((karyawan, index) => (
                             <div key={`karyawan-${index}`} className="p-4 border rounded-md space-y-3 relative">
-                                {newKegiatan.karyawans.length > 1 && (
+                                {newKegiatan.employee.length > 0 && (
                                     <Button
                                         type="button"
                                         onClick={() => removeKaryawan(index)}
@@ -799,6 +905,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             onChange={(e) => handleKaryawanChange(index, "nama", e.target.value)}
                                             placeholder="Nama karyawan"
                                         />
+                                        {errors[`employee_${index}_nama`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`employee_${index}_nama`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`employee_${index}_nama`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -810,6 +926,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             onChange={(e) => handleKaryawanChange(index, "email", e.target.value)}
                                             placeholder="Email"
                                         />
+                                        {errors[`employee_${index}_email`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`employee_${index}_email`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`employee_${index}_email`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -820,6 +946,16 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             onChange={(e) => handleKaryawanChange(index, "telepon", e.target.value)}
                                             placeholder="No telepon"
                                         />
+                                        {errors[`employee_${index}_telepon`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`employee_${index}_telepon`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`employee_${index}_telepon`]}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2 md:col-span-2">
@@ -831,17 +967,67 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                             placeholder="Alamat lengkap"
                                             rows={2}
                                         />
+                                        {errors[`employee_${index}_alamat`] && (
+                                            <p
+                                                ref={(el) => {
+                                                    errorRefs.current[`employee_${index}_alamat`] = el
+                                                }}
+                                                className="text-red-500 text-[12px]"
+                                            >
+                                                {errors[`employee_${index}_alamat`]}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
-                                {errors.karyawans && (
-                                    <p ref={(el) => { (errorRefs.current.karyawans = el) }} className="text-red-500 text-[12px]">
-                                        {errors.karyawans}
-                                    </p>
-                                )}
                             </div>
                         ))}
                     </div>
-                    <DialogFooter>
+
+                    {/* Upload Documentation Section */}
+                    <div className="space-y-4 mt-6 border-t pt-4">
+                        <Label htmlFor="dokumentasi">Upload Dokumentasi</Label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center hover:bg-gray-50">
+                            <input
+                                id="dokumentasi"
+                                type="file"
+                                multiple
+                                accept="image/jpeg, image/png, image/gif, image/webp, image/svg+xml"
+                                onChange={handleImageChange}
+                                className="hidden"
+                            />
+                            <label htmlFor="dokumentasi" className="text-gray-600">
+                                <div className="mb-3 text-[var(--green)] flex items-center justify-center space-x-2 text-[12px] cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-blue-900">
+                                    <Upload className="h-4 w-4" />
+                                    <span>Klik untuk mengunggah dokumentasi!</span>
+                                </div>
+                            </label>
+
+                            {images.length > 0 && (
+                                <div className="grid grid-cols-3 gap-4">
+                                    {images.map((img, index) => (
+                                        <div key={index} className="relative">
+                                            <img
+                                                src={img.url || "/placeholder.svg"}
+                                                alt="Preview"
+                                                className="w-full h-32 object-cover rounded-lg"
+                                            />
+                                            <Button
+                                                size="icon"
+                                                className="cursor-pointer absolute top-1 right-1 bg-red-500 text-white hover:bg-red-600"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    removeImage(index)
+                                                }}
+                                            >
+                                                <X size={16} />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <DialogFooter className="space-y-4 mt-6 pt-4">
                         <Button
                             className="border-[var(--green)] text-[var(--green)] px-4 md:px-6 py-1 md:py-2 w-full max-w-[120px] md:max-w-[140px] transition-transform duration-200 hover:scale-95 text-xs md:text-sm h-8 md:h-10"
                             variant="outline"
