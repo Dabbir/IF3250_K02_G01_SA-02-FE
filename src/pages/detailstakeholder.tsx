@@ -203,7 +203,7 @@ export default function DetailStakeholder() {
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <Leaf className="h-6 w-6 text-slate-700" />
-                        <CardTitle>Detail Stakeholder</CardTitle>
+                        <CardTitle>Detail Pemangku Kepentingan</CardTitle>
                     </div>
 
                     <div className="flex flex-col text-xs space-y-1 text-gray-700 text-left md:text-right">

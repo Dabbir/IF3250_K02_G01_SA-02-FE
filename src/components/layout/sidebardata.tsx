@@ -50,7 +50,7 @@ export const programs = [
         icon: Leaf,
     },
     {
-        title: "Stakeholder",
+        title: "Pemangku Kepentingan",
         url: "/stakeholder",
         icon: Users,
     },

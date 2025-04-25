@@ -252,7 +252,7 @@ export default function StakeholderPage() {
             <CardHeader>
                 <div className="flex items-center space-x-2">
                     <Users className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
-                    <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Stakeholder</h2>
+                    <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Pemangku Kepentingan</h2>
                 </div>
             </CardHeader>
             <CardContent>
