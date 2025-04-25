@@ -21,6 +21,7 @@ import StakeholderPage from "@/pages/stakeholders.tsx";
 import Beneficiary from "@/pages/beneficiary";
 import DetailBeneficiary from "@/pages/detailbeneficiary";
 import DetailStakeholder from "@/pages/detailstakeholder.tsx";
+import GalleryPage from "@/pages/galeri.tsx";
 import Employee from "@/pages/employee.tsx";
 import DetailEmployee from "@/pages/detailemployee.tsx";
 
@@ -81,7 +82,7 @@ const AppRoutes = () => (
         <Route path="/stakeholder/:id" element={<DetailStakeholder />} />
         <Route path="/karyawan" element={<Employee/>} />
         <Route path="/karyawan/:id" element={<DetailEmployee/>} />
-        <Route path="/galeri" element={<div className="p-4">Galeri Content</div>} />
+        <Route path="/galeri" element={<GalleryPage />} />
         <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
         <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
