@@ -519,7 +519,7 @@ const DetailEmployee = () => {
                                                     className="w-full"
                                                 />
                                             ) : (
-                                                <div className="whitespace-pre-wrap">{String(employee?.alamat)}</div>
+                                                <div className="whitespace-pre-wrap">{employee?.alamat || "-"}</div>
                                             )}
                                         </div>
                                     </TableCell>
