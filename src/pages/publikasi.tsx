@@ -33,6 +33,13 @@ interface Publikasi {
   tone: "Positif" | "Netral" | "Negatif";
 }
 
+interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 const formatRupiah = (value: number) => {
   const valueInt = Math.round(value);
   return valueInt.toLocaleString("id-ID", { maximumFractionDigits: 0 });
@@ -50,13 +57,20 @@ export default function PublikasiPage() {
   const [error, setError] = useState<string | null>(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   
-  // Sort states
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    total: 0,
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    totalPages: 0
+  });
+  
   const [sortColumn, setSortColumn] = useState<string>("tanggal");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   
-  // Filter states
   const [toneFilters, setToneFilters] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  
+  const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -70,18 +84,110 @@ export default function PublikasiPage() {
   }, []);
 
   useEffect(() => {
-    refreshData();
-  }, []);
+    fetchData();
+  }, [currentPage, sortColumn, sortOrder, toneFilters]);
 
-  const refreshData = async () => {
+  useEffect(() => {
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+    
+    const timer = setTimeout(() => {
+      setCurrentPage(1); 
+      fetchData();
+    }, 500);
+    
+    setSearchTimer(timer);
+    
+    return () => {
+      if (searchTimer) clearTimeout(searchTimer);
+    };
+  }, [search]);
+
+  const fetchData = async () => {
     try {
-      const publikasiData = await fetchPublikasi();
-      setPublikasiList(publikasiData);
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      let url = new URL(`${API_URL}/api/publikasi`);
+      url.searchParams.append('page', currentPage.toString());
+      url.searchParams.append('limit', ITEMS_PER_PAGE.toString());
+      
+      if (search) {
+        url.searchParams.append('search', search);
+      }
+      
+      const columnMapping: Record<string, string> = {
+        'judul': 'judul_publikasi',
+        'tanggal': 'tanggal_publikasi',
+        'prValue': 'pr_value',
+        'tone': 'tone'
+      };
+      
+      const backendSortColumn = columnMapping[sortColumn] || 'tanggal_publikasi';
+      url.searchParams.append('sortBy', backendSortColumn);
+      url.searchParams.append('sortOrder', sortOrder);
+      
+      if (toneFilters.length > 0) {
+        url.searchParams.append('toneFilters', toneFilters.join(','));
+      }
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      const result = await response.json();
+
+      if (response.ok) {
+        const formattedData: Publikasi[] = result.data.map((item: {
+          id?: string;
+          judul_publikasi?: string;
+          media_publikasi?: "Televisi" | "Koran" | "Radio" | "Media Online" | "Sosial Media" | "Lainnya";
+          nama_perusahaan_media?: string;
+          tanggal_publikasi?: string;
+          url_publikasi?: string;
+          pr_value?: number;
+          nama_program?: string;
+          nama_aktivitas?: string;
+          tone?: "Positif" | "Netral" | "Negatif";
+        }): Publikasi => ({
+          id: item.id || "",
+          judul: item.judul_publikasi || "",
+          media: item.media_publikasi || "Media Online",
+          perusahaan: item.nama_perusahaan_media || "",
+          tanggal: item.tanggal_publikasi || "",
+          link: item.url_publikasi || "",
+          prValue: item.pr_value || 0,
+          nama_program: item.nama_program || "",
+          nama_aktivitas: item.nama_aktivitas || "",
+          tone: item.tone || "Netral",
+        }));
+        
+        setPublikasiList(formattedData);
+        setPagination(result.pagination);
+      } else {
+        throw new Error(result.message || "Gagal mengambil publikasi.");
+      }
     } catch (error) {
-      console.error("Error refreshing data:", error);
+      console.error("Error fetching publikasi:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
       toast.error("Gagal memuat data, silakan coba lagi");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const refreshData = async () => {
+    setCurrentPage(1); 
+    await fetchData();
   };
 
   const handleSortChange = (column: string) => {
@@ -101,51 +207,8 @@ export default function PublikasiPage() {
         return [...prev, tone];
       }
     });
-    setCurrentPage(1);
+    setCurrentPage(1); 
   };
-
-  // Filter publikasi by search and tone
-  const filteredPublikasi = publikasiList.filter((item) => {
-    const matchesSearch = item.judul?.toLowerCase().includes(search.toLowerCase()) ?? false;
-    const matchesTone = toneFilters.length === 0 || toneFilters.includes(item.tone);
-    
-    return matchesSearch && matchesTone;
-  });
-
-  // Sort the filtered publikasi
-  const sortedPublikasi = [...filteredPublikasi].sort((a, b) => {
-    let valueA = a[sortColumn as keyof Publikasi];
-    let valueB = b[sortColumn as keyof Publikasi];
-
-    // Handle date sorting
-    if (sortColumn === "tanggal") {
-      const dateA = new Date(valueA as string).getTime();
-      const dateB = new Date(valueB as string).getTime();
-      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-    }
-
-    // Handle string sorting
-    if (typeof valueA === "string" && typeof valueB === "string") {
-      return sortOrder === "asc"
-        ? valueA.localeCompare(valueB)
-        : valueB.localeCompare(valueA);
-    }
-
-    // Handle number sorting
-    if (typeof valueA === "number" && typeof valueB === "number") {
-      return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
-    }
-
-    return 0;
-  });
-
-  // Apply pagination to sorted publikasi
-  const displayedPublikasi = sortedPublikasi.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const totalPages = Math.ceil(filteredPublikasi.length / ITEMS_PER_PAGE);
 
   const shareToWhatsApp = (item: Publikasi) => {
     event?.stopPropagation();
@@ -274,61 +337,6 @@ export default function PublikasiPage() {
     }
   };
 
-  const fetchPublikasi = async (): Promise<Publikasi[]> => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
-
-      const response = await fetch(`${API_URL}/api/publikasi`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-
-      if (response.ok) {
-        const formattedData: Publikasi[] = data.map((item: {
-          id?: string;
-          judul_publikasi?: string;
-          media_publikasi?: "Televisi" | "Koran" | "Radio" | "Media Online" | "Sosial Media" | "Lainnya";
-          nama_perusahaan_media?: string;
-          tanggal_publikasi?: string;
-          url_publikasi?: string;
-          pr_value?: number;
-          nama_program?: string;
-          nama_aktivitas?: string;
-          tone?: "Positif" | "Netral" | "Negatif";
-        }): Publikasi => ({
-          id: item.id || "",
-          judul: item.judul_publikasi || "",
-          media: item.media_publikasi || "Media Online",
-          perusahaan: item.nama_perusahaan_media || "",
-          tanggal: item.tanggal_publikasi || "",
-          link: item.url_publikasi || "",
-          prValue: item.pr_value || 0,
-          nama_program: item.nama_program || "",
-          nama_aktivitas: item.nama_aktivitas || "",
-          tone: item.tone || "Netral",
-        }));
-        return formattedData;
-      } else {
-        throw new Error(data.message || "Gagal mengambil publikasi.");
-      }
-    } catch (error) {
-      console.error("Error fetching publikasi:", error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Format date for display
   const formatDisplayDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
@@ -337,7 +345,6 @@ export default function PublikasiPage() {
     return `${day}-${month}-${year}`;
   };
 
-  // DELETE - Delete publication by ID
   const deletePublikasi = async (id: string): Promise<boolean> => {
     try {
       const token = localStorage.getItem("token");
@@ -402,7 +409,7 @@ export default function PublikasiPage() {
     );
   };
 
-  if (loading) {
+  if (loading && currentPage === 1) {
     return (
       <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
         <CardContent className="flex justify-center items-center h-[400px]">
@@ -501,7 +508,6 @@ export default function PublikasiPage() {
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-2">
-            {/* Export Button */}
             <Button
               className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center gap-1"
               onClick={exportToXlsx}
@@ -510,7 +516,6 @@ export default function PublikasiPage() {
               Unduh Publikasi
             </Button>
 
-            {/* Add Publikasi Button */}
             <Button
               className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center"
               onClick={() => setIsOpen(true)}
@@ -520,7 +525,7 @@ export default function PublikasiPage() {
           </div>
         </div>
 
-        {filteredPublikasi.length === 0 ? (
+        {publikasiList.length === 0 ? (
           <div className="text-center py-8 border rounded-lg">
             <p className="text-gray-500">No publications found</p>
             {(toneFilters.length > 0 || search) && (
@@ -539,9 +544,8 @@ export default function PublikasiPage() {
             )}
           </div>
         ) : isMobileView ? (
-          // Mobile card view
           <div className="space-y-4">
-            {displayedPublikasi.map((item) => (
+            {publikasiList.map((item) => (
               <div
                 key={item.id}
                 className="border rounded-lg p-4 space-y-3 bg-white"
@@ -641,7 +645,6 @@ export default function PublikasiPage() {
             ))}
           </div>
         ) : (
-          // Desktop table view
           <div className="border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
@@ -701,82 +704,90 @@ export default function PublikasiPage() {
               </TableHeader>
 
               <TableBody>
-                {displayedPublikasi.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    className="border-b cursor-pointer hover:bg-gray-100 transition"
-                    onClick={() => {
-                      navigate(`/publikasi/${item.id}`);
-                    }}
-                  >
-                    <TableCell className="pl-7 truncate max-w-[180px]">{item.judul}</TableCell>
-                    <TableCell className="text-center truncate">
-                      {formatDisplayDate(item.tanggal)}
-                    </TableCell>
-                    <TableCell className="truncate max-w-[180px]">
-                      <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {item.link.length > 25 ? `${item.link.substring(0, 25)}...` : item.link}
-                      </a>
-                    </TableCell>
-                    <TableCell className="text-left truncate max-w-[180px]">
-                      Rp{formatRupiah(item.prValue)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {getToneBadge(item.tone)}
-                    </TableCell>
-                    <TableCell className="pr-5 text-right">
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="hover:bg-gray-200 transition cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/publikasi/${item.id}`);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="hover:bg-green-100 transition cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            shareToWhatsApp(item);
-                          }}
-                        >
-                          <Share2 className="w-4 h-4 text-green-500 hover:text-green-700" />
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="hover:bg-red-100 transition cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePublikasi(item.id);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600 hover:text-red-800" />
-                        </Button>
-                      </div>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  publikasiList.map((item) => (
+                    <TableRow
+                      key={item.id}
+                      className="border-b cursor-pointer hover:bg-gray-100 transition"
+                      onClick={() => {
+                        navigate(`/publikasi/${item.id}`);
+                      }}
+                    >
+                      <TableCell className="pl-7 truncate max-w-[180px]">{item.judul}</TableCell>
+                      <TableCell className="text-center truncate">
+                        {formatDisplayDate(item.tanggal)}
+                      </TableCell>
+                      <TableCell className="truncate max-w-[180px]">
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {item.link.length > 25 ? `${item.link.substring(0, 25)}...` : item.link}
+                        </a>
+                      </TableCell>
+                      <TableCell className="text-left truncate max-w-[180px]">
+                        Rp{formatRupiah(item.prValue)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {getToneBadge(item.tone)}
+                      </TableCell>
+                      <TableCell className="pr-5 text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hover:bg-gray-200 transition cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/publikasi/${item.id}`);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hover:bg-green-100 transition cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              shareToWhatsApp(item);
+                            }}
+                          >
+                            <Share2 className="w-4 h-4 text-green-500 hover:text-green-700" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hover:bg-red-100 transition cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePublikasi(item.id);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600 hover:text-red-800" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
         )}
 
-        {totalPages > 1 && (
+        {pagination.totalPages > 1 && (
           <div className="flex flex-wrap justify-center mt-4 gap-2">
             <Button
               disabled={currentPage === 1}
@@ -785,20 +796,76 @@ export default function PublikasiPage() {
             >
               Previous
             </Button>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <Button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${currentPage === i + 1
-                  ? "bg-[#3A786D] text-white"
-                  : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                  }`}
-              >
-                {i + 1}
-              </Button>
-            ))}
+            {(() => {
+              const pageButtons = [];
+              const maxVisiblePages = 5;
+              let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+              let endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
+              
+              if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+              }
+              
+              if (startPage > 1) {
+                pageButtons.push(
+                  <Button
+                    key="first"
+                    onClick={() => setCurrentPage(1)}
+                    className="h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                  >
+                    1
+                  </Button>
+                );
+                
+                if (startPage > 2) {
+                  pageButtons.push(
+                    <span key="ellipsis1" className="flex items-center justify-center">
+                      ...
+                    </span>
+                  );
+                }
+              }
+              
+              for (let i = startPage; i <= endPage; i++) {
+                pageButtons.push(
+                  <Button
+                    key={i}
+                    onClick={() => setCurrentPage(i)}
+                    className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${
+                      currentPage === i
+                        ? "bg-[#3A786D] text-white"
+                        : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                    }`}
+                  >
+                    {i}
+                  </Button>
+                );
+              }
+              
+              if (endPage < pagination.totalPages) {
+                if (endPage < pagination.totalPages - 1) {
+                  pageButtons.push(
+                    <span key="ellipsis2" className="flex items-center justify-center">
+                      ...
+                    </span>
+                  );
+                }
+                
+                pageButtons.push(
+                  <Button
+                    key="last"
+                    onClick={() => setCurrentPage(pagination.totalPages)}
+                    className="h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                  >
+                    {pagination.totalPages}
+                  </Button>
+                );
+              }
+              
+              return pageButtons;
+            })()}
             <Button
-              disabled={currentPage === totalPages}
+              disabled={currentPage === pagination.totalPages}
               onClick={() => setCurrentPage(currentPage + 1)}
               className="bg-[#3A786D] text-white h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm"
             >
@@ -806,6 +873,7 @@ export default function PublikasiPage() {
             </Button>
           </div>
         )}
+        
         <ChooseMethodPublication
           isOpen={isOpen}
           setIsOpen={setIsOpen}

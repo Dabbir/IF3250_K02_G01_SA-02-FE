@@ -5,9 +5,10 @@ import { useParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { Building, Pencil, Save, Loader2, ArrowLeft, Upload, X } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Building, Pencil, Save, Loader2, ArrowLeft, Upload, X, Calendar, Eye } from "lucide-react"
 import { toast } from "react-toastify"
 
 interface Beneficiary {
@@ -17,6 +18,17 @@ interface Beneficiary {
   alamat: string;
   telepon: string;
   email: string;
+  foto: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Aktivitas {
+  id: string;
+  nama: string;
+  tanggal: string;
+  lokasi: string;
+  deskripsi: string;
   foto: string;
   created_at: string;
   updated_at: string;
@@ -37,6 +49,10 @@ export default function DetailBeneficiary() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isNewBeneficiary = id === "tambah";
+  
+  const [aktivitas, setAktivitas] = useState<Aktivitas[]>([]);
+  const [loadingAktivitas, setLoadingAktivitas] = useState(false);
+  const [aktivitasError, setAktivitasError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isNewBeneficiary) {
@@ -98,6 +114,51 @@ export default function DetailBeneficiary() {
     }
   }, [id, isNewBeneficiary]);
 
+  const fetchAktivitasBeneficiary = async () => {
+    if (isNewBeneficiary || !id) return;
+    
+    try {
+      setLoadingAktivitas(true);
+      setAktivitasError(null);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(`${API_URL}/api/beneficiary/aktivitas/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch aktivitas: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setAktivitas(result.data || []);
+      } else {
+        throw new Error(result.message || "Failed to fetch aktivitas");
+      }
+    } catch (err) {
+      setAktivitasError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching aktivitas:", err);
+    } finally {
+      setLoadingAktivitas(false);
+    }
+  };
+
+  const handleTabChange = (value: string) => {
+    if (value === "aktivitas" && aktivitas.length === 0 && !loadingAktivitas) {
+      fetchAktivitasBeneficiary();
+    }
+  };
+
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -105,6 +166,18 @@ export default function DetailBeneficiary() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      if (file.size > 2 * 1024 * 1024) { 
+        toast.error("Ukuran file terlalu besar. Maksimal 2MB");
+        return;
+      }
+      
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Format file tidak valid. Gunakan JPG, PNG, GIF, atau WEBP");
+        return;
+      }
+      
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -116,6 +189,13 @@ export default function DetailBeneficiary() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    
+    if (editedBeneficiary && !isNewBeneficiary) {
+      setEditedBeneficiary({
+        ...editedBeneficiary,
+        foto: ""
+      });
+    }
   };
 
   const handleChange = (field: keyof Beneficiary, value: string) => {
@@ -125,7 +205,6 @@ export default function DetailBeneficiary() {
   const handleSaveClick = async () => {
     if (!editedBeneficiary) return;
 
-    // Validate required fields
     if (!editedBeneficiary.nama_instansi) {
       toast.error("Nama instansi harus diisi");
       return;
@@ -148,6 +227,8 @@ export default function DetailBeneficiary() {
       
       if (selectedImage) {
         formData.append("foto", selectedImage);
+      } else if (editedBeneficiary.foto === "" && !isNewBeneficiary) {
+        formData.append("remove_foto", "true");
       }
 
       const url = isNewBeneficiary 
@@ -206,6 +287,24 @@ export default function DetailBeneficiary() {
 
   const handleGoBack = () => {
     navigate("/penerima-manfaat");
+  };
+
+  const handleViewAktivitas = (aktivitasId: string) => {
+    navigate(`/aktivitas/${aktivitasId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
   };
 
   if (loading) {
@@ -282,17 +381,242 @@ export default function DetailBeneficiary() {
         </CardHeader>
 
         <CardContent className="pb-10">
-          <div className="space-y-4">
-            {!isNewBeneficiary && (
-              <h1 className="text-xl font-bold">{beneficiary?.nama_instansi}</h1>
-            )}
+          {!isNewBeneficiary ? (
+            <Tabs defaultValue="profile" onValueChange={handleTabChange}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="profile">Profil</TabsTrigger>
+                <TabsTrigger value="aktivitas">Aktivitas Terkait</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="profile">
+                <div className="space-y-4">
+                  <h1 className="text-xl font-bold">{beneficiary?.nama_instansi}</h1>
 
-            <div className="flex justify-end mt-4">
-              {!isEditing ? (
-                <Button variant="outline" size="sm" onClick={handleEditClick}>
-                  <Pencil className="h-4 w-4 mr-2" /> Edit
-                </Button>
-              ) : (
+                  <div className="flex justify-end mt-4">
+                    {!isEditing ? (
+                      <Button variant="outline" size="sm" onClick={handleEditClick}>
+                        <Pencil className="h-4 w-4 mr-2" /> Edit
+                      </Button>
+                    ) : (
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" onClick={handleCancel}>
+                          Cancel
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleSaveClick} disabled={saving}>
+                          {saving ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" /> Simpan
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <Table className="border rounded-lg overflow-hidden mb-2">
+                        <TableBody>
+                          <TableRow>
+                            <TableHead className="w-1/3">Nama Instansi</TableHead>
+                            <TableCell>
+                              {isEditing ? (
+                                <Input
+                                  value={editedBeneficiary?.nama_instansi || ""}
+                                  onChange={(e) => handleChange("nama_instansi", e.target.value)}
+                                  placeholder="Nama instansi/lembaga"
+                                  required
+                                />
+                              ) : (
+                                beneficiary?.nama_instansi || "N/A"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableHead>Nama Kontak</TableHead>
+                            <TableCell>
+                              {isEditing ? (
+                                <Input
+                                  value={editedBeneficiary?.nama_kontak || ""}
+                                  onChange={(e) => handleChange("nama_kontak", e.target.value)}
+                                  placeholder="Nama kontak personil"
+                                />
+                              ) : (
+                                beneficiary?.nama_kontak || "N/A"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableHead>Email</TableHead>
+                            <TableCell>
+                              {isEditing ? (
+                                <Input
+                                  type="email"
+                                  value={editedBeneficiary?.email || ""}
+                                  onChange={(e) => handleChange("email", e.target.value)}
+                                  placeholder="Email kontak"
+                                />
+                              ) : (
+                                beneficiary?.email || "N/A"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableHead>Telepon</TableHead>
+                            <TableCell>
+                              {isEditing ? (
+                                <Input
+                                  type="tel"
+                                  value={editedBeneficiary?.telepon || ""}
+                                  onChange={(e) => handleChange("telepon", e.target.value)}
+                                  placeholder="Nomor telepon"
+                                />
+                              ) : (
+                                beneficiary?.telepon || "N/A"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableHead>Alamat</TableHead>
+                            <TableCell>
+                              {isEditing ? (
+                                <Textarea
+                                  value={editedBeneficiary?.alamat || ""}
+                                  onChange={(e) => handleChange("alamat", e.target.value)}
+                                  placeholder="Alamat lengkap"
+                                  className="min-h-[100px]"
+                                />
+                              ) : (
+                                beneficiary?.alamat || "N/A"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    <div>
+                      <div className="border rounded-lg p-4 mb-4">
+                        <h3 className="font-medium text-lg mb-4">Foto Instansi/Lembaga</h3>
+                        
+                        <div className="aspect-video bg-slate-100 flex items-center justify-center rounded-md overflow-hidden">
+                          {(imagePreview || (editedBeneficiary?.foto && !isEditing) || (beneficiary?.foto && !isEditing)) ? (
+                            <img
+                              src={imagePreview || editedBeneficiary?.foto || beneficiary?.foto}
+                              alt={editedBeneficiary?.nama_instansi || beneficiary?.nama_instansi}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Building className="h-16 w-16 text-slate-300" />
+                          )}
+                        </div>
+
+                        {isEditing && (
+                          <div className="mt-4 flex flex-col items-center gap-2">
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              accept="image/jpeg, image/png, image/gif, image/webp"
+                              onChange={handleImageChange}
+                              className="hidden"
+                              id="foto-upload"
+                            />
+                            
+                            <div className="flex gap-2">
+                              <label
+                                htmlFor="foto-upload"
+                                className="bg-[#3A786D] cursor-pointer inline-flex items-center px-4 py-2 text-white rounded-md hover:bg-opacity-90"
+                              >
+                                <Upload className="h-4 w-4 mr-2" /> Upload Foto
+                              </label>
+                              
+                              {(imagePreview || editedBeneficiary?.foto) && (
+                                <Button
+                                  variant="outline"
+                                  size="default"
+                                  onClick={handleRemoveImage}
+                                  className="text-red-500 border-red-200"
+                                >
+                                  <X className="h-4 w-4 mr-2" /> Hapus
+                                </Button>
+                              )}
+                            </div>
+                            
+                            <p className="text-xs text-gray-500 mt-2">
+                              Format: JPG, PNG, WEBP, GIF. Ukuran maksimal: 2MB
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="aktivitas">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Aktivitas Terkait dengan {beneficiary?.nama_instansi}</h2>
+                  
+                  {loadingAktivitas ? (
+                    <div className="flex justify-center items-center py-10">
+                      <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+                    </div>
+                  ) : aktivitasError ? (
+                    <div className="py-6 text-center">
+                      <p className="text-red-500 mb-2">{aktivitasError}</p>
+                      <Button onClick={fetchAktivitasBeneficiary} className="bg-[#3A786D] text-white">
+                        Coba Lagi
+                      </Button>
+                    </div>
+                  ) : aktivitas.length === 0 ? (
+                    <div className="py-6 text-center border rounded-lg">
+                      <Calendar className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                      <p className="text-gray-500">Belum ada aktivitas terkait dengan penerima manfaat ini</p>
+                    </div>
+                  ) : (
+                    <Table className="border rounded-lg">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[200px]">Nama Aktivitas</TableHead>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Lokasi</TableHead>
+                          <TableHead className="w-[250px]">Deskripsi</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {aktivitas.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.nama}</TableCell>
+                            <TableCell>{formatDate(item.tanggal)}</TableCell>
+                            <TableCell>{item.lokasi || "N/A"}</TableCell>
+                            <TableCell className="max-w-[250px] truncate">
+                              {item.deskripsi || "N/A"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewAktivitas(item.id)}
+                              >
+                                <Eye className="h-4 w-4 mr-2" /> Lihat
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-end mt-4">
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" onClick={handleCancel}>
                     Cancel
@@ -309,108 +633,86 @@ export default function DetailBeneficiary() {
                     )}
                   </Button>
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <Table className="border rounded-lg overflow-hidden mb-2">
-                  <TableBody>
-                    <TableRow>
-                      <TableHead className="w-1/3">Nama Instansi</TableHead>
-                      <TableCell>
-                        {isEditing ? (
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <Table className="border rounded-lg overflow-hidden mb-2">
+                    <TableBody>
+                      <TableRow>
+                        <TableHead className="w-1/3">Nama Instansi</TableHead>
+                        <TableCell>
                           <Input
                             value={editedBeneficiary?.nama_instansi || ""}
                             onChange={(e) => handleChange("nama_instansi", e.target.value)}
                             placeholder="Nama instansi/lembaga"
                             required
                           />
-                        ) : (
-                          beneficiary?.nama_instansi || "N/A"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Nama Kontak</TableHead>
-                      <TableCell>
-                        {isEditing ? (
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableHead>Nama Kontak</TableHead>
+                        <TableCell>
                           <Input
                             value={editedBeneficiary?.nama_kontak || ""}
                             onChange={(e) => handleChange("nama_kontak", e.target.value)}
                             placeholder="Nama kontak personil"
                           />
-                        ) : (
-                          beneficiary?.nama_kontak || "N/A"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableCell>
-                        {isEditing ? (
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableCell>
                           <Input
                             type="email"
                             value={editedBeneficiary?.email || ""}
                             onChange={(e) => handleChange("email", e.target.value)}
                             placeholder="Email kontak"
                           />
-                        ) : (
-                          beneficiary?.email || "N/A"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Telepon</TableHead>
-                      <TableCell>
-                        {isEditing ? (
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableHead>Telepon</TableHead>
+                        <TableCell>
                           <Input
                             type="tel"
                             value={editedBeneficiary?.telepon || ""}
                             onChange={(e) => handleChange("telepon", e.target.value)}
                             placeholder="Nomor telepon"
                           />
-                        ) : (
-                          beneficiary?.telepon || "N/A"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Alamat</TableHead>
-                      <TableCell>
-                        {isEditing ? (
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableHead>Alamat</TableHead>
+                        <TableCell>
                           <Textarea
                             value={editedBeneficiary?.alamat || ""}
                             onChange={(e) => handleChange("alamat", e.target.value)}
                             placeholder="Alamat lengkap"
                             className="min-h-[100px]"
                           />
-                        ) : (
-                          beneficiary?.alamat || "N/A"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
 
-              <div>
-                <div className="border rounded-lg p-4 mb-4">
-                  <h3 className="font-medium text-lg mb-4">Foto Instansi/Lembaga</h3>
-                  
-                  <div className="aspect-video bg-slate-100 flex items-center justify-center rounded-md overflow-hidden">
-                    {(imagePreview || (editedBeneficiary?.foto && !isEditing) || (beneficiary?.foto && !isEditing)) ? (
-                      <img
-                        src={imagePreview || editedBeneficiary?.foto || beneficiary?.foto}
-                        alt={editedBeneficiary?.nama_instansi || beneficiary?.nama_instansi}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Building className="h-16 w-16 text-slate-300" />
-                    )}
-                  </div>
+                <div>
+                  <div className="border rounded-lg p-4 mb-4">
+                    <h3 className="font-medium text-lg mb-4">Foto Instansi/Lembaga</h3>
+                    
+                    <div className="aspect-video bg-slate-100 flex items-center justify-center rounded-md overflow-hidden">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Building className="h-16 w-16 text-slate-300" />
+                      )}
+                    </div>
 
-                  {isEditing && (
                     <div className="mt-4 flex flex-col items-center gap-2">
                       <input
                         type="file"
@@ -445,11 +747,11 @@ export default function DetailBeneficiary() {
                         Format: JPG, PNG, WEBP, GIF. Ukuran maksimal: 2MB
                       </p>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

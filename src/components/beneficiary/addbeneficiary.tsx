@@ -14,7 +14,7 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
-import { Upload, X, Building } from "lucide-react";
+import { Upload, X, Building, Loader2 } from "lucide-react";
 
 interface AddBeneficiaryProps {
   isOpen: boolean;
@@ -30,6 +30,14 @@ interface BeneficiaryFormData {
   email: string;
 }
 
+interface ValidationErrors {
+  nama_instansi: boolean;
+  nama_kontak: boolean;
+  alamat: boolean;
+  telepon: boolean;
+  email: boolean;
+}
+
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBeneficiaryProps) {
@@ -41,18 +49,46 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
     telepon: "",
     email: ""
   });
+  const [errors, setErrors] = useState<ValidationErrors>({
+    nama_instansi: false,
+    nama_kontak: false,
+    alamat: false,
+    telepon: false,
+    email: false
+  });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formTouched, setFormTouched] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const validateField = (field: keyof BeneficiaryFormData): boolean => {
+    return formData[field].trim() !== "";
+  };
 
   const handleChange = (field: keyof BeneficiaryFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    
+    if (formTouched) {
+      setErrors(prev => ({ ...prev, [field]: !value.trim() }));
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      if (file.size > 2 * 1024 * 1024) { 
+        toast.error("Ukuran file terlalu besar. Maksimal 2MB");
+        return;
+      }
+      
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Format file tidak valid. Gunakan JPG, PNG, GIF, atau WEBP");
+        return;
+      }
+      
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -66,11 +102,34 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
     }
   };
 
+  const validateForm = (): boolean => {
+    const newErrors = {
+      nama_instansi: !validateField("nama_instansi"),
+      nama_kontak: !validateField("nama_kontak"),
+      alamat: !validateField("alamat"),
+      telepon: !validateField("telepon"),
+      email: !validateField("email")
+    };
+    
+    setErrors(newErrors);
+    setFormTouched(true);
+    
+    const errorFields = Object.entries(newErrors).filter(([_, hasError]) => hasError);
+    if (errorFields.length > 0) {
+      const firstErrorField = document.getElementById(errorFields[0][0]);
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField.focus();
+      }
+    }
+    
+    return !Object.values(newErrors).some(error => error);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.nama_instansi) {
-      toast.error("Nama instansi harus diisi");
+    
+    if (!validateForm()) {
       return;
     }
 
@@ -84,10 +143,10 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
 
       const formDataToSend = new FormData();
       formDataToSend.append("nama_instansi", formData.nama_instansi);
-      formDataToSend.append("nama_kontak", formData.nama_kontak || "");
-      formDataToSend.append("alamat", formData.alamat || "");
-      formDataToSend.append("telepon", formData.telepon || "");
-      formDataToSend.append("email", formData.email || "");
+      formDataToSend.append("nama_kontak", formData.nama_kontak);
+      formDataToSend.append("alamat", formData.alamat);
+      formDataToSend.append("telepon", formData.telepon);
+      formDataToSend.append("email", formData.email);
       
       if (selectedImage) {
         formDataToSend.append("foto", selectedImage);
@@ -137,6 +196,14 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
       telepon: "",
       email: ""
     });
+    setErrors({
+      nama_instansi: false,
+      nama_kontak: false,
+      alamat: false,
+      telepon: false,
+      email: false
+    });
+    setFormTouched(false);
     setSelectedImage(null);
     setImagePreview(null);
     if (fileInputRef.current) {
@@ -145,12 +212,14 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
   };
 
   const handleClose = () => {
-    resetForm();
-    setIsOpen(false);
+    if (!isSubmitting) {
+      resetForm();
+      setIsOpen(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tambah Penerima Manfaat</DialogTitle>
@@ -170,26 +239,34 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
                 value={formData.nama_instansi}
                 onChange={(e) => handleChange("nama_instansi", e.target.value)}
                 placeholder="Nama instansi/lembaga"
-                required
+                className={errors.nama_instansi ? "border-red-500" : ""}
               />
+              {errors.nama_instansi && (
+                <p className="text-red-500 text-xs mt-1">Nama instansi harus diisi</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <label htmlFor="nama_kontak" className="text-sm font-medium">
-                Nama Kontak Personil
+                Nama Kontak Personil <span className="text-red-500">*</span>
               </label>
               <Input
                 id="nama_kontak"
                 value={formData.nama_kontak}
                 onChange={(e) => handleChange("nama_kontak", e.target.value)}
                 placeholder="Nama kontak personil"
+                required
+                className={errors.nama_kontak ? "border-red-500" : ""}
               />
+              {errors.nama_kontak && (
+                <p className="text-red-500 text-xs mt-1">Nama kontak personil harus diisi</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="telepon" className="text-sm font-medium">
-                  Nomor Telepon
+                  Nomor Telepon <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="telepon"
@@ -197,12 +274,16 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
                   value={formData.telepon}
                   onChange={(e) => handleChange("telepon", e.target.value)}
                   placeholder="Nomor telepon"
+                  className={errors.telepon ? "border-red-500" : ""}
                 />
+                {errors.telepon && (
+                  <p className="text-red-500 text-xs mt-1">Nomor telepon harus diisi</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="email"
@@ -210,13 +291,17 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="Email kontak"
+                  className={errors.email ? "border-red-500" : ""}
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">Email harus diisi</p>
+                )}
               </div>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="alamat" className="text-sm font-medium">
-                Alamat
+                Alamat <span className="text-red-500">*</span>
               </label>
               <Textarea
                 id="alamat"
@@ -224,7 +309,11 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
                 onChange={(e) => handleChange("alamat", e.target.value)}
                 placeholder="Alamat lengkap"
                 rows={3}
+                className={errors.alamat ? "border-red-500" : ""}
               />
+              {errors.alamat && (
+                <p className="text-red-500 text-xs mt-1">Alamat harus diisi</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -281,7 +370,12 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose} 
+              disabled={isSubmitting}
+            >
               Batal
             </Button>
             <Button 
@@ -289,7 +383,13 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
               className="bg-[#3A786D] hover:bg-[#2d6055]"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Menyimpan..." : "Simpan"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Menyimpan...
+                </>
+              ) : (
+                "Simpan"
+              )}
             </Button>
           </DialogFooter>
         </form>
