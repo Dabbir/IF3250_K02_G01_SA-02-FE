@@ -67,7 +67,7 @@ const Employee = () => {
         const loadInitialData = async () => {
           await fetchUser();
           if (search.trim().length > 0) {
-            await fetchEmployees();
+            await fetchPaginatedEmployees(currentPage, search);
           } else {
             await fetchPaginatedEmployees(currentPage);
           }
@@ -77,26 +77,27 @@ const Employee = () => {
     }, []);
 
     useEffect(() => {
+        if (search.trim().length > 0) {
+            setCurrentPage(1);
+            fetchPaginatedEmployees(1, search);
+        } else {
+            fetchPaginatedEmployees(currentPage);
+        }
+    }, [search]);
+    
+    useEffect(() => {
+        if (search.trim().length > 0) {
+            fetchPaginatedEmployees(currentPage, search);
+        } else {
+            fetchPaginatedEmployees(currentPage);
+        }
+    }, [currentPage]);
+
+    useEffect(() => {
         if (user.masjid_id) {
           fetchMasjidDetails();
         }
     }, [user.masjid_id]);
-
-    useEffect(() => {
-        if (search.trim().length > 0) {
-          fetchEmployees();
-        } else {
-          fetchPaginatedEmployees(currentPage);
-        }
-    }, [currentPage, search, masjidName]);
-
-    useEffect(() => {
-        if (search.trim().length > 0) {
-            fetchEmployees();
-        } else {
-            fetchPaginatedEmployees(currentPage);
-        }
-    }, [currentPage, search]);
 
     const fetchUser = async () => {
         try {
@@ -172,11 +173,13 @@ const Employee = () => {
         }
     }
 
-    const fetchPaginatedEmployees = async (page: number) => {
+    const fetchPaginatedEmployees = async (page: number, searchTerm: string = "") => {
         setLoading(true);
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/api/employee/paginated?page=${page}&limit=${ITEMS_PER_PAGE}`, {
+
+            const response = await fetch(`
+                ${API_URL}/api/employee?page=${page}&limit=${ITEMS_PER_PAGE}${searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ""}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -379,43 +382,40 @@ const Employee = () => {
                 throw new Error("Authentication token not found");
             }
 
-            const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-            const payload = {
-                ...newEmployee,
-                masjid_id: user.masjid_id,
-                created_by: user.id,
-                created_at: now,
-                updated_at: now
+            const formData = new FormData();
+            formData.append("nama", newEmployee.nama || "");
+            formData.append("email", newEmployee.email || "");
+            formData.append("telepon", newEmployee.telepon || "");
+            
+            if (newEmployee.alamat) {
+                formData.append("alamat", newEmployee.alamat);
             }
 
-            console.log(JSON.stringify(payload))
+            if (selectedFile) {
+                formData.append("foto", selectedFile);
+            }
+
+            console.log("isi formData", formData);
 
             const response = await fetch(`${API_URL}/api/employee`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify(payload),
+                body: formData,
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.log(errorData);
                 throw new Error(errorData.message || "Failed to save employee");
             }
-
+    
             const data = await response.json();
-
-            if (response.ok) {
-                toast.success("Karyawan berhasil ditambahkan");
-                setIsOpen(false);
-                resetForm();
-                fetchPaginatedEmployees(currentPage);
-            } else {
-                throw new Error(data.message || "Terjadi kesalahan");
-            }
+    
+            toast.success("Karyawan berhasil ditambahkan");
+            setIsOpen(false);
+            resetForm();
+            fetchPaginatedEmployees(currentPage);
         } catch (error) {
             console.error("Error saving employee:", error);
             toast.error(error instanceof Error ? error.message : "Gagal menyimpan data karyawan");
@@ -626,7 +626,7 @@ const Employee = () => {
                 </Dialog>
             </CardContent>
         </Card>
-      );
+    );
 }
 
 export default Employee;

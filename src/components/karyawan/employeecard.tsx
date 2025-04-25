@@ -32,13 +32,13 @@ interface EmployeeCardProps {
 
 const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, onClick, onEdit, onDelete}) => {
   const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+      return name
+        .split(' ')
+        .map(part => part[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    };
 
   const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
@@ -49,7 +49,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, 
       <div className="flex items-center gap-x-3">
         <div className="shrink-0">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={employee.foto} alt={employee.nama} />
+            <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover' />
             <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
               {getInitials(employee.nama)}
             </AvatarFallback>

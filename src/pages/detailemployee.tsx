@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Pencil, Save, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -24,27 +24,16 @@ interface Employee {
     updated_at: string;
 }
 
-interface Kegiatan {
-    idKegiatan: string;
-    namaKegiatan: string;
-    tanggalMulai: string;
-    tanggalSelesai: string;
-    status: string;
-    biayaImplementasi: string;
-    deskripsi: string;
-}
-
 const DetailEmployee = () => {
     const { id } = useParams<{ id: string }>();
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(true);
-    const [kegiatanLoading, setKegiatanLoading] = useState(true);
-    const [fotoFile, setFotoFile] = useState<File | null>(null);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [employee, setEmployee] = useState<Employee | null>(null);
     const [editedEmployee, setEditedEmployee] = useState<Employee | null>(null);
-    const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -101,52 +90,26 @@ const DetailEmployee = () => {
         fetchEmployee();
     }, [id]);
 
-    useEffect(() => {
-        const fetchKegiatan = async () => {
-            setKegiatanLoading(true);
-            try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/activity/program/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-        
-                const data = await response.json();
-        
-                if (response.status === 404 || !data.success || !Array.isArray(data.activity)) {
-                    setKegiatanList([]);
-                    return;
-                }
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const maxSize = 5 * 1024 * 1024;
 
-                if (!response.ok) {
-                    throw new Error(data.message || "Gagal memuat kegiatan program");
-                }
-        
-                const listKegiatan: Kegiatan[] = data.activity.map((item: any) => ({
-                    idKegiatan: String(item.id),
-                    namaKegiatan: item.nama_aktivitas,
-                    tanggalMulai: new Date(item.tanggal_mulai).toISOString().split("T")[0],
-                    tanggalSelesai: new Date(item.tanggal_selesai).toISOString().split("T")[0],
-                    status: item.status,
-                    biayaImplementasi: String(item.biaya_implementasi),
-                    deskripsi: item.deskripsi,
-                }));
-        
-                setKegiatanList(listKegiatan);
-            } catch (error) {
-                console.error("Error fetching kegiatan:", error);
-                toast.error("Gagal memuat data kegiatan");
-            } finally {
-                setKegiatanLoading(false);
+            if (file.size > maxSize) {
+                toast.error("Ukuran foto tidak boleh lebih dari 2MB");
+                return;
             }
-        };         
+            setSelectedFile(file);
 
-        if (id) {
-            fetchKegiatan();
+            const reader = new FileReader();
+
+            reader.onloadend = () => {
+                setPreviewUrl(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
-    }, [id]);
+
+    }
 
     const handleChange = (field: keyof Employee, value: string | number) => {
         setEditedEmployee((prev) => ({ ...prev!, [field]: value }));
@@ -168,16 +131,33 @@ const DetailEmployee = () => {
         try {
             console.log("Edited Employee", editedEmployee);
             console.log("Stringify", JSON.stringify(editedEmployee))
+
             const token = localStorage.getItem("token");
+
+            const formData = new FormData();
+            formData.append("nama", editedEmployee.nama || "");
+            formData.append("email", editedEmployee.email || "");
+            formData.append("telepon", editedEmployee.telepon || "");
+            
+            if (editedEmployee.alamat) {
+                formData.append("alamat", editedEmployee.alamat);
+            }
+            
+            if (selectedFile) {
+                formData.append("foto", selectedFile);
+            }
 
             const response = await fetch(`${API_URL}/api/employee/${id}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify(editedEmployee),
+                body: formData,
             });
+
+            if (!response.ok) {
+                throw new Error("Failed to update employee");
+            }
 
             const updatedData = await fetch(`${API_URL}/api/employee/${id}`, {
                 headers: {
@@ -212,6 +192,8 @@ const DetailEmployee = () => {
             }
 
             setEmployee(updatedEmployee);
+            setSelectedFile(null);
+            setPreviewUrl(null);
             setIsEditing(false);
             toast.success("Data karyawan berhasil diperbarui");
         } catch (error) {
@@ -230,27 +212,6 @@ const DetailEmployee = () => {
           .toUpperCase()
           .substring(0, 2);
     };
-
-    // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     if (e.target.files && e.target.files[0]) {
-    //         const file = e.target.files[0];
-    //         const maxSize = 2 * 1024 * 1024; // 2MB
-    //         if (file.size > maxSize) {
-    //             toast.error("Ukuran foto tidak boleh lebih dari 2MB");
-    //             return;
-    //         }
-    //         setSelectedFile(file);
-          
-    //         const reader = new FileReader();
-    //         reader.onloadend = () => {
-    //             setEditedEmployee(prev => prev ? {
-    //             ...prev,
-    //             foto: reader.result as string
-    //             } : null);
-    //         };
-    //         reader.readAsDataURL(file);
-    //     }
-    // };
 
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
@@ -313,15 +274,68 @@ const DetailEmployee = () => {
                             )}
                         </div>
 
-                        <div className="shrink-0 flex justify-center items-center">
-                            <Avatar className="h-16 w-16">
-                                <AvatarImage src={employee.foto} alt={employee.nama} />
-                                <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
-                                    {getInitials(employee.nama)}
-                                </AvatarFallback>
-                            </Avatar>
-                        </div>
-
+                        <div className="flex justify-center items-center">
+                            {isEditing ? (
+                                <div className="space-y-2 w-full">
+                                    <Input
+                                        id="foto"
+                                        name="foto"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        ref={fileInputRef}
+                                    />
+                                    <div className="flex items-center space-x-4 mt-2">
+                                        {previewUrl ? (
+                                            <div className="relative">
+                                                <img 
+                                                    src={previewUrl} 
+                                                    alt="Preview" 
+                                                    className="w-16 h-16 rounded-full object-cover" 
+                                                />
+                                                <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-5 w-5 text-red-500 hover:text-red-600"
+                                                        onClick={() => {
+                                                            setSelectedFile(null);
+                                                            setPreviewUrl(null);
+                                                            if (fileInputRef.current) {
+                                                                fileInputRef.current.value = "";
+                                                            }
+                                                        }}
+                                                    >
+                                                        ✕
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            employee.foto && (
+                                                <div>
+                                                    <Avatar className="h-16 w-16">
+                                                        <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover'/>
+                                                        <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
+                                                            {getInitials(employee.nama)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="shrink-0">
+                                    <Avatar className="h-32 w-32">
+                                        <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover'/>
+                                        <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
+                                            {getInitials(employee.nama)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </div> 
+                            )}
+                        </div> 
+                        
                         <Table className="border border-t-0 border-l-0 border-r-0 last:border-b-0 my-6 w-full">
                             <TableBody>
                                 <TableRow className="flex flex-col md:table-row">
