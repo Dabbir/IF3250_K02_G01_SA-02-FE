@@ -14,7 +14,7 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
-import { Upload, X, Building } from "lucide-react";
+import { Upload, X, Building, Loader2 } from "lucide-react";
 
 interface AddBeneficiaryProps {
   isOpen: boolean;
@@ -53,6 +53,18 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      if (file.size > 2 * 1024 * 1024) { // 2MB
+        toast.error("Ukuran file terlalu besar. Maksimal 2MB");
+        return;
+      }
+      
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Format file tidak valid. Gunakan JPG, PNG, GIF, atau WEBP");
+        return;
+      }
+      
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -73,6 +85,26 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
       toast.error("Nama instansi harus diisi");
       return;
     }
+    
+    if (!formData.nama_kontak) {
+      toast.error("Nama kontak personil harus diisi");
+      return;
+    }
+    
+    if (!formData.alamat) {
+      toast.error("Alamat harus diisi");
+      return;
+    }
+    
+    if (!formData.telepon) {
+      toast.error("Nomor telepon harus diisi");
+      return;
+    }
+    
+    if (!formData.email) {
+      toast.error("Email harus diisi");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -84,10 +116,10 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
 
       const formDataToSend = new FormData();
       formDataToSend.append("nama_instansi", formData.nama_instansi);
-      formDataToSend.append("nama_kontak", formData.nama_kontak || "");
-      formDataToSend.append("alamat", formData.alamat || "");
-      formDataToSend.append("telepon", formData.telepon || "");
-      formDataToSend.append("email", formData.email || "");
+      formDataToSend.append("nama_kontak", formData.nama_kontak);
+      formDataToSend.append("alamat", formData.alamat);
+      formDataToSend.append("telepon", formData.telepon);
+      formDataToSend.append("email", formData.email);
       
       if (selectedImage) {
         formDataToSend.append("foto", selectedImage);
@@ -145,12 +177,14 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
   };
 
   const handleClose = () => {
-    resetForm();
-    setIsOpen(false);
+    if (!isSubmitting) {
+      resetForm();
+      setIsOpen(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tambah Penerima Manfaat</DialogTitle>
@@ -176,20 +210,21 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
 
             <div className="space-y-2">
               <label htmlFor="nama_kontak" className="text-sm font-medium">
-                Nama Kontak Personil
+                Nama Kontak Personil <span className="text-red-500">*</span>
               </label>
               <Input
                 id="nama_kontak"
                 value={formData.nama_kontak}
                 onChange={(e) => handleChange("nama_kontak", e.target.value)}
                 placeholder="Nama kontak personil"
+                required
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="telepon" className="text-sm font-medium">
-                  Nomor Telepon
+                  Nomor Telepon <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="telepon"
@@ -197,12 +232,13 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
                   value={formData.telepon}
                   onChange={(e) => handleChange("telepon", e.target.value)}
                   placeholder="Nomor telepon"
+                  required
                 />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="email"
@@ -210,13 +246,14 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="Email kontak"
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="alamat" className="text-sm font-medium">
-                Alamat
+                Alamat <span className="text-red-500">*</span>
               </label>
               <Textarea
                 id="alamat"
@@ -224,6 +261,7 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
                 onChange={(e) => handleChange("alamat", e.target.value)}
                 placeholder="Alamat lengkap"
                 rows={3}
+                required
               />
             </div>
 
@@ -281,7 +319,12 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose} 
+              disabled={isSubmitting}
+            >
               Batal
             </Button>
             <Button 
@@ -289,7 +332,13 @@ export default function AddBeneficiary({ isOpen, setIsOpen, onSuccess }: AddBene
               className="bg-[#3A786D] hover:bg-[#2d6055]"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Menyimpan..." : "Simpan"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Menyimpan...
+                </>
+              ) : (
+                "Simpan"
+              )}
             </Button>
           </DialogFooter>
         </form>

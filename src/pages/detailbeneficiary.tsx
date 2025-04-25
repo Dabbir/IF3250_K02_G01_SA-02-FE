@@ -105,6 +105,20 @@ export default function DetailBeneficiary() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validate file size
+      if (file.size > 2 * 1024 * 1024) { // 2MB
+        toast.error("Ukuran file terlalu besar. Maksimal 2MB");
+        return;
+      }
+      
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Format file tidak valid. Gunakan JPG, PNG, GIF, atau WEBP");
+        return;
+      }
+      
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -115,6 +129,14 @@ export default function DetailBeneficiary() {
     setSelectedImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    
+    // If we're editing an existing beneficiary, also clear the foto field
+    if (editedBeneficiary && !isNewBeneficiary) {
+      setEditedBeneficiary({
+        ...editedBeneficiary,
+        foto: ""
+      });
     }
   };
 
@@ -148,6 +170,10 @@ export default function DetailBeneficiary() {
       
       if (selectedImage) {
         formData.append("foto", selectedImage);
+      } else if (editedBeneficiary.foto === "" && !isNewBeneficiary) {
+        // If the foto field was cleared (but not a new beneficiary), 
+        // send a special field to indicate the image should be removed
+        formData.append("remove_foto", "true");
       }
 
       const url = isNewBeneficiary 
@@ -429,7 +455,7 @@ export default function DetailBeneficiary() {
                           <Upload className="h-4 w-4 mr-2" /> Upload Foto
                         </label>
                         
-                        {imagePreview && (
+                        {(imagePreview || editedBeneficiary?.foto) && (
                           <Button
                             variant="outline"
                             size="default"

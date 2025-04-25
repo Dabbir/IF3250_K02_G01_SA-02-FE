@@ -5,11 +5,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Building, Pencil, Trash2, Loader2, Menu, Share2, Phone, Mail, HandCoins, Download } from "lucide-react";
+import { Search, Building, Pencil, Trash2, Loader2, Share2, Phone, Mail, HandCoins, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import AddBeneficiary from "@/components/beneficiary/addbeneficiary";
 
 interface Beneficiary {
@@ -23,7 +22,7 @@ interface Beneficiary {
   created_at: string;
 }
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 10;
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function BeneficiaryPage() {
@@ -34,20 +33,10 @@ export default function BeneficiaryPage() {
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   useEffect(() => {
     const fetchBeneficiaries = async () => {
@@ -59,7 +48,7 @@ export default function BeneficiaryPage() {
           throw new Error("Authentication token not found");
         }
 
-        const response = await fetch(`${API_URL}/api/beneficiary`, {
+        const response = await fetch(`${API_URL}/api/beneficiary?page=${currentPage}&limit=${ITEMS_PER_PAGE}&nama_instansi=${search}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -75,6 +64,8 @@ export default function BeneficiaryPage() {
         
         if (data.success) {
           setBeneficiaries(data.data || []);
+          setTotalPages(data.pagination?.totalPages || 1);
+          setTotalItems(data.pagination?.total || 0);
         } else {
           throw new Error(data.message || "Failed to fetch beneficiaries");
         }
@@ -87,10 +78,10 @@ export default function BeneficiaryPage() {
     };
 
     fetchBeneficiaries();
-  }, []);
+  }, [currentPage, search]);
 
-  const handleShareToWhatsApp = (beneficiary: Beneficiary) => {
-    event?.stopPropagation();
+  const handleShareToWhatsApp = (beneficiary: Beneficiary, e: React.MouseEvent) => {
+    e.stopPropagation();
 
     const shareText = `*Detail Penerima Manfaat*\n\n` +
       `*Nama Instansi:* ${beneficiary.nama_instansi}\n` +
@@ -104,20 +95,6 @@ export default function BeneficiaryPage() {
 
     window.open(whatsappUrl, '_blank');
   };
-
-  const filteredBeneficiaries = beneficiaries.filter(beneficiary => {
-    const matchesSearch = 
-      (beneficiary.nama_instansi && beneficiary.nama_instansi.toLowerCase().includes(search.toLowerCase())) ||
-      (beneficiary.nama_kontak && beneficiary.nama_kontak.toLowerCase().includes(search.toLowerCase()));
-
-    return matchesSearch;
-  });
-
-  const totalPages = Math.ceil(filteredBeneficiaries.length / ITEMS_PER_PAGE);
-  const displayedBeneficiaries = filteredBeneficiaries.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   const handleDeleteBeneficiary = async (id: string | undefined) => {
     if (!id) return;
@@ -146,6 +123,36 @@ export default function BeneficiaryPage() {
       if (data.success) {
         setBeneficiaries(beneficiaries.filter(beneficiary => beneficiary.id !== id));
         toast.success(data.message || "Penerima manfaat berhasil dihapus");
+        
+        if (beneficiaries.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        } else {
+          const fetchBeneficiaries = async () => {
+            try {
+              const token = localStorage.getItem("token");
+              const response = await fetch(`${API_URL}/api/beneficiary?page=${currentPage}&limit=${ITEMS_PER_PAGE}&nama_instansi=${search}`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`
+                }
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                  setBeneficiaries(data.data || []);
+                  setTotalPages(data.pagination?.totalPages || 1);
+                  setTotalItems(data.pagination?.total || 0);
+                }
+              }
+            } catch (error) {
+              console.error("Error refreshing data:", error);
+            }
+          };
+          
+          fetchBeneficiaries();
+        }
       } else {
         throw new Error(data.message || "Failed to delete beneficiary");
       }
@@ -162,7 +169,6 @@ export default function BeneficiaryPage() {
       return;
     }
 
-    // Membentuk data sesuai struktur
     const data = beneficiaries.map(beneficiary => ({
       "Nama Instansi": beneficiary.nama_instansi,
       "Nama Kontak": beneficiary.nama_kontak || "",
@@ -172,11 +178,11 @@ export default function BeneficiaryPage() {
     }));
 
     const columnWidths = [
-      { wch: 30 }, // Nama Instansi
-      { wch: 25 }, // Nama Kontak
-      { wch: 40 }, // Alamat
-      { wch: 20 }, // Telepon
-      { wch: 30 }  // Email
+      { wch: 30 }, 
+      { wch: 25 }, 
+      { wch: 40 }, 
+      { wch: 20 }, 
+      { wch: 30 } 
     ];
 
     const worksheet = utils.json_to_sheet(data);
@@ -238,7 +244,6 @@ export default function BeneficiaryPage() {
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-2">
-            {/* Export Button */}
             <Button
               className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center gap-1"
               onClick={exportXlsx}
@@ -247,7 +252,6 @@ export default function BeneficiaryPage() {
               Unduh Penerima Manfaat
             </Button>
 
-            {/* Add Beneficiary Button */}
             <Button
               className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center"
               onClick={() => setIsOpen(true)}
@@ -257,7 +261,7 @@ export default function BeneficiaryPage() {
           </div>
         </div>
 
-        {filteredBeneficiaries.length === 0 ? (
+        {beneficiaries.length === 0 ? (
           <div className="text-center py-8 border rounded-lg">
             <p className="text-gray-500">Tidak ada data penerima manfaat</p>
             {search && (
@@ -274,7 +278,7 @@ export default function BeneficiaryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {displayedBeneficiaries.map((beneficiary) => (
+            {beneficiaries.map((beneficiary) => (
               <Card 
                 key={beneficiary.id} 
                 className="overflow-hidden hover:shadow-md transition cursor-pointer"
@@ -298,57 +302,6 @@ export default function BeneficiaryPage() {
                     <h3 className="font-semibold text-[var(--blue)] truncate pr-2 text-base">
                       {beneficiary.nama_instansi}
                     </h3>
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 relative z-10"
-                          onClick={(e) => {e.stopPropagation();}}
-                        >
-                          <Menu className="h-4 w-4" />
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent 
-                        side="bottom" 
-                        className="h-auto max-h-[30vh] rounded-t-xl"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="grid gap-4 py-4">
-                          <Button
-                            className="w-full flex justify-start items-center space-x-2 bg-transparent text-blue-500 hover:bg-blue-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/penerima-manfaat/${beneficiary.id}`);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            <span>Edit Penerima Manfaat</span>
-                          </Button>
-                          <Button
-                            className="w-full flex justify-start items-center space-x-2 bg-transparent text-green-500 hover:bg-green-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleShareToWhatsApp(beneficiary);
-                            }}
-                          >
-                            <Share2 className="h-4 w-4" />
-                            <span>Bagikan ke WhatsApp</span>
-                          </Button>
-                          <Button
-                            className="w-full flex justify-start items-center space-x-2 bg-transparent text-red-500 hover:bg-red-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedBeneficiary(beneficiary);
-                              setShowDeleteDialog(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span>Hapus Penerima Manfaat</span>
-                          </Button>
-                        </div>
-                      </SheetContent>
-                    </Sheet>
                   </div>
                   
                   {beneficiary.nama_kontak && (
@@ -368,6 +321,45 @@ export default function BeneficiaryPage() {
                         <span className="truncate">{beneficiary.email}</span>
                       </div>
                     )}
+                  </div>
+
+                  <div className="flex mt-4 pt-3 border-t border-gray-100 justify-between">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/penerima-manfaat/${beneficiary.id}`);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="ml-1 text-xs">Edit</span>
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-green-500 hover:text-green-700 hover:bg-green-50 p-1"
+                      onClick={(e) => handleShareToWhatsApp(beneficiary, e)}
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span className="ml-1 text-xs">Share</span>
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBeneficiary(beneficiary);
+                        setShowDeleteDialog(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="ml-1 text-xs">Hapus</span>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -429,12 +421,35 @@ export default function BeneficiaryPage() {
           </div>
         )}
         
-        {/* Add Beneficiary Dialog */}
         <AddBeneficiary 
           isOpen={isOpen} 
           setIsOpen={setIsOpen} 
           onSuccess={() => {
-            window.location.reload();
+            const fetchBeneficiaries = async () => {
+              try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/beneficiary?page=${currentPage}&limit=${ITEMS_PER_PAGE}&nama_instansi=${search}`, {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                  }
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.success) {
+                    setBeneficiaries(data.data || []);
+                    setTotalPages(data.pagination?.totalPages || 1);
+                    setTotalItems(data.pagination?.total || 0);
+                  }
+                }
+              } catch (error) {
+                console.error("Error refreshing data:", error);
+              }
+            };
+            
+            fetchBeneficiaries();
           }}
         />
       </CardContent>
