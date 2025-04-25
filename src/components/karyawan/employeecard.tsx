@@ -58,7 +58,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, masjidNameParam, 
 
         <div className="grow overflow-hidden">
             <h1 className="text-base font-medium text-gray-800 dark:text-neutral-200 truncate">
-              {truncateText(employee.nama, 20)}
+              {truncateText(employee.nama, 15)}
             </h1>
             <div className="flex items-center space-x-2">
                 <Building className='h-3 w-3 flex-shrink-0 text-gray-500'/>

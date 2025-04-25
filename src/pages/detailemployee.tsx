@@ -201,6 +201,31 @@ const DetailEmployee = () => {
 
     const handleSaveClick = async () => {
         if (!editedEmployee) return;
+        const errors = [];
+    
+        if (!editedEmployee.nama || editedEmployee.nama.trim() === '') {
+            errors.push("Nama wajib diisi");
+        }
+        
+        if (!editedEmployee.email || editedEmployee.email.trim() === '') {
+            errors.push("Email wajib diisi");
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedEmployee.email)) {
+            errors.push("Format email tidak valid");
+        }
+        
+        if (!editedEmployee.telepon || editedEmployee.telepon.trim() === '') {
+            errors.push("Telepon wajib diisi!");
+        } else if (!/^\d+$/.test(editedEmployee.telepon)) {
+            errors.push("Telepon harus berupa angka!");
+        } else if (editedEmployee.telepon.length < 10 || editedEmployee.telepon.length > 15) {
+            errors.push("Nomor telepon harus berupa angka (10-15 digit)!");
+        }
+        
+        if (errors.length > 0) {
+            errors.forEach(error => toast.error(error));
+            return;
+        }
+        
         setSaving(true);
         
         try {

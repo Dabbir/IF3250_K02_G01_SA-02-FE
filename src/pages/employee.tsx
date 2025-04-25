@@ -382,8 +382,14 @@ const Employee = () => {
             return;
         }
 
-        if (newEmployee.telepon && !/^\d+$/.test(newEmployee.telepon)) {
-            toast.error("Telepon harus berupa angka");
+        if (!newEmployee.telepon || newEmployee.telepon.trim() === '') {
+            toast.error("Telepon wajib diisi!");
+            return;
+        } else if (!/^\d+$/.test(newEmployee.telepon)) {
+            toast.error("Telepon harus berupa angka!");
+            return;
+        } else if (newEmployee.telepon.length < 10 || newEmployee.telepon.length > 15) {
+            toast.error("Nomor telepon harus berupa angka (10-15 digit)!");
             return;
         }
     
