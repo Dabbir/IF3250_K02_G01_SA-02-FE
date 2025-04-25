@@ -54,6 +54,7 @@ export default function ManajemenAkun() {
         alamatMasjid: "",
     })
 
+    const [originalUserData, setOriginalUserData] = useState<UserData | null>(null);
     const [newProfileImage, setNewProfileImage] = useState<File | null>(null)
     const [previewImage, setPreviewImage] = useState<string | null>(null)
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -86,7 +87,7 @@ export default function ManajemenAkun() {
                     const [namaDepan, ...restNama] = fullName.split(" ")
                     const namaBelakang = restNama.join(" ") || ""
 
-                    setUserData({
+                    const profileData = {
                         namaDepan,
                         namaBelakang,
                         email: data.user.email,
@@ -95,7 +96,12 @@ export default function ManajemenAkun() {
                         profileImage: data.user.foto_profil || "",
                         namaMasjid: data.user.nama_masjid || "",
                         alamatMasjid: data.user.alamat_masjid || "",
-                    })
+                    };
+        
+                    setUserData(profileData);
+                    setOriginalUserData(profileData);
+                    setAlasanLength(data.user.alasan_bergabung?.length || 0);
+                    setBioLength(data.user.short_bio?.length || 0);
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error)
@@ -124,6 +130,7 @@ export default function ManajemenAkun() {
                 return;
             }
 
+            setShouldDeleteImage(false)
             setNewProfileImage(file);
 
             // Buat preview URL
@@ -138,7 +145,10 @@ export default function ManajemenAkun() {
     // Add the handleDeletePhoto function after the handleImageChange function
     const handleDeletePhoto = () => {
         setPreviewImage(null)
-        userData.profileImage = "";
+        setUserData(prev => ({
+            ...prev,
+            profileImage: ""
+        }));
         setNewProfileImage(null)
         setShouldDeleteImage(true)
         setShowDeleteDialog(false)
@@ -199,46 +209,18 @@ export default function ManajemenAkun() {
 
     // Modify the handleCancel function to reset the shouldDeleteImage state
     const handleCancel = () => {
-        setIsEditing(false)
-        setNewProfileImage(null)
-        setPreviewImage(null)
-        setShouldDeleteImage(false)
-        // Reset to original data from server
-        const fetchUserProfile = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/users`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                })
-
-                if (response.ok) {
-                    const data = await response.json()
-                    if (data.success && data.user) {
-                        const fullName = data.user.nama?.trim() || ""
-                        const [namaDepan, ...restNama] = fullName.split(" ")
-                        const namaBelakang = restNama.join(" ") || ""
-
-                        setUserData({
-                            namaDepan,
-                            namaBelakang,
-                            email: data.user.email,
-                            alasanBergabung: data.user.alasan_bergabung || "",
-                            bio: data.user.short_bio || "",
-                            profileImage: data.user.foto_profil || "",
-                            namaMasjid: data.user.nama_masjid || "",
-                            alamatMasjid: data.user.alamat_masjid || "",
-                        })
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching profile:", error)
-            }
+        setIsEditing(false);
+        
+        if (originalUserData) {
+            setUserData(originalUserData);
+            setAlasanLength(originalUserData.alasanBergabung.length);
+            setBioLength(originalUserData.bio.length);
         }
-        fetchUserProfile()
-    }
+        
+        setNewProfileImage(null);
+        setPreviewImage(null);
+        setShouldDeleteImage(false);
+    };
 
     const handleImageUpload = () => {
         const fileInput = document.getElementById("profile-upload") as HTMLInputElement
@@ -300,7 +282,10 @@ export default function ManajemenAkun() {
                             <div className="flex flex-col md:flex-row items-center relative gap-4">
                                 <div className="w-28 h-28 sm:w-36 sm:h-36">
                                     <Avatar className="w-full h-full rounded-full bg-slate-200">
-                                        <AvatarImage src={previewImage || userData.profileImage || ""} alt="User Profile" />
+                                    <AvatarImage 
+                                        src={previewImage ? previewImage : shouldDeleteImage ? "" : userData.profileImage || ""} 
+                                        alt="User Profile" 
+                                    />
                                         <AvatarFallback className="flex items-center justify-center text-slate-400 text-4xl">
                                             <div className="w-28 h-28 sm:w-36 sm:h-36 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden">
                                                 <svg

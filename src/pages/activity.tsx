@@ -398,19 +398,19 @@ export default function KegiatanPage() {
           <div className="flex flex-col md:flex-row items-center gap-2">
             {/* Export Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center gap-1"
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center gap-1"
               onClick={exportXlsx}
             >
               <Download className="h-4 w-4" />
-              Unduh Publikasi
+              Unduh Kegiatan
             </Button>
 
-            {/* Add Publication Button */}
+            {/* Add Kegiatan Button */}
             <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full flex items-center justify-center"
+              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center"
               onClick={() => setIsOpen(true)}
             >
-              Tambah Publikasi
+              Tambah Kegiatan
             </Button>
           </div>
         </div>
