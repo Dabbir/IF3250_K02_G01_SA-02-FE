@@ -49,6 +49,8 @@ const Employee = () => {
     const [submitting, setSubmitting] = useState(false);
     const [totalEmployees, setTotalEmployees] = useState(0);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [sortColumn, setSortColumn] = useState<string>("created_at");
+    const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [user, setUser] = useState<userData>({
         id: 0,
@@ -84,6 +86,24 @@ const Employee = () => {
             fetchPaginatedEmployees(currentPage);
         }
     }, [search]);
+
+    useEffect(() => {
+        if (search.trim().length > 0) {
+            setCurrentPage(1);
+            fetchPaginatedEmployees(1, search);
+        } else {
+            fetchPaginatedEmployees(currentPage);
+        }
+    }, [sortColumn]);
+
+    useEffect(() => {
+        if (search.trim().length > 0) {
+            setCurrentPage(1);
+            fetchPaginatedEmployees(1, search);
+        } else {
+            fetchPaginatedEmployees(currentPage);
+        }
+    }, [sortOrder]);
     
     useEffect(() => {
         if (search.trim().length > 0) {
@@ -179,7 +199,7 @@ const Employee = () => {
             const token = localStorage.getItem("token");
 
             const response = await fetch(`
-                ${API_URL}/api/employee?page=${page}&limit=${ITEMS_PER_PAGE}${searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ""}`, {
+                ${API_URL}/api/employee?page=${page}&sortBy=${sortColumn}&sortOrder=${sortOrder}&limit=${ITEMS_PER_PAGE}${searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ""}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -424,6 +444,16 @@ const Employee = () => {
         }
     };
 
+    const handleSortChange = (column: string) => {
+        if (sortColumn === column) {
+            setSortOrder(sortOrder === "ASC" ? "DESC" : "ASC");
+        } else {
+            setSortColumn(column);
+            setSortOrder("DESC");
+        }
+        setCurrentPage(1);
+    };
+
     return (
         <Card className="mx-auto mt-6 max-w-[70rem] p-6">
             <CardHeader>
@@ -446,8 +476,24 @@ const Employee = () => {
                             }}
                             className="pl-10"
                         />
-                    </div>
 
+                        <select 
+                            value={`${sortColumn}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [column, order] = e.target.value.split('-');
+                                setSortColumn(column);
+                                setSortOrder(order as "ASC" | "DESC");
+                                setCurrentPage(1);
+                            }}
+                            className="border rounded p-2 text-sm"
+                            >
+                                <option value="nama-ASC">Name (A-Z)</option>
+                                <option value="nama-DESC">Name (Z-A)</option>
+                                <option value="created_at-DESC">Newest first</option>
+                                <option value="created_at-ASC">Oldest first</option>
+                        </select>
+                    </div>
+                    
                     <div className="flex items-center gap-2">
                         <Button className="bg-[#3A786D] text-white" onClick={() => setIsOpen(true)}>
                         Tambah Karyawan
