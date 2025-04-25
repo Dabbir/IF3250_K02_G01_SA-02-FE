@@ -235,6 +235,11 @@ const DetailProgram = () => {
                 body: JSON.stringify(editedProgram),
             });
 
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Gagal memperbarui program");
+            }
+
             const updatedData = await fetch(`${API_URL}/api/program/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
