@@ -276,7 +276,44 @@ const DetailEmployee = () => {
 
                         <div className="flex justify-center items-center">
                             {isEditing ? (
-                                <div className="space-y-2 w-full">
+                                <div className="flex flex-col gap-4 mt-2">
+                                    {previewUrl ? (
+                                        <div className="relative">
+                                            <img 
+                                                src={previewUrl} 
+                                                alt="Preview" 
+                                                className="w-32 h-32 rounded-full object-cover" 
+                                            />
+                                            <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-5 w-5 text-red-500 hover:text-red-600"
+                                                    onClick={() => {
+                                                        setSelectedFile(null);
+                                                        setPreviewUrl(null);
+                                                        if (fileInputRef.current) {
+                                                            fileInputRef.current.value = "";
+                                                        }
+                                                    }}
+                                                >
+                                                    ✕
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        employee.foto && (
+                                            <div>
+                                                <Avatar className="h-32 w-32">
+                                                    <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover'/>
+                                                    <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
+                                                        {getInitials(employee.nama)}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            </div>
+                                        )
+                                    )}
+
                                     <Input
                                         id="foto"
                                         name="foto"
@@ -285,44 +322,6 @@ const DetailEmployee = () => {
                                         onChange={handleFileChange}
                                         ref={fileInputRef}
                                     />
-                                    <div className="flex items-center space-x-4 mt-2">
-                                        {previewUrl ? (
-                                            <div className="relative">
-                                                <img 
-                                                    src={previewUrl} 
-                                                    alt="Preview" 
-                                                    className="w-16 h-16 rounded-full object-cover" 
-                                                />
-                                                <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5">
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="icon" 
-                                                        className="h-5 w-5 text-red-500 hover:text-red-600"
-                                                        onClick={() => {
-                                                            setSelectedFile(null);
-                                                            setPreviewUrl(null);
-                                                            if (fileInputRef.current) {
-                                                                fileInputRef.current.value = "";
-                                                            }
-                                                        }}
-                                                    >
-                                                        ✕
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            employee.foto && (
-                                                <div>
-                                                    <Avatar className="h-16 w-16">
-                                                        <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover'/>
-                                                        <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
-                                                            {getInitials(employee.nama)}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                </div>
-                                            )
-                                        )}
-                                    </div>
                                 </div>
                             ) : (
                                 <div className="shrink-0">
