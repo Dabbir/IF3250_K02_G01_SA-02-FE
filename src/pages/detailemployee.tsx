@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Pencil, Save, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +24,16 @@ interface Employee {
     updated_at: string;
 }
 
+interface Kegiatan {
+    idKegiatan: string;
+    namaKegiatan: string;
+    tanggalMulai: string;
+    tanggalSelesai: string;
+    status: string;
+    biayaImplementasi: string;
+    deskripsi: string;
+}
+
 const DetailEmployee = () => {
     const { id } = useParams<{ id: string }>();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,6 +45,8 @@ const DetailEmployee = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [deletePhoto, setDeletePhoto] = useState(false);
+    const [kegiatanLoading, setKegiatanLoading] = useState(true);
+    const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -89,6 +101,58 @@ const DetailEmployee = () => {
         };        
 
         fetchEmployee();
+    }, [id]);
+
+    useEffect(() => {
+        const fetchKegiatan = async () => {
+            setKegiatanLoading(true);
+
+            try {
+                const token = localStorage.getItem("token");
+
+                const response = await fetch(`${API_URL}/api/employee/activity/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const data = await response.json();
+                console.log("data kegiatan employee", data);
+
+                if (response.status === 404 || !data.success || !Array.isArray(data.data)) {
+                    setKegiatanList([]);
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Gagal memuat kegiatan karyawan");
+                }
+
+                const listKegiatan: Kegiatan[] = data.data.map((item: any) => ({
+                    idKegiatan: String(item.id),
+                    namaKegiatan: item.nama_aktivitas,
+                    tanggalMulai: new Date(item.tanggal_mulai).toISOString().split("T")[0],
+                    tanggalSelesai: new Date(item.tanggal_selesai).toISOString().split("T")[0],
+                    status: item.status,
+                    biayaImplementasi: String(item.biaya_implementasi),
+                    deskripsi: item.deskripsi,
+                }));
+                console.log("List kegiatan")
+                console.log(listKegiatan);
+        
+                setKegiatanList(listKegiatan);
+            } catch (error) {
+                console.error("Error fetching kegiatan:", error);
+                toast.error("Gagal memuat data kegiatan");
+            } finally {
+                setKegiatanLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchKegiatan();
+        }
     }, [id]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -468,6 +532,56 @@ const DetailEmployee = () => {
                         <p>Karyawan tidak ditemukan</p>
                     </div>
                 )}
+
+                <div className="my-6 space-y-3">
+                    <h1 className="text-2xl">Kegiatan Karyawan</h1>
+                    {kegiatanLoading ? (
+                        <div className="flex justify-center items-center h-32">
+                            <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+                        </div>
+                    ) : kegiatanList.length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">Tidak terdapat kegiatan yang terkait dengan data karyawan ini.</p>
+                    ) : (
+                        <Table className="border overflow-hidden">
+                            <TableHeader>
+                                <TableRow className="bg-gray-100">
+                                    <TableHead className="pl-7 w-[200px]">Nama Kegiatan</TableHead>
+                                    <TableHead className="w-[120px] text-center">Tanggal Mulai</TableHead>
+                                    <TableHead className="w-[120px] text-center">Tanggal Selesai</TableHead>
+                                    <TableHead className="w-[120px] text-center">Status</TableHead>
+                                    <TableHead className="w-[180px]">Biaya Implementasi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+
+                            <TableBody>
+                                {kegiatanList.map((item, index) => (
+                                    <TableRow
+                                        key={index}
+                                        className="border-b cursor-pointer hover:bg-gray-100 transition"
+                                        onClick={() => {
+                                            navigate(`/kegiatan/${item.idKegiatan}`);
+                                        }}
+                                    >
+                                        <TableCell className="pl-7 truncate max-w-[180px]">{item.namaKegiatan}</TableCell>
+                                        <TableCell className="text-center truncate">{item.tanggalMulai}</TableCell>
+                                        <TableCell className="text-center truncate">{item.tanggalSelesai}</TableCell>
+                                        <TableCell className="text-center truncate">
+                                            <span className={`px-2 py-1 rounded-full text-xs ${
+                                                item.status === "Finished" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                                            }`}>
+                                                {item.status}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-left truncate max-w-[180px]">
+                                            Rp{parseInt(item.biayaImplementasi).toLocaleString()}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </div>
+
             </CardContent>
         </Card>
     );
