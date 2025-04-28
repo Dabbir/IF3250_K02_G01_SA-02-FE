@@ -4,7 +4,8 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import EmployeeCard from "@/components/karyawan/employeecard";
+import EmployeeCard from "@/components/employee/employeecard";
+import EmployeeDialog from "@/components/employee/addemployeedialog";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search, Users, Loader2 } from "lucide-react";
@@ -332,24 +333,6 @@ const Employee = () => {
         )
         : employeeList;
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-
-        setNewEmployee(prev => ({ ...prev, [name]: value }));
-    };
-    
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-          const file = e.target.files[0];
-          const maxSize = 2 * 1024 * 1024;
-          if (file.size > maxSize) {
-            toast.error("Ukuran foto tidak boleh lebih dari 2MB");
-            return;
-          }
-          setSelectedFile(file);
-        }
-    };
-    
     const resetForm = () => {
         setNewEmployee({
           nama: "",
@@ -388,10 +371,6 @@ const Employee = () => {
     };
 
     const handleDelete = async (id: string): Promise<boolean> => {
-        if (!confirm("Apakah Anda yakin ingin menghapus karyawan ini?")) {
-            return false;
-        }
-        
         try {
             setLoading(true);
             const token = localStorage.getItem("token");
@@ -405,8 +384,6 @@ const Employee = () => {
             });
 
             if (!response.ok) throw new Error("Gagal menghapus karyawan");
-
-            toast.success("Data karyawan berhasil dihapus");
 
             if (search.trim().length > 0) {
                 await fetchEmployees();
@@ -435,7 +412,7 @@ const Employee = () => {
         const success = await handleDelete(deletingEmployee.id);
         
         if (success) {
-            toast.success(`Karyawan "${deletingEmployee.nama}" berhasil dihapus`);
+            toast.success(`Data karyawan berhasil dihapus`);
         } else {
             toast.error("Gagal menghapus karyawan");
         }
@@ -455,27 +432,6 @@ const Employee = () => {
     };
 
     const handleSubmit = async () => {
-        if (!newEmployee.nama || !newEmployee.email || !newEmployee.telepon) {
-            toast.error("Nama, email, dan telepon wajib diisi");
-            return;
-        }
-
-        if (!newEmployee.telepon || newEmployee.telepon.trim() === '') {
-            toast.error("Telepon wajib diisi!");
-            return;
-        } else if (!/^\d+$/.test(newEmployee.telepon)) {
-            toast.error("Telepon harus berupa angka!");
-            return;
-        } else if (newEmployee.telepon.length < 10 || newEmployee.telepon.length > 15) {
-            toast.error("Nomor telepon harus berupa angka (10-15 digit)!");
-            return;
-        }
-    
-        if (newEmployee.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmployee.email)) {
-            toast.error("Format email tidak valid");
-            return;
-        }
-    
         setSubmitting(true);
         
         try {
@@ -631,115 +587,14 @@ const Employee = () => {
                 </div>
                 )}
     
-                <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-                    <DialogContent className="max-w-md md:max-w-xl">
-                        <DialogHeader>
-                            <DialogTitle>{isEditMode ? "Edit Karyawan" : "Tambah Karyawan"}</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="nama">Nama<span className="text-red-500 ml-0.5">*</span></Label>
-                                <Input 
-                                id="nama"
-                                name="nama" 
-                                placeholder="Nama Karyawan" 
-                                value={newEmployee.nama || ""} 
-                                onChange={handleInputChange} 
-                                />
-                            </div>
-                    
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email">Email<span className="text-red-500 ml-0.5">*</span></Label>
-                                    <Input 
-                                        id="email"
-                                        name="email" 
-                                        type="email"
-                                        placeholder="Email" 
-                                        value={newEmployee.email || ""} 
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                        
-                                <div className="grid gap-2">
-                                    <Label htmlFor="telepon">Telepon<span className="text-red-500 ml-0.5">*</span></Label>
-                                    <Input 
-                                        id="telepon"
-                                        name="telepon" 
-                                        placeholder="Telepon" 
-                                        value={newEmployee.telepon || ""} 
-                                        onChange={handleInputChange}
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                    />
-                                </div>
-                            </div>
-                    
-                            <div className="grid gap-2">
-                                <Label htmlFor="alamat">Alamat</Label>
-                                <Textarea 
-                                    id="alamat"
-                                    name="alamat" 
-                                    placeholder="Alamat" 
-                                    rows={3}
-                                    value={newEmployee.alamat || ""} 
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="foto">Foto Profil</Label>
-                                    <Input 
-                                        id="foto"
-                                        name="foto" 
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                />
-
-                                {selectedFile && (
-                                <p className="text-sm text-green-600">
-                                    File dipilih: {selectedFile.name}
-                                </p>
-                                )}
-
-                                {newEmployee.foto && !selectedFile && (
-                                    <div className="flex items-center gap-2">
-                                        <img 
-                                            src={newEmployee.foto}
-                                            alt="Current profile"
-                                            className="w-10 h-10 rounded-full object-cover"
-                                        />
-                                        <p className="text-sm text-gray-600">Foto profil saat ini</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button 
-                                variant="outline" 
-                                onClick={() => setIsOpen(false)}
-                                disabled={submitting}
-                            >
-                                Batal
-                            </Button>
-                            <Button 
-                                className="bg-[#3A786D] text-white"
-                                onClick={handleSubmit}
-                                disabled={submitting}
-                            >
-                                {submitting ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
-                                    {isEditMode ? "Memperbarui..." : "Menyimpan..."}
-                                </>
-                                ) : (
-                                isEditMode ? "Perbarui" : "Simpan"
-                                )}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <EmployeeDialog
+                    isOpen={isOpen}
+                    setIsOpen={handleOpenChange}
+                    newEmployee={newEmployee}
+                    setNewEmployee={setNewEmployee}
+                    onSubmit={handleSubmit}
+                    submitting={submitting}
+                />
 
                 <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                     <DialogContent className="sm:max-w-md">
