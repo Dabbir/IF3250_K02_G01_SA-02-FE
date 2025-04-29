@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ArrowLeft, Save, Clock, MapPin, Users, Calendar, Info, Loader2, GraduationCap } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Users, Calendar, Info, Loader2, GraduationCap } from "lucide-react";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/ui/badge";
 import { Training, TrainingAvailability } from "@/lib/training";
