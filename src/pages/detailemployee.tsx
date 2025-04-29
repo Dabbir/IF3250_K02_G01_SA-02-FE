@@ -34,6 +34,12 @@ interface Kegiatan {
     deskripsi: string;
 }
 
+interface ValidationErrors {
+    nama?: string;
+    email?: string;
+    telepon?: string;
+}
+
 const DetailEmployee = () => {
     const { id } = useParams<{ id: string }>();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +53,7 @@ const DetailEmployee = () => {
     const [deletePhoto, setDeletePhoto] = useState(false);
     const [kegiatanLoading, setKegiatanLoading] = useState(true);
     const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
+    const [errors, setErrors] = useState<ValidationErrors>({});
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -187,58 +194,36 @@ const DetailEmployee = () => {
 
     const handleChange = (field: keyof Employee, value: string | number) => {
         setEditedEmployee((prev) => ({ ...prev!, [field]: value }));
+
+        if (errors[field as keyof ValidationErrors]) {
+            setErrors(prev => ({ ...prev, [field]: undefined }));
+        }
     };
 
     const handleEditClick = () => {
         setIsEditing(true);
+        setErrors({});
     };
 
     const handleCancel = () => {
         setEditedEmployee(employee);
         setIsEditing(false);
         setDeletePhoto(false);
+        setErrors({});
     };
 
     const handleSaveClick = async () => {
-        if (!editedEmployee) return;
-        const errors = [];
-    
-        if (!editedEmployee.nama || editedEmployee.nama.trim() === '') {
-            errors.push("Nama wajib diisi");
-        }
-        
-        if (!editedEmployee.email || editedEmployee.email.trim() === '') {
-            errors.push("Email wajib diisi");
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedEmployee.email)) {
-            errors.push("Format email tidak valid");
-        }
-        
-        if (!editedEmployee.telepon || editedEmployee.telepon.trim() === '') {
-            errors.push("Telepon wajib diisi!");
-        } else if (!/^\d+$/.test(editedEmployee.telepon)) {
-            errors.push("Telepon harus berupa angka!");
-        } else if (editedEmployee.telepon.length < 10 || editedEmployee.telepon.length > 15) {
-            errors.push("Nomor telepon harus berupa angka (10-15 digit)!");
-        }
-        
-        if (errors.length > 0) {
-            errors.forEach(error => toast.error(error));
-            return;
-        }
-        
+        if (!validateForm()) return;
         setSaving(true);
         
         try {
             const token = localStorage.getItem("token");
 
             const formData = new FormData();
-            formData.append("nama", editedEmployee.nama || "");
-            formData.append("email", editedEmployee.email || "");
-            formData.append("telepon", editedEmployee.telepon || "");
-            
-            if (editedEmployee.alamat) {
-                formData.append("alamat", editedEmployee.alamat);
-            }
+            formData.append("nama", editedEmployee!.nama || "");
+            formData.append("email", editedEmployee!.email || "");
+            formData.append("telepon", editedEmployee!.telepon || "");
+            formData.append("alamat", editedEmployee!.alamat || "");
 
             if (deletePhoto) {
                 formData.append("deletePhoto", "true");
@@ -311,6 +296,33 @@ const DetailEmployee = () => {
         }
     };
 
+    const validateForm = (): boolean => {
+        if (!editedEmployee) return false;
+        
+        const newErrors: ValidationErrors = {};
+    
+        if (!editedEmployee.nama || editedEmployee.nama.trim() === "") {
+            newErrors.nama = "Nama wajib diisi";
+            }
+
+        if (!editedEmployee.email || editedEmployee.email.trim() === "") {
+            newErrors.email = "Email wajib diisi";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedEmployee.email)) {
+            newErrors.email = "Format email tidak valid";
+        }
+
+        if (!editedEmployee.telepon || editedEmployee.telepon.trim() === "") {
+            newErrors.telepon = "Telepon wajib diisi";
+        } else if (!/^\d+$/.test(editedEmployee.telepon)) {
+            newErrors.telepon = "Telepon harus berupa angka";
+        } else if ( editedEmployee.telepon.length < 10 || editedEmployee.telepon.length > 15) {
+            newErrors.telepon = "Nomor telepon harus berupa angka (10-15 digit)";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }
+
     const getInitials = (name: string) => {
         return name
           .split(' ')
@@ -323,7 +335,6 @@ const DetailEmployee = () => {
     return (
         <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6 ">
             <CardHeader>
-                <div className='justify-between items-top flex'>
                     <div className="flex items-center space-x-2">
                         <ArrowLeft 
                         className="h-6 w-6 text-slate-700 hover:cursor-pointer" 
@@ -331,17 +342,6 @@ const DetailEmployee = () => {
                         />
                         <h2 className="text-xl font-medium text-[var(--blue)]">Detail Karyawan</h2>
                     </div>
-                    <div className="flex flex-col text-xs space-y-2 text-right text-gray-700">
-                        <p>
-                            <strong>Created At:</strong>{" "}
-                            {employee?.created_at ? new Date(employee.created_at).toLocaleString() : "N/A"}
-                        </p>
-                        <p>
-                            <strong>Updated At:</strong>{" "}
-                            {employee?.updated_at ? new Date(employee.updated_at).toLocaleString() : "N/A"}
-                        </p>
-                    </div>
-                </div>
             </CardHeader>
 
             <CardContent>
@@ -480,13 +480,18 @@ const DetailEmployee = () => {
                                 <TableRow className="flex flex-col md:table-row">
                                     <TableHead className="w-full md:w-1/4 py-3">Nama</TableHead>
                                     <TableCell className="w-full break-words">
-                                        <div className="flex items-center space-x-2 w-full">
+                                        <div className="flex flex-col  space-x-2 w-full">
                                             {isEditing ? (
-                                                <Input
-                                                    value={editedEmployee?.nama}
-                                                    onChange={(e) => handleChange("nama", e.target.value)}
-                                                    className="w-full"
-                                                />
+                                                <>
+                                                    <Input
+                                                        value={editedEmployee?.nama}
+                                                        onChange={(e) => handleChange("nama", e.target.value)}
+                                                        className="w-full"
+                                                    />
+                                                    {errors.nama && (
+                                                        <p className="text-red-500 text-sm mt-1">{errors.nama}</p>
+                                                    )}
+                                                </>
                                             ) : (
                                                 <div className="whitespace-pre-wrap">{String(employee?.nama)}</div>
                                             )}
@@ -504,13 +509,18 @@ const DetailEmployee = () => {
                                 <TableRow className="flex flex-col md:table-row">
                                     <TableHead className="w-full md:w-1/4 py-3">Telepon</TableHead>
                                     <TableCell className="w-full break-words">
-                                        <div className="flex items-center space-x-2 w-full">
+                                        <div className="flex flex-col space-x-2 w-full">
                                             {isEditing ? (
-                                                <Input
-                                                    value={editedEmployee?.telepon}
-                                                    onChange={(e) => handleChange("telepon", e.target.value)}
-                                                    className="w-full"
-                                                />
+                                                <>
+                                                    <Input
+                                                        value={editedEmployee?.telepon}
+                                                        onChange={(e) => handleChange("telepon", e.target.value)}
+                                                        className="w-full"
+                                                    />
+                                                    {errors.telepon && (
+                                                        <p className="text-red-500 text-sm mt-1">{errors.telepon}</p>
+                                                    )}
+                                                </>
                                             ) : (
                                                 <div className="whitespace-pre-wrap">{String(employee?.telepon)}</div>
                                             )}
@@ -520,13 +530,18 @@ const DetailEmployee = () => {
                                 <TableRow className="flex flex-col md:table-row">
                                     <TableHead className="w-full md:w-1/4 py-3">Email</TableHead>
                                     <TableCell className="w-full">
-                                        <div className="flex items-center space-x-2 w-full">
+                                        <div className="flex flex-col space-x-2 w-full">
                                             {isEditing ? (
-                                                <Input
-                                                    value={editedEmployee?.email}
-                                                    onChange={(e) => handleChange("email", e.target.value)}
-                                                    className="w-full"
-                                                />
+                                                <>
+                                                    <Input
+                                                        value={editedEmployee?.email}
+                                                        onChange={(e) => handleChange("email", e.target.value)}
+                                                        className="w-full"
+                                                    />
+                                                    {errors.email && (
+                                                        <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                                                    )}
+                                                </>
                                             ) : (
                                                 <div className="whitespace-pre-wrap">{String(employee?.email)}</div>
                                             )}
