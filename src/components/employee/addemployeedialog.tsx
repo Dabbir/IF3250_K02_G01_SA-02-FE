@@ -141,8 +141,7 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                             )}
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
+                        <div className="grid gap-2">
                             <Label htmlFor="email">
                                 Email<span className="text-red-500 ml-0.5">*</span>
                             </Label>
@@ -157,9 +156,9 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                             {errors.email && (
                                 <p className="text-red-500 text-sm">{errors.email}</p>
                             )}
-                            </div>
+                        </div>
 
-                            <div className="grid gap-2">
+                        <div className="grid gap-2">
                             <Label htmlFor="telepon">
                                 Telepon<span className="text-red-500 ml-0.5">*</span>
                             </Label>
@@ -175,7 +174,6 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                             {errors.telepon && (
                                 <p className="text-red-500 text-sm">{errors.telepon}</p>
                             )}
-                            </div>
                         </div>
 
                         <div className="grid gap-2">
