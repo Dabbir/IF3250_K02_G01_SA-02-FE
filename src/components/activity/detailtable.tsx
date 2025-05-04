@@ -1,10 +1,13 @@
 "use client"
 
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+// components
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import type { DetailedKegiatan, Program } from "@/types/activity"
 import ProgramDropdown from "@/components/activity/programdropdown"
+import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+
+// types and utils
+import type { DetailedKegiatan, Program } from "@/types/activity"
 import { formatDisplayDate, formatRupiah } from "@/utils/formatters"
 
 interface DetailTableProps {

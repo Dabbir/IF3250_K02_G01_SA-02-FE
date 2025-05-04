@@ -1,10 +1,14 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Pencil, Trash2 } from "lucide-react"
-import type { Stakeholder } from "@/types/stakeholder"
+
+// components
+import { Button } from "@/components/ui/button"
 import TypeBadge from "@/components/badge/typebadge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
+// types
+import type { Stakeholder } from "@/types/stakeholder"
 
 interface StakeholderTableProps {
     stakeholders: Stakeholder[]

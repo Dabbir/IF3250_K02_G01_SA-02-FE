@@ -1,10 +1,14 @@
+"use client";
+
 import * as XLSX from "xlsx";
-import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Loader2, Upload, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
+
+// components
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";    
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 

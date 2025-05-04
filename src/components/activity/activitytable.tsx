@@ -1,10 +1,14 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Pencil, Share2, Trash2 } from "lucide-react"
-import type { Kegiatan } from "@/types/activity"
+
+// components
+import { Button } from "@/components/ui/button"
 import StatusBadge from "@/components/badge/statusbadge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
+// types and utils
+import type { Kegiatan } from "@/types/activity"
 import { formatDisplayDate, formatRupiah } from "@/utils/formatters"
 
 interface ActivitiesTableProps {

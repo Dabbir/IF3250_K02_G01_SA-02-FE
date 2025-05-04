@@ -1,10 +1,14 @@
 "use client"
 
+import { Menu, Pencil, Trash2 } from "lucide-react"
+
+// components
+import TypeBadge from "@/components/badge/typebadge"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Pencil, Trash2 } from "lucide-react"
+
+// types
 import type { Stakeholder } from "@/types/stakeholder"
-import TypeBadge from "../badge/typebadge"
 
 interface MobileStakeholderCardProps {
     item: Stakeholder

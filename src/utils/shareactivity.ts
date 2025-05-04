@@ -1,5 +1,5 @@
 import type { Kegiatan } from "@/types/activity"
-import { formatDisplayDate, formatRupiah } from "./formatters"
+import { formatDisplayDate, formatRupiah } from "@/utils/formatters"
 
 export const shareToWhatsApp = (activity: Kegiatan) => {
     const tanggalMulai = formatDisplayDate(activity.tanggal_mulai)

@@ -1,13 +1,17 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Filter } from "lucide-react"
+
+// components
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Filter } from "lucide-react"
-import { STATUS_OPTIONS } from "@/types/activity"
+import { Button } from "@/components/ui/button"
 import StatusBadge from "@/components/badge/statusbadge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+
+// types
+import { STATUS_OPTIONS } from "@/types/activity"
 
 interface FilterPopoverProps {
     open: boolean

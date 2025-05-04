@@ -1,6 +1,6 @@
 import { utils, writeFile } from "xlsx"
 import type { Kegiatan } from "@/types/activity"
-import { formatDisplayDate } from "./formatters"
+import { formatDisplayDate } from "@/utils/formatters"
 
 export const exportActivitiesToXlsx = (activities: Kegiatan[]) => {
   if (activities.length === 0) {
