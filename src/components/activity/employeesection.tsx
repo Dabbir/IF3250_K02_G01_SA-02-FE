@@ -17,15 +17,8 @@ interface EmployeeSectionProps {
 
 export default function EmployeeSection({ karyawan, isEditing, onAdd, onRemove, onUpdate }: EmployeeSectionProps) {
     return (
-        <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Karyawan</h2>
-                {isEditing && (
-                    <Button variant="outline" size="sm" onClick={onAdd} className="flex items-center">
-                        <Plus className="h-4 w-4 mr-2" /> Tambah Karyawan
-                    </Button>
-                )}
-            </div>
+        <div className="space-y-4 mt-8">
+            <h2 className="text-lg font-medium">Karyawan</h2>
 
             {karyawan.length === 0 && !isEditing ? (
                 <p className="text-gray-500 italic">Tidak ada karyawan</p>
@@ -98,6 +91,18 @@ export default function EmployeeSection({ karyawan, isEditing, onAdd, onRemove, 
                         </div>
                     </div>
                 ))
+            )}
+
+            {isEditing && (
+                <Button
+                    type="button"
+                    onClick={onAdd}
+                    variant="outline"
+                    size="sm"
+                    className="text-[var(--green)]"
+                >
+                    <Plus className="h-4 w-4 mr-2" /> Tambah Karyawan
+                </Button>
             )}
         </div>
     )

@@ -23,15 +23,9 @@ export default function BeneficiarySection({
     onUpdate,
 }: BeneficiarySectionProps) {
     return (
-        <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Penerima Manfaat</h2>
-                {isEditing && (
-                    <Button variant="outline" size="sm" onClick={onAdd} className="flex items-center">
-                        <Plus className="h-4 w-4 mr-2" /> Tambah Penerima Manfaat
-                    </Button>
-                )}
-            </div>
+        <div className="space-y-4 mt-8">
+
+            <h2 className="text-lg font-medium">Penerima Manfaat</h2>
 
             {beneficiaries.length === 0 && !isEditing ? (
                 <p className="text-gray-500 italic">Tidak ada penerima manfaat</p>
@@ -116,6 +110,18 @@ export default function BeneficiarySection({
                         </div>
                     </div>
                 ))
+            )}
+
+            {isEditing && (
+                <Button
+                    type="button"
+                    onClick={onAdd}
+                    variant="outline"
+                    size="sm"
+                    className="text-[var(--green)]"
+                >
+                    <Plus className="h-4 w-4 mr-2" /> Tambah Penerima Manfaat
+                </Button>
             )}
         </div>
     )
