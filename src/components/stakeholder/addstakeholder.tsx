@@ -55,10 +55,10 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
         const newErrors: Record<string, string> = {};
 
         if (!newStakeholder.nama_stakeholder) {
-            newErrors.nama_stakeholder = "Nama stakeholder wajib diisi!";
+            newErrors.nama_stakeholder = "Nama pemangku kepentingan wajib diisi!";
         }
         if (!newStakeholder.jenis) {
-            newErrors.jenis = "Jenis stakeholder wajib diisi!";
+            newErrors.jenis = "Jenis pemangku kepentingan wajib diisi!";
         }
         if (!newStakeholder.telepon || newStakeholder.telepon.trim() === "") {
             newErrors.telepon = "Telepon wajib diisi!";
@@ -107,11 +107,11 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
             setIsOpen(false);
             setTimeout(() => window.location.reload(), 500)
 
-            toast.success("Stakeholder berhasil ditambahkan!")
+            toast.success("Pemangku kepentingan berhasil ditambahkan!")
 
         } catch (error) {
             console.error("Gagal menyimpan data:", error);
-            toast.error("Gagal menambahkan stakeholder!")
+            toast.error("Gagal menambahkan pemangku kepentingan!")
         } finally {
             setIsSaving(false);
         }
@@ -141,15 +141,15 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
             >
 
                 <DialogHeader>
-                    <DialogTitle className="text-center">Tambah Stakeholder</DialogTitle>
+                    <DialogTitle className="text-center">Tambah Pemangku Kepentingan</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="nama_stakeholder">Nama Stakeholder</Label>
+                        <Label htmlFor="nama_stakeholder">Nama Pemangku Kepentingan</Label>
                         <Input
                             name="nama_stakeholder"
                             id="nama_stakeholder"
-                            placeholder="Nama Stakeholder"
+                            placeholder="Nama Pemangku Kepentingan"
                             value={newStakeholder.nama_stakeholder}
                             onChange={handleInputChange}
                             className="w-full"
@@ -158,7 +158,7 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="jenis">Jenis Stakeholder</Label>
+                        <Label htmlFor="jenis">Jenis Pemangku Kepentingan</Label>
                         <Select
                             name="jenis"
                             onValueChange={(value) => handleSelectChange("jenis", value)}

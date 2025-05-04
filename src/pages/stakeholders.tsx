@@ -98,11 +98,11 @@ export default function StakeholderPage() {
                 if (data.success) {
                     setStakeholder(data.stakeholders || []);
                 } else {
-                    throw new Error(data.message || "Failed to fetch stakeholder");
+                    throw new Error(data.message || "Gagal memuat pemangku kepentingan");
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : "An error occurred");
-                toast.error("Stakeholder gagal dimuat!");
+                toast.error("Pemangku kepentingan gagal dimuat!");
             } finally {
                 setLoading(false);
             }
@@ -208,12 +208,12 @@ export default function StakeholderPage() {
 
             if (data.success) {
                 setStakeholder(stakeholder.filter(item => item.id !== id));
-                toast.success("Stakeholder deleted successfully");
+                toast.success("Pemangku kepentingan berhasil dihapus");
             } else {
-                throw new Error(data.message || "Failed to delete stakeholder");
+                throw new Error(data.message || "Gagal menghapus pemangku kepentingan");
             }
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Failed to delete stakeholder");
+            toast.error(err instanceof Error ? err.message : "gagal menghapus pemangku kepentingan");
         } finally {
             setShowDeleteDialog(false);
         }
@@ -319,14 +319,14 @@ export default function StakeholderPage() {
 
                     <div className="flex items-center gap-2">
                         <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
-                            Tambah Stakeholder
+                            Tambah Pemangku Kepentingan
                         </Button>
                     </div>
                 </div>
 
                 {filteredStakeholder.length === 0 ? (
                     <div className="text-center py-8 border rounded-lg">
-                        <p className="text-gray-500">No stakeholder found</p>
+                        <p className="text-gray-500">Pemangku kepentingan tidak ditemukan</p>
                         {(jenisFilters.length > 0 || search) && (
                             <div className="mt-2">
                                 <Button
@@ -374,7 +374,7 @@ export default function StakeholderPage() {
                                                     }}
                                                 >
                                                     <Pencil className="h-4 w-4" />
-                                                    <span>Edit Stakeholder</span>
+                                                    <span>Edit Pemangku Kepentingan</span>
                                                 </Button>
                                                 <Button
                                                     className="w-full flex justify-start items-center space-x-2 bg-transparent text-red-500 hover:bg-red-50"
@@ -385,7 +385,7 @@ export default function StakeholderPage() {
                                                     }}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
-                                                    <span>Hapus Stakeholder</span>
+                                                    <span>Hapus Pemangku Kepentingan</span>
                                                 </Button>
                                             </div>
                                         </SheetContent>
@@ -428,7 +428,7 @@ export default function StakeholderPage() {
                                         onClick={() => handleSortChange("nama_stakeholder")}
                                     >
                                         <div className="flex items-center justify-left">
-                                            Nama Stakeholder
+                                            Nama Pemangku Kepentingan
                                             {sortColumn === "nama_stakeholder" && (
                                                 <ArrowUpDown className="ml-2 h-4 w-4" />
                                             )}
@@ -522,9 +522,9 @@ export default function StakeholderPage() {
                 <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle>Hapus Stakeholder</DialogTitle>
+                            <DialogTitle>Hapus Pemangku Kepentingan</DialogTitle>
                             <DialogDescription>
-                                Apakah Anda yakin ingin menghapus stakeholder "{selectedStakeholder?.nama_stakeholder}"?
+                                Apakah Anda yakin ingin menghapus pemangku kepentingan? "{selectedStakeholder?.nama_stakeholder}"?
                             </DialogDescription>
                         </DialogHeader>
                         <DialogFooter className="flex justify-between sm:justify-between mt-4">
