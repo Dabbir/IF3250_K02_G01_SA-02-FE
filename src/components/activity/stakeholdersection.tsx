@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +15,14 @@ interface StakeholderSectionProps {
     onAdd: () => void
     onRemove: (index: number) => void
     onUpdate: (index: number, field: keyof StakeholderActivity, value: string) => void
+    allStakeholders: StakeholderActivity[]
+    filteredStakeholders: StakeholderActivity[]
+    showStakeholderDropdown: boolean
+    setShowStakeholderDropdown: React.Dispatch<React.SetStateAction<boolean>>
+    stakeholderSearch: string
+    onSearchChange: (value: string) => void
+    onSelect: (stakeholder: StakeholderActivity) => void
+    onDropdownBlur: (e: React.FocusEvent<HTMLDivElement>) => void
 }
 
 export default function StakeholderSection({
@@ -21,17 +31,76 @@ export default function StakeholderSection({
     onAdd,
     onRemove,
     onUpdate,
+    allStakeholders,
+    filteredStakeholders,
+    showStakeholderDropdown,
+    setShowStakeholderDropdown,
+    stakeholderSearch,
+    onSearchChange,
+    onSelect,
+    onDropdownBlur,
 }: StakeholderSectionProps) {
     return (
-        <div className="space-y-4 mt-8">
+        <div className="mt-8">
+            <div className="flex-col space-y-4 items-center justify-between mb-4">
+                <h2 className="text-lg font-medium">Stakeholder</h2>
+                {isEditing && (
+                    <div className="relative" onBlur={onDropdownBlur}>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                placeholder="Cari stakeholder..."
+                                value={stakeholderSearch}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                onFocus={() => setShowStakeholderDropdown(true)}
+                                className="w-64"
+                            />
+                            <Button variant="outline" size="sm" onClick={onAdd} className="flex items-center">
+                                <Plus className="h-4 w-4 mr-2" /> Tambah Baru
+                            </Button>
+                        </div>
 
-            <h2 className="text-lg font-medium">Stakeholder</h2>
+                        {showStakeholderDropdown && (
+                            <div className="absolute z-10 w-64 mt-1 bg-white border rounded-md shadow-md max-h-60 overflow-auto">
+                                {filteredStakeholders.length > 0 ? (
+                                    filteredStakeholders.map((stakeholder) => (
+                                        <div
+                                            key={stakeholder.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault()
+                                                onSelect(stakeholder)
+                                            }}
+                                        >
+                                            {stakeholder.nama_stakeholder} ({stakeholder.jenis})
+                                        </div>
+                                    ))
+                                ) : allStakeholders.length > 0 ? (
+                                    allStakeholders.map((stakeholder) => (
+                                        <div
+                                            key={stakeholder.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault()
+                                                onSelect(stakeholder)
+                                            }}
+                                        >
+                                            {stakeholder.nama_stakeholder} ({stakeholder.jenis})
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="px-4 py-2 text-gray-500">Tidak ada data stakeholder</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {stakeholders.length === 0 && !isEditing ? (
                 <p className="text-gray-500 italic">Tidak ada stakeholder</p>
             ) : (
                 stakeholders.map((stakeholder, index) => (
-                    <div key={`stakeholder-${index}`} className="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <div key={`stakeholder-${index}`} className="mb-6 p-4 border rounded-lg">
                         <div className="flex justify-between items-center mb-3">
                             {isEditing && (
                                 <Button
@@ -108,17 +177,6 @@ export default function StakeholderSection({
                         </div>
                     </div>
                 ))
-            )}
-            {isEditing && (
-                <Button
-                    type="button"
-                    onClick={onAdd}
-                    variant="outline"
-                    size="sm"
-                    className="text-[var(--green)]"
-                >
-                    <Plus className="h-4 w-4 mr-2" /> Tambah Stakeholder
-                </Button>
             )}
         </div>
     )

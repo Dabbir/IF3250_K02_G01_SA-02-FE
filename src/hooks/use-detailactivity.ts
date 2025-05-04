@@ -23,7 +23,7 @@ const emptyBeneficiary: BeneficiaryActivity = {
     alamat: "",
 }
 
-const emptyEmployee: EmployeeActivity = {
+const emptyKaryawan: EmployeeActivity = {
     nama: "",
     email: "",
     telepon: "",
@@ -43,10 +43,25 @@ export default function useDetailActivity(id: string | undefined) {
     const [prevDokumentasi, setPrevDokumentasi] = useState<string[]>([])
     const [programs, setPrograms] = useState<Program[]>([])
 
-    // New state for stakeholders, beneficiaries, and employees
     const [stakeholders, setStakeholders] = useState<StakeholderActivity[]>([])
     const [beneficiaries, setBeneficiaries] = useState<BeneficiaryActivity[]>([])
     const [karyawan, setKaryawan] = useState<EmployeeActivity[]>([])
+
+    const [allStakeholders, setAllStakeholders] = useState<StakeholderActivity[]>([])
+    const [allBeneficiaries, setAllBeneficiaries] = useState<BeneficiaryActivity[]>([])
+    const [allKaryawan, setAllKaryawan] = useState<EmployeeActivity[]>([])
+
+    const [filteredStakeholders, setFilteredStakeholders] = useState<StakeholderActivity[]>([])
+    const [filteredBeneficiaries, setFilteredBeneficiaries] = useState<BeneficiaryActivity[]>([])
+    const [filteredKaryawan, setFilteredKaryawan] = useState<EmployeeActivity[]>([])
+
+    const [showStakeholderDropdown, setShowStakeholderDropdown] = useState(false)
+    const [showBeneficiaryDropdown, setShowBeneficiaryDropdown] = useState(false)
+    const [showKaryawanDropdown, setShowKaryawanDropdown] = useState(false)
+
+    const [stakeholderSearch, setStakeholderSearch] = useState("")
+    const [beneficiarySearch, setBeneficiarySearch] = useState("")
+    const [karyawanSearch, setKaryawanSearch] = useState("")
 
     const getDokumentasiList = (dokumentasi?: string): string[] => {
         if (!dokumentasi) return []
@@ -91,7 +106,6 @@ export default function useDetailActivity(id: string | undefined) {
                     setEditedKegiatan(data.activity)
                     setDokumentasiList(getDokumentasiList(data.activity?.dokumentasi))
 
-                    // Set stakeholders, beneficiaries, and employees if they exist
                     if (data.activity.stakeholder) {
                         setStakeholders(data.activity.stakeholder)
                     } else {
@@ -148,9 +162,78 @@ export default function useDetailActivity(id: string | undefined) {
         }
     }
 
+    const fetchAllStakeholders = async () => {
+        try {
+            const token = localStorage.getItem("token")
+            const response = await fetch(`${API_URL}/api/stakeholder/getAll/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) throw new Error("Gagal mengambil data stakeholder")
+
+            const data = await response.json()
+            if (data.success) {
+                setAllStakeholders(data.stakeholders || [])
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const fetchAllBeneficiaries = async () => {
+        try {
+            const token = localStorage.getItem("token")
+            const response = await fetch(`${API_URL}/api/beneficiary/getAll/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) throw new Error("Gagal mengambil data penerima manfaat")
+
+            const data = await response.json()
+            if (data.success) {
+                setAllBeneficiaries(data.beneficiaries || [])
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const fetchAllKaryawan = async () => {
+        try {
+            const token = localStorage.getItem("token")
+            const response = await fetch(`${API_URL}/api/employee/getAll/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) throw new Error("Gagal mengambil data karyawan")
+
+            const data = await response.json()
+            if (data.success) {
+                setAllKaryawan(data.employees || [])
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     const handleEditClick = () => {
         setIsEditing(true)
         fetchPrograms()
+        fetchAllStakeholders()
+        fetchAllBeneficiaries()
+        fetchAllKaryawan()
         setPrevDokumentasi(dokumentasiList)
         setImages([])
     }
@@ -160,17 +243,9 @@ export default function useDetailActivity(id: string | undefined) {
         setDeletedImages([])
         setImages([])
         setIsEditing(false)
-
-        // Reset stakeholders, beneficiaries, and employees to their original state
-        if (kegiatan?.stakeholders) {
-            setStakeholders(kegiatan.stakeholders)
-        }
-        if (kegiatan?.penerima_manfaat) {
-            setBeneficiaries(kegiatan.penerima_manfaat)
-        }
-        if (kegiatan?.karyawan) {
-            setKaryawan(kegiatan.karyawan)
-        }
+        setStakeholders([])
+        setBeneficiaries([])
+        setKaryawan([])
     }
 
     const handleChange = (field: keyof DetailedKegiatan, value: string | number) => {
@@ -216,7 +291,6 @@ export default function useDetailActivity(id: string | undefined) {
         setDokumentasiList((prev) => [...prev, ...newImages.map((image) => image.url)])
     }
 
-    // Handlers for stakeholders
     const addStakeholder = () => {
         setStakeholders((prev) => [...prev, { ...emptyStakeholder }])
     }
@@ -233,7 +307,6 @@ export default function useDetailActivity(id: string | undefined) {
         })
     }
 
-    // Handlers for beneficiaries
     const addBeneficiary = () => {
         setBeneficiaries((prev) => [...prev, { ...emptyBeneficiary }])
     }
@@ -250,9 +323,8 @@ export default function useDetailActivity(id: string | undefined) {
         })
     }
 
-    // Handlers for employees
     const addKaryawan = () => {
-        setKaryawan((prev) => [...prev, { ...emptyEmployee }])
+        setKaryawan((prev) => [...prev, { ...emptyKaryawan }])
     }
 
     const removeKaryawan = (index: number) => {
@@ -265,6 +337,64 @@ export default function useDetailActivity(id: string | undefined) {
             updated[index] = { ...updated[index], [field]: value }
             return updated
         })
+    }
+
+    const handleStakeholderSearchChange = (value: string) => {
+        setStakeholderSearch(value)
+        setShowStakeholderDropdown(true)
+        setFilteredStakeholders(
+            allStakeholders.filter((s) => s.nama_stakeholder.toLowerCase().includes(value.toLowerCase())),
+        )
+    }
+
+    const handleBeneficiarySearchChange = (value: string) => {
+        setBeneficiarySearch(value)
+        setShowBeneficiaryDropdown(true)
+        setFilteredBeneficiaries(
+            allBeneficiaries.filter((b) => b.nama_instansi.toLowerCase().includes(value.toLowerCase())),
+        )
+    }
+
+    const handleKaryawanSearchChange = (value: string) => {
+        setKaryawanSearch(value)
+        setShowKaryawanDropdown(true)
+        setFilteredKaryawan(allKaryawan.filter((k) => k.nama.toLowerCase().includes(value.toLowerCase())))
+    }
+
+    const handleSelectStakeholder = (stakeholder: StakeholderActivity) => {
+        setStakeholders((prev) => [...prev, stakeholder])
+        setStakeholderSearch("")
+        setShowStakeholderDropdown(false)
+    }
+
+    const handleSelectBeneficiary = (beneficiary: BeneficiaryActivity) => {
+        setBeneficiaries((prev) => [...prev, beneficiary])
+        setBeneficiarySearch("")
+        setShowBeneficiaryDropdown(false)
+    }
+
+    const handleSelectKaryawan = (karyawan: EmployeeActivity) => {
+        setKaryawan((prev) => [...prev, karyawan])
+        setKaryawanSearch("")
+        setShowKaryawanDropdown(false)
+    }
+
+    const handleStakeholderDropdownBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setShowStakeholderDropdown(false)
+        }
+    }
+
+    const handleBeneficiaryDropdownBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setShowBeneficiaryDropdown(false)
+        }
+    }
+
+    const handleKaryawanDropdownBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setShowKaryawanDropdown(false)
+        }
     }
 
     const handleSaveClick = async () => {
@@ -300,7 +430,6 @@ export default function useDetailActivity(id: string | undefined) {
                 formData.append(`dokumentasi`, image.file)
             })
 
-            // Add stakeholders, beneficiaries, and employees to form data
             formData.append("stakeholders", JSON.stringify(stakeholders))
             formData.append("penerima_manfaat", JSON.stringify(beneficiaries))
             formData.append("karyawan", JSON.stringify(karyawan))
@@ -321,7 +450,6 @@ export default function useDetailActivity(id: string | undefined) {
             const data = await response.json()
 
             if (data.success) {
-                // Update the local state with the updated data
                 setKegiatan((prev) =>
                     prev
                         ? {
@@ -360,6 +488,21 @@ export default function useDetailActivity(id: string | undefined) {
         stakeholders,
         beneficiaries,
         karyawan,
+        allStakeholders,
+        allBeneficiaries,
+        allKaryawan,
+        filteredStakeholders,
+        filteredBeneficiaries,
+        filteredKaryawan,
+        showStakeholderDropdown,
+        setShowStakeholderDropdown,
+        showBeneficiaryDropdown,
+        setShowBeneficiaryDropdown,
+        showKaryawanDropdown,
+        setShowKaryawanDropdown,
+        stakeholderSearch,
+        beneficiarySearch,
+        karyawanSearch,
         handleEditClick,
         handleCancel,
         handleChange,
@@ -377,5 +520,14 @@ export default function useDetailActivity(id: string | undefined) {
         addKaryawan,
         removeKaryawan,
         updateKaryawan,
+        handleStakeholderSearchChange,
+        handleBeneficiarySearchChange,
+        handleKaryawanSearchChange,
+        handleSelectStakeholder,
+        handleSelectBeneficiary,
+        handleSelectKaryawan,
+        handleStakeholderDropdownBlur,
+        handleBeneficiaryDropdownBlur,
+        handleKaryawanDropdownBlur,
     }
 }

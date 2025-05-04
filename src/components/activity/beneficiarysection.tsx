@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +15,14 @@ interface BeneficiarySectionProps {
     onAdd: () => void
     onRemove: (index: number) => void
     onUpdate: (index: number, field: keyof BeneficiaryActivity, value: string) => void
+    allBeneficiaries: BeneficiaryActivity[]
+    filteredBeneficiaries: BeneficiaryActivity[]
+    showBeneficiaryDropdown: boolean
+    setShowBeneficiaryDropdown: React.Dispatch<React.SetStateAction<boolean>>
+    beneficiarySearch: string
+    onSearchChange: (value: string) => void
+    onSelect: (beneficiary: BeneficiaryActivity) => void
+    onDropdownBlur: (e: React.FocusEvent<HTMLDivElement>) => void
 }
 
 export default function BeneficiarySection({
@@ -21,17 +31,65 @@ export default function BeneficiarySection({
     onAdd,
     onRemove,
     onUpdate,
+    allBeneficiaries,
+    filteredBeneficiaries,
+    showBeneficiaryDropdown,
+    setShowBeneficiaryDropdown,
+    beneficiarySearch,
+    onSearchChange,
+    onSelect,
+    onDropdownBlur,
 }: BeneficiarySectionProps) {
     return (
-        <div className="space-y-4 mt-8">
+        <div className="mt-8">
+            <div className="flex-col space-y-4 items-center justify-between mb-4">
+                <h2 className="text-lg font-medium">Penerima Manfaat</h2>
+                {isEditing && (
+                    <div className="relative" onBlur={onDropdownBlur}>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                placeholder="Cari penerima manfaat..."
+                                value={beneficiarySearch}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                onFocus={() => setShowBeneficiaryDropdown(true)}
+                                className="w-64"
+                            />
+                            <Button variant="outline" size="sm" onClick={onAdd} className="flex items-center">
+                                <Plus className="h-4 w-4 mr-2" /> Tambah Baru
+                            </Button>
+                        </div>
 
-            <h2 className="text-lg font-medium">Penerima Manfaat</h2>
+                        {showBeneficiaryDropdown && (
+                            <div className="absolute z-10 w-64 mt-1 bg-white border rounded-md shadow-md max-h-60 overflow-auto">
+                                {filteredBeneficiaries.length > 0 ? (
+                                    filteredBeneficiaries.map((beneficiary) => (
+                                        <div
+                                            key={beneficiary.id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault()
+                                                onSelect(beneficiary)
+                                            }}
+                                        >
+                                            {beneficiary.nama_instansi} - {beneficiary.nama_kontak}
+                                        </div>
+                                    ))
+                                ) : allBeneficiaries.length > 0 ? (
+                                    <div className="px-4 py-2 text-gray-500">Tidak ditemukan</div>
+                                ) : (
+                                    <div className="px-4 py-2 text-gray-500">Tidak ada data penerima manfaat</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {beneficiaries.length === 0 && !isEditing ? (
                 <p className="text-gray-500 italic">Tidak ada penerima manfaat</p>
             ) : (
                 beneficiaries.map((beneficiary, index) => (
-                    <div key={`beneficiary-${index}`} className="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <div key={`beneficiary-${index}`} className="mb-6 p-4 border rounded-lg">
                         <div className="flex justify-between items-center mb-3">
                             {isEditing && (
                                 <Button
@@ -110,18 +168,6 @@ export default function BeneficiarySection({
                         </div>
                     </div>
                 ))
-            )}
-
-            {isEditing && (
-                <Button
-                    type="button"
-                    onClick={onAdd}
-                    variant="outline"
-                    size="sm"
-                    className="text-[var(--green)]"
-                >
-                    <Plus className="h-4 w-4 mr-2" /> Tambah Penerima Manfaat
-                </Button>
             )}
         </div>
     )

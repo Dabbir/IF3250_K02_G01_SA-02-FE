@@ -52,6 +52,30 @@ export default function DetailKegiatan() {
         addKaryawan,
         removeKaryawan,
         updateKaryawan,
+        allStakeholders,
+        filteredStakeholders,
+        showStakeholderDropdown,
+        setShowStakeholderDropdown,
+        stakeholderSearch,
+        handleStakeholderSearchChange,
+        handleSelectStakeholder,
+        handleStakeholderDropdownBlur,
+        allBeneficiaries,
+        filteredBeneficiaries,
+        showBeneficiaryDropdown,
+        setShowBeneficiaryDropdown,
+        beneficiarySearch,
+        handleBeneficiarySearchChange,
+        handleSelectBeneficiary,
+        handleBeneficiaryDropdownBlur,
+        allKaryawan,
+        filteredKaryawan,
+        showKaryawanDropdown,
+        setShowKaryawanDropdown,
+        karyawanSearch,
+        handleKaryawanSearchChange,
+        handleSelectKaryawan,
+        handleKaryawanDropdownBlur,
     } = useDetailActivity(id)
 
     const handleGoBack = () => {
@@ -109,6 +133,14 @@ export default function DetailKegiatan() {
                             onAdd={addStakeholder}
                             onRemove={removeStakeholder}
                             onUpdate={updateStakeholder}
+                            allStakeholders={allStakeholders}
+                            filteredStakeholders={filteredStakeholders}
+                            showStakeholderDropdown={showStakeholderDropdown}
+                            setShowStakeholderDropdown={setShowStakeholderDropdown}
+                            stakeholderSearch={stakeholderSearch}
+                            onSearchChange={handleStakeholderSearchChange}
+                            onSelect={handleSelectStakeholder}
+                            onDropdownBlur={handleStakeholderDropdownBlur}
                         />
 
                         {/* Penerima Manfaat Section */}
@@ -118,6 +150,14 @@ export default function DetailKegiatan() {
                             onAdd={addBeneficiary}
                             onRemove={removeBeneficiary}
                             onUpdate={updateBeneficiary}
+                            allBeneficiaries={allBeneficiaries}
+                            filteredBeneficiaries={filteredBeneficiaries}
+                            showBeneficiaryDropdown={showBeneficiaryDropdown}
+                            setShowBeneficiaryDropdown={setShowBeneficiaryDropdown}
+                            beneficiarySearch={beneficiarySearch}
+                            onSearchChange={handleBeneficiarySearchChange}
+                            onSelect={handleSelectBeneficiary}
+                            onDropdownBlur={handleBeneficiaryDropdownBlur}
                         />
 
                         {/* Karyawan Section */}
@@ -127,6 +167,14 @@ export default function DetailKegiatan() {
                             onAdd={addKaryawan}
                             onRemove={removeKaryawan}
                             onUpdate={updateKaryawan}
+                            allKaryawan={allKaryawan}
+                            filteredKaryawan={filteredKaryawan}
+                            showKaryawanDropdown={showKaryawanDropdown}
+                            setShowKaryawanDropdown={setShowKaryawanDropdown}
+                            karyawanSearch={karyawanSearch}
+                            onSearchChange={handleKaryawanSearchChange}
+                            onSelect={handleSelectKaryawan}
+                            onDropdownBlur={handleKaryawanDropdownBlur}
                         />
 
                         <Documentation
