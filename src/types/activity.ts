@@ -1,3 +1,28 @@
+export interface StakeholderActivity {
+  id?: string
+  nama_stakeholder: string
+  jenis: "Individu" | "Organisasi" | "Perusahaan"
+  telepon: string
+  email: string
+}
+
+export interface BeneficiaryActivity {
+  id?: string
+  nama_instansi: string
+  nama_kontak: string
+  telepon: string
+  email: string
+  alamat: string
+}
+
+export interface EmployeeActivity {
+  id?: string
+  nama: string
+  email: string
+  telepon: string
+  alamat: string
+}
+
 export interface Kegiatan {
   id?: string
   nama_aktivitas: string
@@ -24,6 +49,9 @@ export interface DetailedKegiatan {
   status: "Belum Mulai" | "Berjalan" | "Selesai"
   created_at?: string
   updated_at?: string
+  stakeholders?: StakeholderActivity[]
+  penerima_manfaat?: BeneficiaryActivity[]
+  karyawan?: EmployeeActivity[]
 }
 
 export interface Program {

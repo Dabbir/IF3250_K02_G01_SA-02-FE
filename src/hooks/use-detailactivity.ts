@@ -4,9 +4,31 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { toast } from "react-toastify"
-import type { DetailedKegiatan, Program, ImageData } from "@/types/activity"
+import type { DetailedKegiatan, Program, ImageData, StakeholderActivity, BeneficiaryActivity, EmployeeActivity } from "@/types/activity"
 
 const API_URL = import.meta.env.VITE_HOST_NAME
+
+const emptyStakeholder: StakeholderActivity = {
+    nama_stakeholder: "",
+    jenis: "Individu",
+    telepon: "",
+    email: "",
+}
+
+const emptyBeneficiary: BeneficiaryActivity = {
+    nama_instansi: "",
+    nama_kontak: "",
+    telepon: "",
+    email: "",
+    alamat: "",
+}
+
+const emptyEmployee: EmployeeActivity = {
+    nama: "",
+    email: "",
+    telepon: "",
+    alamat: "",
+}
 
 export default function useDetailActivity(id: string | undefined) {
     const [kegiatan, setKegiatan] = useState<DetailedKegiatan | null>(null)
@@ -20,6 +42,11 @@ export default function useDetailActivity(id: string | undefined) {
     const [images, setImages] = useState<ImageData[]>([])
     const [prevDokumentasi, setPrevDokumentasi] = useState<string[]>([])
     const [programs, setPrograms] = useState<Program[]>([])
+
+    // New state for stakeholders, beneficiaries, and employees
+    const [stakeholders, setStakeholders] = useState<StakeholderActivity[]>([])
+    const [beneficiaries, setBeneficiaries] = useState<BeneficiaryActivity[]>([])
+    const [karyawan, setKaryawan] = useState<EmployeeActivity[]>([])
 
     const getDokumentasiList = (dokumentasi?: string): string[] => {
         if (!dokumentasi) return []
@@ -63,6 +90,25 @@ export default function useDetailActivity(id: string | undefined) {
                     setKegiatan(data.activity)
                     setEditedKegiatan(data.activity)
                     setDokumentasiList(getDokumentasiList(data.activity?.dokumentasi))
+
+                    // Set stakeholders, beneficiaries, and employees if they exist
+                    if (data.activity.stakeholder) {
+                        setStakeholders(data.activity.stakeholder)
+                    } else {
+                        setStakeholders([])
+                    }
+
+                    if (data.activity.beneficiary) {
+                        setBeneficiaries(data.activity.beneficiary)
+                    } else {
+                        setBeneficiaries([])
+                    }
+
+                    if (data.activity.employee) {
+                        setKaryawan(data.activity.employee)
+                    } else {
+                        setKaryawan([])
+                    }
                 } else {
                     throw new Error(data.message || "Failed to fetch activity")
                 }
@@ -114,6 +160,17 @@ export default function useDetailActivity(id: string | undefined) {
         setDeletedImages([])
         setImages([])
         setIsEditing(false)
+
+        // Reset stakeholders, beneficiaries, and employees to their original state
+        if (kegiatan?.stakeholders) {
+            setStakeholders(kegiatan.stakeholders)
+        }
+        if (kegiatan?.penerima_manfaat) {
+            setBeneficiaries(kegiatan.penerima_manfaat)
+        }
+        if (kegiatan?.karyawan) {
+            setKaryawan(kegiatan.karyawan)
+        }
     }
 
     const handleChange = (field: keyof DetailedKegiatan, value: string | number) => {
@@ -159,6 +216,57 @@ export default function useDetailActivity(id: string | undefined) {
         setDokumentasiList((prev) => [...prev, ...newImages.map((image) => image.url)])
     }
 
+    // Handlers for stakeholders
+    const addStakeholder = () => {
+        setStakeholders((prev) => [...prev, { ...emptyStakeholder }])
+    }
+
+    const removeStakeholder = (index: number) => {
+        setStakeholders((prev) => prev.filter((_, i) => i !== index))
+    }
+
+    const updateStakeholder = (index: number, field: keyof StakeholderActivity, value: string) => {
+        setStakeholders((prev) => {
+            const updated = [...prev]
+            updated[index] = { ...updated[index], [field]: value }
+            return updated
+        })
+    }
+
+    // Handlers for beneficiaries
+    const addBeneficiary = () => {
+        setBeneficiaries((prev) => [...prev, { ...emptyBeneficiary }])
+    }
+
+    const removeBeneficiary = (index: number) => {
+        setBeneficiaries((prev) => prev.filter((_, i) => i !== index))
+    }
+
+    const updateBeneficiary = (index: number, field: keyof BeneficiaryActivity, value: string) => {
+        setBeneficiaries((prev) => {
+            const updated = [...prev]
+            updated[index] = { ...updated[index], [field]: value }
+            return updated
+        })
+    }
+
+    // Handlers for employees
+    const addKaryawan = () => {
+        setKaryawan((prev) => [...prev, { ...emptyEmployee }])
+    }
+
+    const removeKaryawan = (index: number) => {
+        setKaryawan((prev) => prev.filter((_, i) => i !== index))
+    }
+
+    const updateKaryawan = (index: number, field: keyof EmployeeActivity, value: string) => {
+        setKaryawan((prev) => {
+            const updated = [...prev]
+            updated[index] = { ...updated[index], [field]: value }
+            return updated
+        })
+    }
+
     const handleSaveClick = async () => {
         if (!editedKegiatan || !id) return
 
@@ -192,6 +300,11 @@ export default function useDetailActivity(id: string | undefined) {
                 formData.append(`dokumentasi`, image.file)
             })
 
+            // Add stakeholders, beneficiaries, and employees to form data
+            formData.append("stakeholders", JSON.stringify(stakeholders))
+            formData.append("penerima_manfaat", JSON.stringify(beneficiaries))
+            formData.append("karyawan", JSON.stringify(karyawan))
+
             const response = await fetch(`${API_URL}/api/activity/update/${id}`, {
                 method: "PUT",
                 headers: {
@@ -209,7 +322,17 @@ export default function useDetailActivity(id: string | undefined) {
 
             if (data.success) {
                 // Update the local state with the updated data
-                setKegiatan((prev) => (prev ? { ...prev, ...data.data } : data.data))
+                setKegiatan((prev) =>
+                    prev
+                        ? {
+                            ...prev,
+                            ...data.data,
+                            stakeholders: stakeholders,
+                            penerima_manfaat: beneficiaries,
+                            karyawan: karyawan,
+                        }
+                        : data.data,
+                )
                 setIsEditing(false)
                 setImages([])
                 setDeletedImages([])
@@ -234,6 +357,9 @@ export default function useDetailActivity(id: string | undefined) {
         editedKegiatan,
         dokumentasiList,
         programs,
+        stakeholders,
+        beneficiaries,
+        karyawan,
         handleEditClick,
         handleCancel,
         handleChange,
@@ -242,5 +368,14 @@ export default function useDetailActivity(id: string | undefined) {
         handleRemoveImage,
         handleAddImages,
         handleSaveClick,
+        addStakeholder,
+        removeStakeholder,
+        updateStakeholder,
+        addBeneficiary,
+        removeBeneficiary,
+        updateBeneficiary,
+        addKaryawan,
+        removeKaryawan,
+        updateKaryawan,
     }
 }

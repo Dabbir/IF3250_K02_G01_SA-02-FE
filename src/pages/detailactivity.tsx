@@ -10,6 +10,9 @@ import DetailHeader from "@/components/shared/detailheader"
 import EditButtons from "@/components/shared/editbutton"
 import DetailTable from "@/components/activity/detailtable"
 import Documentation from "@/components/activity/documentation"
+import StakeholderSection from "@/components/activity/stakeholdersection"
+import BeneficiarySection from "@/components/activity/beneficiarysection"
+import EmployeeSection from "@/components/activity/employeesection"
 
 // Hooks
 import useDetailActivity from "@/hooks/use-detailactivity"
@@ -28,6 +31,9 @@ export default function DetailKegiatan() {
         editedKegiatan,
         dokumentasiList,
         programs,
+        stakeholders,
+        beneficiaries,
+        karyawan,
         handleEditClick,
         handleCancel,
         handleChange,
@@ -36,6 +42,15 @@ export default function DetailKegiatan() {
         handleRemoveImage,
         handleAddImages,
         handleSaveClick,
+        addStakeholder,
+        removeStakeholder,
+        updateStakeholder,
+        addBeneficiary,
+        removeBeneficiary,
+        updateBeneficiary,
+        addKaryawan,
+        removeKaryawan,
+        updateKaryawan,
     } = useDetailActivity(id)
 
     const handleGoBack = () => {
@@ -43,20 +58,18 @@ export default function DetailKegiatan() {
     }
 
     if (loading) {
-        return <LoadingState
-            title="Detail Kegiatan"
-            onGoBack={handleGoBack}
-            Icon={Leaf}
-        />
+        return <LoadingState title="Detail Kegiatan" onGoBack={handleGoBack} Icon={Leaf} />
     }
 
     if (error || !kegiatan) {
-        return <ErrorState
-            error={error || "Aktivitas tidak ditemukan"}
-            title="Detail Kegiatan"
-            onGoBack={handleGoBack}
-            Icon={Leaf}
-        />
+        return (
+            <ErrorState
+                error={error || "Aktivitas tidak ditemukan"}
+                title="Detail Kegiatan"
+                onGoBack={handleGoBack}
+                Icon={Leaf}
+            />
+        )
     }
 
     return (
@@ -89,6 +102,33 @@ export default function DetailKegiatan() {
                             onProgramSelect={handleProgramSelect}
                             onProgramChange={handleProgramChange}
                             onChange={handleChange}
+                        />
+
+                        {/* Stakeholder Section */}
+                        <StakeholderSection
+                            stakeholders={stakeholders}
+                            isEditing={isEditing}
+                            onAdd={addStakeholder}
+                            onRemove={removeStakeholder}
+                            onUpdate={updateStakeholder}
+                        />
+
+                        {/* Penerima Manfaat Section */}
+                        <BeneficiarySection
+                            beneficiaries={beneficiaries}
+                            isEditing={isEditing}
+                            onAdd={addBeneficiary}
+                            onRemove={removeBeneficiary}
+                            onUpdate={updateBeneficiary}
+                        />
+
+                        {/* Karyawan Section */}
+                        <EmployeeSection
+                            karyawan={karyawan}
+                            isEditing={isEditing}
+                            onAdd={addKaryawan}
+                            onRemove={removeKaryawan}
+                            onUpdate={updateKaryawan}
                         />
 
                         <Documentation
