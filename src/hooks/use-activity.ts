@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router-dom"
-import type { Kegiatan } from "@/types/Activity"
+import type { Kegiatan } from "@/types/activity"
 import { shareToWhatsApp } from "@/utils/shareactivity"
 
 const ITEMS_PER_PAGE = 20

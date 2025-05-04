@@ -1,4 +1,4 @@
-import type { Kegiatan } from "@/types/Activity"
+import type { Kegiatan } from "@/types/activity"
 import { formatDisplayDate, formatRupiah } from "./formatters"
 
 export const shareToWhatsApp = (activity: Kegiatan) => {

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Pencil, Share2, Trash2 } from "lucide-react"
-import type { Kegiatan } from "@/types/Activity"
+import type { Kegiatan } from "@/types/activity"
 import StatusBadge from "@/components/badge/statusbadge"
 import { formatDisplayDate, formatRupiah } from "@/utils/formatters"
 
@@ -16,7 +16,7 @@ interface ActivitiesTableProps {
     onDelete: (activity: Kegiatan) => void
 }
 
-export default function ActivitiesList({
+export default function ActivityTable({
     activities,
     sortColumn,
     onSortChange,
@@ -47,10 +47,9 @@ export default function ActivitiesList({
                                 {sortColumn === "tanggal_selesai" && <ArrowUpDown className="ml-2 h-4 w-4" />}
                             </div>
                         </TableHead>
-                        <TableHead className="w-[120px] text-center cursor-pointer" onClick={() => onSortChange("status")}>
+                        <TableHead className="w-[120px] text-center cursor-pointer">
                             <div className="flex items-center justify-center">
                                 Status
-                                {sortColumn === "status" && <ArrowUpDown className="ml-2 h-4 w-4" />}
                             </div>
                         </TableHead>
                         <TableHead className="w-[180px] cursor-pointer" onClick={() => onSortChange("biaya_implementasi")}>

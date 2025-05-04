@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, Pencil, Share2, Trash2 } from "lucide-react"
-import type { Kegiatan } from "@/types/Activity"
+import type { Kegiatan } from "@/types/activity"
 import StatusBadge from "@/components/badge/statusbadge"
 import { formatDisplayDate, formatRupiah } from "@/utils/formatters"
 

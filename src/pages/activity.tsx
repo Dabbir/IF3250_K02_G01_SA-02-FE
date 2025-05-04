@@ -9,10 +9,9 @@ import { Leaf, Search, Download } from "lucide-react"
 // Components
 import LoadingState from "@/components/loading/loading"
 import ErrorState from "@/components/error/error"
-import DeleteDialog from "@/components/dialog/deletedialog"
+import { ConfirmDeleteDialog } from "@/components/dialog/deletedialog"
 import Pagination from "@/components/pagination/pagination"
 import MobileActivityCard from "@/components/activity/mobileactivitycard"
-import ActivitiesList from "@/components/activity/activitieslist"
 import FilterActivity from "@/components/activity/filteractivity"
 import ChooseMethod from "@/components/activity/choosemethod"
 
@@ -20,6 +19,7 @@ import ChooseMethod from "@/components/activity/choosemethod"
 import useResponsive from "@/hooks/use-responsive"
 import useActivity from "@/hooks/use-activity"
 import { exportActivitiesToXlsx } from "@/utils/exportactivity"
+import ActivityTable from "@/components/activity/activitytable"
 
 export default function KegiatanPage() {
   // State and Hooks
@@ -139,7 +139,7 @@ export default function KegiatanPage() {
           </div>
         ) : (
           // Desktop table view
-          <ActivitiesList
+          <ActivityTable
             activities={displayedActivities}
             sortColumn={sortColumn}
             onSortChange={handleSortChange}
@@ -149,11 +149,15 @@ export default function KegiatanPage() {
           />
         )}
 
-        <DeleteDialog
+        <ConfirmDeleteDialog
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
-          selectedActivity={selectedActivity}
+          selectedItem={selectedActivity}
+          itemName="kegiatan"
+          itemLabelKey="nama_aktivitas"
           onDelete={handleDeleteActivity}
+          title="Hapus Kegiatan"
+          descriptionPrefix="Apakah Anda yakin ingin menghapus kegiatan"
         />
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />

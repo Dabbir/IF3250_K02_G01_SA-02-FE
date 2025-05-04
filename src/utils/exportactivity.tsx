@@ -1,5 +1,5 @@
 import { utils, writeFile } from "xlsx"
-import type { Kegiatan } from "@/types/Activity"
+import type { Kegiatan } from "@/types/activity"
 import { formatDisplayDate } from "./formatters"
 
 export const exportActivitiesToXlsx = (activities: Kegiatan[]) => {
