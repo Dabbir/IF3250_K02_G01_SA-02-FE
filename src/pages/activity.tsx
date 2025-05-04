@@ -55,11 +55,18 @@ export default function KegiatanPage() {
   const { isMobileView } = useResponsive()
 
   if (loading) {
-    return <LoadingState />
+    return <LoadingState
+      title="Kegiatan"
+      Icon={Leaf}
+    />
   }
 
   if (error) {
-    return <ErrorState error={error} />
+    return <ErrorState
+      error={error}
+      title="Kegiatan"
+      Icon={Leaf}
+    />
   }
 
   return (

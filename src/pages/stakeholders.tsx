@@ -64,11 +64,18 @@ export default function StakeholderPage() {
     }
 
     if (loading) {
-        return <LoadingState />
+        return <LoadingState
+            title="Pemangku Kepentingan"
+            Icon={Users}
+        />
     }
 
     if (error) {
-        return <ErrorState error={error} />
+        return <ErrorState
+            error={error}
+            title="Pemangku Kepentingan"
+            Icon={Users}
+        />
     }
 
     return (

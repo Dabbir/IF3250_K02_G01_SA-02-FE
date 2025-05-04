@@ -35,11 +35,20 @@ export default function DetailStakeholder() {
     const handleGoBack = () => navigate("/stakeholder")
 
     if (loading) {
-        return <LoadingState title="Detail Kegiatan" onGoBack={handleGoBack} />
+        return <LoadingState
+            title="Detail Pemangku Kepentingan"
+            onGoBack={handleGoBack}
+            Icon={Users}
+        />
     }
 
     if (error || !stakeholder) {
-        return <ErrorState error={error || "Activity not found"} title="Detail Kegiatan" onGoBack={handleGoBack} />
+        return <ErrorState
+            error={error || "Pemangku kepentingan tidak ditemukan"}
+            title="Detail Pemangku Kepentingan"
+            onGoBack={handleGoBack}
+            Icon={Users}
+        />
     }
 
     return (

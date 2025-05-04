@@ -43,11 +43,20 @@ export default function DetailKegiatan() {
     }
 
     if (loading) {
-        return <LoadingState title="Detail Kegiatan" onGoBack={handleGoBack} />
+        return <LoadingState
+            title="Detail Kegiatan"
+            onGoBack={handleGoBack}
+            Icon={Leaf}
+        />
     }
 
     if (error || !kegiatan) {
-        return <ErrorState error={error || "Activity not found"} title="Detail Kegiatan" onGoBack={handleGoBack} />
+        return <ErrorState
+            error={error || "Aktivitas tidak ditemukan"}
+            title="Detail Kegiatan"
+            onGoBack={handleGoBack}
+            Icon={Leaf}
+        />
     }
 
     return (
