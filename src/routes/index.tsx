@@ -3,7 +3,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RegisterDataDiri from "@/pages/register-datadiri";
 import WaitVerification from "@/pages/menunggu-verifikasi";
-import ManajemenAkun from "@/pages/manajemenakun";
+import ManajemenAkun from "@/pages/accountmanagement.tsx";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
 import AuthCallback from "@/pages/AuthCallback";
