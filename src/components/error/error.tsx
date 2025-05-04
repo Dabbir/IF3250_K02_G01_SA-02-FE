@@ -1,23 +1,39 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ArrowLeft, Leaf } from "lucide-react"
 
 interface ErrorStateProps {
     error: string
+    title?: string
+    onGoBack?: () => void
 }
 
-export default function ErrorState({ error }: ErrorStateProps) {
+export default function ErrorState({ error, title = "Error", onGoBack }: ErrorStateProps) {
     return (
-        <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
-            <CardContent className="flex justify-center items-center h-[400px]">
-                <div className="text-center">
-                    <p className="text-red-500 mb-4">{error}</p>
-                    <Button onClick={() => window.location.reload()} className="bg-[#3A786D] text-white">
-                        Coba Lagi
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="m-5">
+            <Card className="w-full min-h-[500px] h-auto sm:h-[calc(85vh)] py-7 sm:p-5 mx-auto border-0 shadow-inner">
+                <CardHeader>
+                    <div className="flex items-center space-x-2">
+                        {onGoBack && (
+                            <Button variant="ghost" size="sm" className="p-0 mr-2" onClick={onGoBack}>
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                        )}
+                        <Leaf className="h-6 w-6 text-slate-700" />
+                        <CardTitle>{title}</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent className="flex justify-center items-center h-[400px]">
+                    <div className="text-center">
+                        <p className="text-gray-600 mb-4">{error}</p>
+                        <Button onClick={() => window.location.reload()} className="bg-[#3A786D] text-white">
+                            Coba Lagi
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     )
 }
