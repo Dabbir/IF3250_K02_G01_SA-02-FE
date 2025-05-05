@@ -349,38 +349,97 @@ export default function LaporanAktivitas() {
           {/* Summary Preview */}
           <Card className="mb-6">
             <CardContent className="pl-4 pr-4">
-              <h3 className="text-lg font-medium mb-4">Ringkasan</h3>
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-medium">Ringkasan</h3>
+              </div>
+
               {loading ? (
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3A786D]"></div>
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#3A786D]"></div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600">Total Aktivitas</div>
-                    <div className="text-2xl font-bold">{summary.totalActivities}</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600">Total Biaya</div>
-                    <div className="text-2xl font-bold">Rp{formatRupiah(summary.totalBudget)}</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600">Status</div>
-                    <div className="space-y-1">
-                      {Object.entries(summary.statusCounts).map(([status, count]) => (
-                        <div key={status} className="text-sm">
-                          {status}: {count}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Total Activities Card */}
+                  <div className="bg-gradient-to-br from-[#f8f9fa] to-[#e9f5f3] rounded-xl shadow-sm border border-[#e0e7e5] overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-gray-500 mb-1">Total Aktivitas</p>
+                          <h4 className="text-2xl font-bold text-gray-800">{summary.totalActivities}</h4>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600">Rentang Tanggal</div>
-                    <div className="text-sm">
-                      {summary.dateRange ? 
-                        `${summary.dateRange.start} - ${summary.dateRange.end}` : 
-                        'Semua periode'
-                      }
+
+                  {/* Total Budget Card */}
+                  <div className="bg-gradient-to-br from-[#f8f9fa] to-[#eef3f8] rounded-xl shadow-sm border border-[#e0e5e7] overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-gray-500 mb-1">Total Biaya</p>
+                          <h4 className="text-2xl font-bold text-gray-800">Rp{formatRupiah(summary.totalBudget)}</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Card */}
+                  <div className="bg-gradient-to-br from-[#f8f9fa] to-[#f5f0e9] rounded-xl shadow-sm border border-[#e7e5e0] overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex justify-between items-start mb-3">
+                        <p className="text-sm font-medium text-gray-500">Status</p>
+                      </div>
+                      <div className="space-y-2">
+                        {Object.entries(summary.statusCounts).map(([status, count]) => (
+                          <div key={status} className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-gray-600">{status}</span>
+                            <div className="flex items-center">
+                              <div
+                                className="h-2 rounded-full mr-2"
+                                style={{
+                                  width: `${Math.min(100, (count / summary.totalActivities) * 100)}px`,
+                                  backgroundColor:
+                                    status === "Selesai"
+                                      ? "#3A786D"
+                                      : status === "Dalam Proses"
+                                        ? "#2c5282"
+                                        : status === "Tertunda"
+                                          ? "#825a2c"
+                                          : "#718096",
+                                }}
+                              ></div>
+                              <span className="text-xs font-semibold">{count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Date Range Card */}
+                  <div className="bg-gradient-to-br from-[#f8f9fa] to-[#f0e9f5] rounded-xl shadow-sm border border-[#e5e0e7] overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-gray-500 mb-1">Rentang Tanggal</p>
+                          <div className="mt-2">
+                            {summary.dateRange ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center text-xs text-gray-600">
+                                  <Calendar className="h-3 w-3 mr-1 text-[#5a2c82]" />
+                                  <span>Mulai: {summary.dateRange.start}</span>
+                                </div>
+                                <div className="flex items-center text-xs text-gray-600">
+                                  <Calendar className="h-3 w-3 mr-1 text-[#5a2c82]" />
+                                  <span>Selesai: {summary.dateRange.end}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm font-medium text-gray-700">Semua periode</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
