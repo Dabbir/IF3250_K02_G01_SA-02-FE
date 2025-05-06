@@ -24,9 +24,7 @@ import DetailStakeholder from "@/pages/detailstakeholder.tsx";
 import GalleryPage from "@/pages/galeri.tsx";
 import Employee from "@/pages/employee.tsx";
 import DetailEmployee from "@/pages/detailemployee.tsx";
-import DetailTraining from "@/pages/detailtraining.tsx";
-import PublicTraining from "@/pages/trainingpublic.tsx";
-import Training from "@/pages/training.tsx";
+import LaporanAktivitas from "@/pages/reportActivity.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -87,7 +85,8 @@ const AppRoutes = () => (
         <Route path="/karyawan/:id" element={<DetailEmployee/>} />
         <Route path="/galeri" element={<GalleryPage />} />
         <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
-        <Route path="/laporan-kegiatan" element={<div className="p-4">Laporan Kegiatan Content</div>} />
+        <Route path="/laporan-kegiatan" element={<LaporanAktivitas/>} />
+        <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
         <Route path="/viewer-access" element={<ViewerAccessManagement />} />
         <Route path="/penerima-manfaat" element={<Beneficiary />} />
         <Route path="/penerima-manfaat/:id" element={<DetailBeneficiary />} />
