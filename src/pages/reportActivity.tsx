@@ -31,7 +31,6 @@ export default function LaporanAktivitas() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [minBudget, setMinBudget] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
 
@@ -375,9 +374,13 @@ export default function LaporanAktivitas() {
                   <div className="bg-gradient-to-br from-[#f8f9fa] to-[#eef3f8] rounded-xl shadow-sm border border-[#e0e5e7] overflow-hidden">
                     <div className="p-5">
                       <div className="flex justify-between items-start">
-                        <div>
+                        <div className="w-full">
                           <p className="text-sm font-medium text-gray-500 mb-1">Total Biaya</p>
-                          <h4 className="text-2xl font-bold text-gray-800">Rp{formatRupiah(summary.totalBudget)}</h4>
+                          <h4 className="text-2xl font-bold text-gray-800 break-words">
+                            <span className="text-2xl sm:text-xl md:text-2xl">
+                              Rp{formatRupiah(summary.totalBudget)}
+                            </span>
+                          </h4>
                         </div>
                       </div>
                     </div>
