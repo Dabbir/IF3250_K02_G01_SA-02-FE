@@ -63,7 +63,7 @@ export default function DetailStakeholder() {
                     setStakeholder(data.stakeholder)
                     setEditedStakeholder(data.stakeholder)
                 } else {
-                    throw new Error(data.message || "Failed to fetch stakeholder")
+                    throw new Error(data.message || "gagal memuat Pemangku Kepentingan")
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : "An error occurred")
@@ -120,15 +120,15 @@ export default function DetailStakeholder() {
                 // Update the local state with the updated data
                 setStakeholder((prev) => (prev ? { ...prev, ...data.data } : data.data))
                 setIsEditing(false)
-                toast.success("Stakeholder berhasil diperbarui!")
+                toast.success("Pemangku kepentingan berhasil diperbarui!")
 
                 // setTimeout(() => window.location.reload(), 500)
             } else {
-                throw new Error(data.message || "Gagal memperbarui stakeholder!")
+                throw new Error(data.message || "Gagal memperbarui pemangku kepentingan!")
             }
         } catch (error) {
-            console.error("Error updating stakeholder:", error)
-            toast.error(error instanceof Error ? error.message : "Gagal memperbarui stakeholder!")
+            console.error("Error updating pemangku kepentingan:", error)
+            toast.error(error instanceof Error ? error.message : "Gagal memperbarui pemangku kepentingan!")
         } finally {
             setSaving(false)
         }
@@ -157,7 +157,7 @@ export default function DetailStakeholder() {
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
                             <Leaf className="h-6 w-6 text-slate-700" />
-                            <CardTitle>Detail Stakeholder</CardTitle>
+                            <CardTitle>Detail Pemangku Kepentingan</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="flex justify-center items-center h-[400px]">
@@ -178,12 +178,12 @@ export default function DetailStakeholder() {
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
                             <Leaf className="h-6 w-6 text-slate-700" />
-                            <CardTitle>Detail Stakeholder</CardTitle>
+                            <CardTitle>Detail Pemangku Kepentingan</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="flex justify-center items-center h-[400px]">
                         <div className="text-center">
-                            <p className="text-red-500 mb-4">{error || "Stakeholder not found"}</p>
+                            <p className="text-red-500 mb-4">{error || "Pemangku Kepentingan tidak ditemukan"}</p>
                             <Button onClick={() => window.location.reload()} className="bg-[#3A786D] text-white">
                                 Try Again
                             </Button>
@@ -249,7 +249,7 @@ export default function DetailStakeholder() {
                         <Table className="border rounded-lg overflow-hidden mb-2">
                             <TableBody>
                                 <TableRow>
-                                    <TableHead>Nama Stakeholder</TableHead>
+                                    <TableHead>Nama Pemangku Kepentingan</TableHead>
                                     <TableCell>
                                         {isEditing ? (
                                             <Input
@@ -265,7 +265,7 @@ export default function DetailStakeholder() {
                                 </TableRow>
 
                                 <TableRow>
-                                    <TableHead>Jenis Stakeholder</TableHead>
+                                    <TableHead>Jenis Pemangku Kepentingan</TableHead>
                                     <TableCell>
                                         {isEditing ? (
                                             <select
