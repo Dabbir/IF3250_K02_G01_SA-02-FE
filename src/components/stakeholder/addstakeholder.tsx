@@ -1,26 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+
+// components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
-const API_URL = import.meta.env.VITE_HOST_NAME
+// types
+import { Stakeholder } from "@/types/stakeholder";
 
-interface Stakeholder {
-    id: string;
-    nama_stakeholder: string;
-    jenis: string;
-    telepon: string;
-    email: string;
-    foto: string;
-    masjid_id: string;
-    created_by: string;
-}
+const API_URL = import.meta.env.VITE_HOST_NAME
 
 interface AddStakeholderDialogProps {
     isOpen: boolean;

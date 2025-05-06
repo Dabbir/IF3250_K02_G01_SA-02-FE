@@ -12,14 +12,14 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  
+
   useEffect(() => {
     if (localStorage.getItem("showSuccessLogoutToast") === "true") {
       toast.success("Logout berhasil!");
       localStorage.removeItem("showSuccessLogoutToast");
     }
   }, []);
-  
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -88,8 +88,8 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -116,8 +116,8 @@ const Login = () => {
             <div className="flex-grow h-px bg-[#3A786D]"></div>
           </div>
 
-          <button 
-            onClick={handleGoogleLogin} 
+          <button
+            onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center border border-gray-300 py-3 rounded hover:bg-gray-50 transition"
           >
             <img src={Google} alt="Google Logo" className="w-5 h-5 md:w-6 md:h-6" />
@@ -133,7 +133,7 @@ const Login = () => {
 
       {/* Right Side - Image (Hidden on small screens, shown on md and up) */}
       <div className="relative w-full md:w-1/2 h-40 md:h-full order-1 md:order-2">
-        <div 
+        <div
           className="absolute top-0 bottom-0 left-0 w-24 bg-white hidden md:block"
           style={{ transform: 'skewX(-6deg) translateX(-50%)', zIndex: 5, height: '100%' }}
         ></div>
