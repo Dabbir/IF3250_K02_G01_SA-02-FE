@@ -25,6 +25,9 @@ import GalleryPage from "@/pages/galeri.tsx";
 import Employee from "@/pages/employee.tsx";
 import DetailEmployee from "@/pages/detailemployee.tsx";
 import LaporanAktivitas from "@/pages/reportActivity.tsx";
+import DetailTraining from "@/pages/detailtraining.tsx";
+import PublicTraining from "@/pages/trainingpublic.tsx";
+import Training from "@/pages/training.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
