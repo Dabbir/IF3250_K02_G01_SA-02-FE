@@ -16,6 +16,7 @@ const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function PublicTrainingPage() {
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,11 +39,8 @@ export default function PublicTrainingPage() {
         throw new Error("Authentication token not found");
       }
 
-      // For public view, we only want to show upcoming and ongoing trainings
-      const status = "Upcoming,Ongoing";
-      
       const response = await fetch(
-        `${API_URL}/api/trainings?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${search}&status=${status}`,
+        `${API_URL}/api/trainings?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${search}&status=${status}&trainingRegistration=true`,
         {
           headers: {
             "Authorization": `Bearer ${token}`

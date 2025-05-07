@@ -36,7 +36,7 @@ export default function TrainingPage() {
         }
 
         const response = await fetch(
-          `${API_URL}/api/trainings?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${search}&status=${status}`, 
+          `${API_URL}/api/trainings?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${search}&status=${status}&trainingRegistration=false`, 
           {
             method: "GET",
             headers: {
