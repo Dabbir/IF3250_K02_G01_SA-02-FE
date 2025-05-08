@@ -30,7 +30,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("");
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
@@ -246,7 +246,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
       {participants.length === 0 ? (
         <div className="text-center py-8 border rounded-lg">
           <p className="text-gray-500">Tidak ada data peserta pelatihan</p>
-          {(search || statusFilter) && (
+          {(search || statusFilter !== "") && (
             <div className="mt-2">
               <Button
                 variant="outline"
