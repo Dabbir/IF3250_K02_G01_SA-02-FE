@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Download, GraduationCap } from "lucide-react";
+import { Search, Loader2, Download, GraduationCap, ChevronDown, BookOpen } from "lucide-react";
 import { toast } from "react-toastify";
 import TrainingList from "@/components/training/trainingList";
 import AddTraining from "@/components/training/addTraining";
@@ -24,6 +25,10 @@ export default function TrainingPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTrainings = async () => {
@@ -70,9 +75,31 @@ export default function TrainingPage() {
     fetchTrainings();
   }, [currentPage, search, status]);
 
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      dropdownRef.current && 
+      !dropdownRef.current.contains(event.target as Node) &&
+      buttonRef.current &&
+      !buttonRef.current.contains(event.target as Node)
+    ) {
+      setDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1); 
   };
 
   const handleDeleteTraining = async (id: string) => {
@@ -214,10 +241,51 @@ export default function TrainingPage() {
 
   return (
     <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between md:justify-start md:gap-4">
         <div className="flex items-center space-x-2">
           <GraduationCap className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
           <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Manajemen Pelatihan</h2>
+        </div>
+        <div className="relative">
+          <button
+            ref={buttonRef}
+            onClick={toggleDropdown}
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            aria-label="Menu pelatihan"
+            title="Menu pelatihan"
+          >
+              <ChevronDown className="h-5 w-5 text-gray-600" />
+          </button>
+
+          {dropdownOpen && (
+            <div 
+              ref={dropdownRef}
+              className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-opacity-2 focus:outline-none z-10"
+            >
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    navigate("/pelatihan");
+                    setDropdownOpen(false);
+                  }}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 w-full text-left hover:bg-gray-100"
+                >
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  Manajemen Pelatihan
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/pelatihan-umum");
+                    setDropdownOpen(false);
+                  }}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 w-full text-left hover:bg-gray-100"
+                >
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Daftar Pelatihan
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>

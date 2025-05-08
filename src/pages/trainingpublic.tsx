@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, MapPin, Users, Search, Loader2, BookOpen } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Search, Loader2, BookOpen, GraduationCap, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/ui/badge";
 import { Training, TrainingAvailability } from "@/lib/training";
@@ -25,6 +26,32 @@ export default function PublicTrainingPage() {
   const [selectedTraining, setSelectedTraining] = useState<Training | null>(null);
   const [availability, setAvailability] = useState<TrainingAvailability | null>(null);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const navigate = useNavigate();
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      dropdownRef.current && 
+      !dropdownRef.current.contains(event.target as Node) &&
+      buttonRef.current &&
+      !buttonRef.current.contains(event.target as Node)
+    ) {
+      setDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     fetchTrainings();
@@ -89,7 +116,6 @@ export default function PublicTrainingPage() {
         }
       }
       
-      // Default values if fetch fails
       return {
         total_kuota: 0,
         used_slots: 0,
@@ -108,7 +134,6 @@ export default function PublicTrainingPage() {
   const handleOpenRegisterDialog = async (training: Training) => {
     setSelectedTraining(training);
     
-    // Fetch availability before opening dialog
     const availabilityData = await fetchAvailability(training.id);
     setAvailability(availabilityData);
     
@@ -118,7 +143,7 @@ export default function PublicTrainingPage() {
   const handleRegistrationSuccess = () => {
     setIsRegisterDialogOpen(false);
     toast.success("Pendaftaran berhasil. Tim kami akan meninjau pendaftaran Anda.");
-    fetchTrainings(); // Refresh the list
+    fetchTrainings(); 
   };
 
   const getStatusBadge = (status: string) => {
@@ -162,10 +187,52 @@ export default function PublicTrainingPage() {
 
   return (
     <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between md:justify-start md:gap-4">
         <div className="flex items-center space-x-2">
           <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-slate-700" />
-          <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Pelatihan Tersedia</h2>
+          <h2 className="text-lg md:text-xl font-medium text-[var(--blue)]">Daftar Pelatihan</h2>
+        </div>
+        
+        <div className="relative">
+          <button
+            ref={buttonRef}
+            onClick={toggleDropdown}
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            aria-label="Menu pelatihan"
+            title="Menu pelatihan"
+          >
+              <ChevronDown className="h-5 w-5 text-gray-600" />
+          </button>
+
+          {dropdownOpen && (
+            <div 
+              ref={dropdownRef}
+              className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-opacity-2 focus:outline-none z-10"
+            >
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    navigate("/pelatihan");
+                    setDropdownOpen(false);
+                  }}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 w-full text-left hover:bg-gray-100"
+                >
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  Manajemen Pelatihan
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/pelatihan-umum");
+                    setDropdownOpen(false);
+                  }}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 w-full text-left hover:bg-gray-100"
+                >
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Daftar Pelatihan
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
