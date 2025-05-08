@@ -89,7 +89,6 @@ const AppRoutes = () => (
         <Route path="/galeri" element={<GalleryPage />} />
         <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
         <Route path="/laporan-kegiatan" element={<LaporanAktivitas/>} />
-        <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
         <Route path="/viewer-access" element={<ViewerAccessManagement />} />
         <Route path="/penerima-manfaat" element={<Beneficiary />} />
         <Route path="/penerima-manfaat/:id" element={<DetailBeneficiary />} />

@@ -22,7 +22,7 @@ export default function TrainingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [, setTotalItems] = useState(0);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function TrainingPage() {
 
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1); 
   };
 
   const handleDeleteTraining = async (id: string) => {
@@ -98,11 +98,9 @@ export default function TrainingPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Remove the deleted training from the state
         setTrainings((prevTrainings) => prevTrainings.filter(training => training.id !== id));
         toast.success("Pelatihan berhasil dihapus");
         
-        // If this was the last item on the page and not the first page, go back one page
         if (trainings.length === 1 && currentPage > 1) {
           setCurrentPage(prev => prev - 1);
         }
@@ -132,16 +130,15 @@ export default function TrainingPage() {
         "Masjid": training.nama_masjid || ""
       })));
 
-      // Set column widths
       const columnWidths = [
-        { wch: 30 }, // Name
-        { wch: 40 }, // Description
-        { wch: 25 }, // Location
-        { wch: 22 }, // Start time
-        { wch: 22 }, // End time
-        { wch: 10 }, // Quota
-        { wch: 15 }, // Status
-        { wch: 25 }, // Mosque
+        { wch: 30 }, 
+        { wch: 40 }, 
+        { wch: 25 }, 
+        { wch: 22 }, 
+        { wch: 22 }, 
+        { wch: 10 }, 
+        { wch: 15 }, 
+        { wch: 25 }, 
       ];
       worksheet['!cols'] = columnWidths;
 
