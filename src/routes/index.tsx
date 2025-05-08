@@ -28,6 +28,7 @@ import LaporanAktivitas from "@/pages/reportActivity.tsx";
 import DetailTraining from "@/pages/detailtraining.tsx";
 import PublicTraining from "@/pages/trainingpublic.tsx";
 import Training from "@/pages/training.tsx";
+import LaporanProgram from "@/pages/reportProgram.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -87,7 +88,7 @@ const AppRoutes = () => (
         <Route path="/karyawan" element={<Employee/>} />
         <Route path="/karyawan/:id" element={<DetailEmployee/>} />
         <Route path="/galeri" element={<GalleryPage />} />
-        <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
+        <Route path="/laporan-program" element={<LaporanProgram />} />
         <Route path="/laporan-kegiatan" element={<LaporanAktivitas/>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
         <Route path="/viewer-access" element={<ViewerAccessManagement />} />
