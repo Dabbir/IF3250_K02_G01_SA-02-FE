@@ -351,32 +351,36 @@ export default function LaporanProgram() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">KPI Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-          {[
-            {
-              label: "Total Program",
-              value: summary.total,
-              gradient: "bg-gradient-to-br from-green-50 to-teal-100",
-            },
-            {
-              label: "Total Rancangan",
-              value: `Rp${formatRupiah(summary.sumPlanned)}`,
-              gradient: "bg-gradient-to-br from-blue-50 to-indigo-100",
-            },
-            {
-              label: "Total Aktualisasi",
-              value: `Rp${formatRupiah(summary.sumActual)}`,
-              gradient: "bg-gradient-to-br from-teal-50 to-cyan-100",
-            },
-            {
-              label: "Avg Rancangan/Prog",
-              value: `Rp${formatRupiah(summary.avgPlannedPer)}`,
-              gradient: "bg-gradient-to-br from-indigo-50 to-purple-100",
-            },
-          ].map(({ label, value, gradient }) => (
-            <Card
-              key={label}
-              className={`${gradient} rounded-xl shadow-md ring-1 ring-gray-200`}
-            >
+        {[
+          {
+            label: "Total Program",
+            value: summary.total,
+            gradient: "bg-gradient-to-br from-[#f8f9fa] to-[#e9f5f3]",
+            border: "border-[#e0e7e5]"
+          },
+          {
+            label: "Total Rancangan",
+            value: `Rp${formatRupiah(summary.sumPlanned)}`,
+            gradient: "bg-gradient-to-br from-[#f8f9fa] to-[#eef3f8]",
+            border: "border-[#e0e5e7]"
+          },
+          {
+            label: "Total Aktualisasi",
+            value: `Rp${formatRupiah(summary.sumActual)}`,
+            gradient: "bg-gradient-to-br from-[#f8f9fa] to-[#e9f5f3]",
+            border: "border-[#e0e7e5]"
+          },
+          {
+            label: "Avg Rancangan/Prog",
+            value: `Rp${formatRupiah(summary.avgPlannedPer)}`,
+            gradient: "bg-gradient-to-br from-[#f8f9fa] to-[#eef3f8]",
+            border: "border-[#e0e5e7]"
+          },
+        ].map(({ label, value, gradient, border }) => (
+          <Card
+            key={label}
+            className={`${gradient} rounded-xl shadow-sm border ${border} overflow-hidden`}
+          >
               <CardContent className="py-6 text-center">
                 <p className="text-sm text-gray-500">{label}</p>
                 {loading ? (
@@ -389,27 +393,30 @@ export default function LaporanProgram() {
           ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-          {[
-            {
-              label: "Avg Aktualisasi/Prog",
-              value: `Rp${formatRupiah(summary.avgActualPer)}`,
-              gradient: "bg-gradient-to-br from-purple-50 to-pink-100",
-            },
-            {
-              label: "Durasi Rata-rata (h)",
-              value: summary.avgDur,
-              gradient: "bg-gradient-to-br from-yellow-50 to-red-100",
-            },
-            {
-              label: "Pemanfaatan Anggaran",
-              value: `${summary.util}%`,
-              gradient: "bg-gradient-to-br from-green-50 to-lime-100",
-            },
-          ].map(({ label, value, gradient }) => (
-            <Card
-              key={label}
-              className={`${gradient} rounded-xl shadow-md ring-1 ring-gray-200`}
-            >
+        {[
+          {
+            label: "Avg Aktualisasi/Prog",
+            value: `Rp${formatRupiah(summary.avgActualPer)}`,
+            gradient: "bg-gradient-to-br from-[#f8f9fa] to-[#f5f0e9]",
+            border: "border-[#e7e5e0]"
+          },
+          {
+            label: "Durasi Rata-rata (h)",
+            value: summary.avgDur,
+            gradient: "bg-gradient-to-br from-[#f8f9fa] to-[#f0e9f5]",
+            border: "border-[#e5e0e7]"
+          },
+          {
+            label: "Pemanfaatan Anggaran",
+            value: `${summary.util}%`,
+            gradient: "bg-gradient-to-br from-[#f8f9fa] to-[#f5f0e9]",
+            border: "border-[#e7e5e0]"
+          },
+        ].map(({ label, value, gradient, border }) => (
+          <Card
+            key={label}
+            className={`${gradient} rounded-xl shadow-sm border ${border} overflow-hidden`}
+          >
               <CardContent className="py-6 text-center">
                 <p className="text-sm text-gray-500">{label}</p>
                 {loading ? (
@@ -497,7 +504,7 @@ export default function LaporanProgram() {
                 {Object.entries(summary.pillarCounts).map(([pl, cnt]) => (
                   <span
                     key={pl}
-                    className="bg-[#3A786D] bg-opacity-10 text-white px-2 py-1 rounded-full text-sm"
+                    className="bg-[#3A786D] px-2 py-1 rounded-full text-sm text-white"
                   >
                     {pl}: {cnt}
                   </span>
@@ -594,7 +601,7 @@ export default function LaporanProgram() {
         <Button
           onClick={exportExcel}
           disabled={loading || summary.total === 0}
-          className="bg-[#3A786D] text-white px-6 py-2 flex items-center space-x-2 shadow"
+          className="bg-[#3A786D] text-white px-8 py-3 gap-2"
         >
           <Download className="w-5 h-5" />
           <span>Export ke Excel ({summary.total})</span>
