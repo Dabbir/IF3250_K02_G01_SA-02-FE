@@ -114,12 +114,16 @@ export default function TrainingPage() {
       }
 
       let url = new URL(`${API_URL}/api/trainings`);
-      url.searchParams.append('page', currentPage.toString());
       url.searchParams.append('limit', ITEMS_PER_PAGE.toString());
 
       if (search) {
+        if (currentPage != 1) {
+          setCurrentPage(1);
+        }
         url.searchParams.append('search', search);
       }
+      
+      url.searchParams.append('page', currentPage.toString());
 
       if (statusFilters.length > 0) {
         url.searchParams.append('status', statusFilters.join(','));
