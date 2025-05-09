@@ -19,7 +19,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import ChooseMethodProgram from "@/components/program/choosemethodprogram";
+import ChooseMethodProgram from "@/components/program/chooseMethodProgram";
 import ProgramSortControls from "@/components/program/programsortcontrol";
 import { getStatusBadge } from "@/components/program/programstatusbadge";
 import { STATUS_OPTIONS } from "@/types/program";

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { Program, STATUS_OPTIONS } from "@/types/program"
@@ -101,6 +101,7 @@ export default function useProgram() {
         );
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
     const handleNavigate = (id: Number | undefined) => {
         if (id) {
             navigate(`/data-program/${id}`)

@@ -35,7 +35,7 @@ export default function useStakeholders() {
                 const params = new URLSearchParams({
                     page: currentPage.toString(),
                     limit: ITEMS_PER_PAGE.toString(),
-                    nama_instansi: search,
+                    nama_stakeholder: search,
                     jenis: jenisFilters.join(","),
                     sortColumn: sortColumn,
                     sortOrder: sortOrder,
