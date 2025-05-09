@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil, Loader2, Menu, Filter } from "lucide-react";
+import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil, Loader2, Menu, Filter, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import ChooseMethodPublication from "@/components/publikasi/choosemethodpublication";
 import * as XLSX from "xlsx";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -38,6 +38,13 @@ interface PaginationInfo {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+interface FilterOptions {
+    media: string[];
+    programs: Array<{ id: string; nama_program: string }>;
+    activities: Array<{ id: string; nama_aktivitas: string }>;
+    tones: string[];
 }
 
 const formatRupiah = (value: number) => {
@@ -72,6 +79,15 @@ export default function PublikasiPage() {
   
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
 
+  const [mediaFilters, setMediaFilters] = useState<string[]>([]);
+  const [programFilters, setprogramFilters] = useState<string[]>([]);
+  const [activityFilters, setActivityFilters] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [prValueMin, setPrValueMin] = useState<number | undefined>();
+  const [prValueMax, setPrValueMax] = useState<number | undefined>();
+  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobileView(window.innerWidth < 768);
@@ -85,7 +101,7 @@ export default function PublikasiPage() {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, sortColumn, sortOrder, toneFilters]);
+  }, [currentPage, sortColumn, sortOrder, toneFilters, mediaFilters, dateFrom, dateTo, prValueMin, prValueMax]);
 
   useEffect(() => {
     if (searchTimer) {
@@ -113,7 +129,7 @@ export default function PublikasiPage() {
         throw new Error("Authentication token not found");
       }
 
-      let url = new URL(`${API_URL}/api/publikasi`);
+      let url = new URL(`${API_URL}/api/publication`);
       url.searchParams.append('page', currentPage.toString());
       url.searchParams.append('limit', ITEMS_PER_PAGE.toString());
       
@@ -134,6 +150,21 @@ export default function PublikasiPage() {
       
       if (toneFilters.length > 0) {
         url.searchParams.append('toneFilters', toneFilters.join(','));
+      }
+      if (mediaFilters.length > 0) {
+        url.searchParams.append('mediaFilters', mediaFilters.join(','));
+      }
+      if (dateFrom) {
+        url.searchParams.append('dateFrom', dateFrom);
+      }
+      if (dateTo) {
+        url.searchParams.append('dateTo', dateTo);
+      }
+      if (prValueMin !== undefined) {
+        url.searchParams.append('prValueMin', prValueMin.toString());
+      }
+      if (prValueMax !== undefined) {
+        url.searchParams.append('prValueMax', prValueMax.toString());
       }
 
       const response = await fetch(url.toString(), {
@@ -184,6 +215,25 @@ export default function PublikasiPage() {
       setLoading(false);
     }
   };
+
+  const fetchFilterOptions = async () => {
+    const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+    const response = await fetch(`${API_URL}/api/publication/filter-options`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+    setFilterOptions(data);
+  };
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
 
   const refreshData = async () => {
     setCurrentPage(1); 
@@ -346,7 +396,7 @@ export default function PublikasiPage() {
         return false;
       }
 
-      const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
+      const response = await fetch(`${API_URL}/api/publication/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -452,50 +502,155 @@ export default function PublikasiPage() {
             </div>
 
             <Popover open={filterOpen} onOpenChange={setFilterOpen}>
-              <PopoverTrigger asChild>
+            <PopoverTrigger asChild>
                 <Button variant="outline" className="max-md:h-8 flex items-center gap-1 md:w-auto">
-                  <Filter className="h-3 w-3 md:-h4 md:w-4" />
-                  <span className="max-md:text-[12px]">Filter Tone</span>
-                  {toneFilters.length > 0 && (
-                    <Badge className="ml-1 bg-[#3A786D]">{toneFilters.length}</Badge>
-                  )}
+                <Filter className="h-3 w-3 md:-h4 md:w-4" />
+                <span className="max-md:text-[12px]">Filter</span>
+                {(toneFilters.length > 0 || mediaFilters.length > 0 || dateFrom || dateTo || prValueMin !== undefined || prValueMax !== undefined) && (
+                    <Badge className="ml-1 bg-[#3A786D] text-white min-w-[20px] h-5 text-xs">
+                    {toneFilters.length + mediaFilters.length + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (prValueMin !== undefined ? 1 : 0) + (prValueMax !== undefined ? 1 : 0)}
+                    </Badge>
+                )}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-4">
-                <h4 className="text-[12px] font-medium mb-3">Filter berdasarkan tone</h4>
-                <div className="space-y-2">
-                  {TONE_OPTIONS.map((tone) => (
-                    <div key={tone} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`tone-${tone}`}
-                        checked={toneFilters.includes(tone)}
-                        onCheckedChange={() => toggleToneFilter(tone)}
-                      />
-                      <Label htmlFor={`tone-${tone}`} className="flex items-center">
-                        {getToneBadge(tone)}
-                      </Label>
+            </PopoverTrigger>
+            
+            <PopoverContent className="w-[calc(100vw-32px)] sm:w-[380px] p-0" align="end">
+                <div className="max-h-[85vh] overflow-y-auto">
+                <div className="sticky top-0 z-10 bg-white border-b px-3 sm:px-4 py-3 flex items-center justify-between">
+                    <h3 className="font-semibold text-base">Filter Publikasi</h3>
+                    <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs hover:bg-gray-100"
+                        onClick={() => {
+                        setToneFilters([]);
+                        setMediaFilters([]);
+                        setDateFrom("");
+                        setDateTo("");
+                        setPrValueMin(undefined);
+                        setPrValueMax(undefined);
+                        }}
+                    >
+                        Reset
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-gray-100"
+                        onClick={() => setFilterOpen(false)}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
                     </div>
-                  ))}
                 </div>
-                <div className="flex justify-between mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setToneFilters([])}
-                    disabled={toneFilters.length === 0}
-                    className="text-[12px]"
-                  >
-                    Clear All
-                  </Button>
-                  <Button
-                    size="sm"
+
+                <div className="p-3 sm:p-4 space-y-4">
+                    <div className="space-y-2">
+                    <h4 className="font-medium text-sm text-gray-900">Tone</h4>
+                    <div className="grid grid-cols-3 gap-1 sm:gap-2">
+                        {TONE_OPTIONS.map((tone) => (
+                        <div key={tone} className="flex items-center space-x-1 py-1.5 px-1 sm:px-2 rounded hover:bg-gray-50">
+                            <Checkbox
+                            id={`tone-${tone}`}
+                            checked={toneFilters.includes(tone)}
+                            onCheckedChange={() => toggleToneFilter(tone)}
+                            className="data-[state=checked]:bg-[#3A786D] data-[state=checked]:border-[#3A786D] h-3.5 w-3.5"
+                            />
+                            <Label htmlFor={`tone-${tone}`} className="cursor-pointer text-xs sm:text-sm">
+                            {getToneBadge(tone)}
+                            </Label>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+
+                    <div className="space-y-2">
+                    <h4 className="font-medium text-sm text-gray-900">Media</h4>
+                    <div className="grid grid-cols-2 gap-x-1 gap-y-1 sm:gap-x-2">
+                        {filterOptions?.media.map((media) => (
+                        <div key={media} className="flex items-center space-x-1.5 py-1.5 px-1 sm:px-2 rounded hover:bg-gray-50">
+                            <Checkbox
+                            checked={mediaFilters.includes(media)}
+                            onCheckedChange={(checked) => {
+                                if (checked) {
+                                setMediaFilters([...mediaFilters, media]);
+                                } else {
+                                setMediaFilters(mediaFilters.filter(m => m !== media));
+                                }
+                            }}
+                            className="data-[state=checked]:bg-[#3A786D] data-[state=checked]:border-[#3A786D] h-3.5 w-3.5"
+                            />
+                            <Label className="text-xs sm:text-sm cursor-pointer leading-none truncate">{media}</Label>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+
+                    <div className="space-y-2">
+                    <h4 className="font-medium text-sm text-gray-900">Tanggal & PR Value</h4>
+                    <div className="space-y-3 border rounded-md p-2 sm:p-3">
+                        <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <Label htmlFor="dateFrom" className="text-xs text-gray-600 mb-1 block">Dari</Label>
+                            <Input
+                            id="dateFrom"
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="h-8 text-xs sm:text-sm"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="dateTo" className="text-xs text-gray-600 mb-1 block">Sampai</Label>
+                            <Input
+                            id="dateTo"
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="h-8 text-xs sm:text-sm"
+                            />
+                        </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <Label htmlFor="prValueMin" className="text-xs text-gray-600 mb-1 block">PR Min</Label>
+                            <Input
+                            id="prValueMin"
+                            type="number"
+                            value={prValueMin || ''}
+                            onChange={(e) => setPrValueMin(e.target.value ? Number(e.target.value) : undefined)}
+                            placeholder="0"
+                            className="h-8 text-xs sm:text-sm"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="prValueMax" className="text-xs text-gray-600 mb-1 block">PR Max</Label>
+                            <Input
+                            id="prValueMax"
+                            type="number"
+                            value={prValueMax || ''}
+                            onChange={(e) => setPrValueMax(e.target.value ? Number(e.target.value) : undefined)}
+                            placeholder="999999999"
+                            className="h-8 text-xs sm:text-sm"
+                            />
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div className="sticky bottom-0 z-10 bg-white border-t px-3 sm:px-4 py-3">
+                    <Button
+                    className="w-full bg-[#3A786D] hover:bg-[#2d5f56] text-white h-9 text-sm font-medium"
                     onClick={() => setFilterOpen(false)}
-                    className="bg-[#3A786D] text-[12px]"
-                  >
-                    Apply
-                  </Button>
+                    >
+                    Terapkan Filter
+                    </Button>
                 </div>
-              </PopoverContent>
+                </div>
+            </PopoverContent>
             </Popover>
           </div>
 
@@ -520,19 +675,26 @@ export default function PublikasiPage() {
         {publikasiList.length === 0 ? (
           <div className="text-center py-8 border rounded-lg">
             <p className="text-gray-500">No publications found</p>
-            {(toneFilters.length > 0 || search) && (
-              <div className="mt-2">
+            {(toneFilters.length > 0 || search || mediaFilters.length > 0 || programFilters.length > 0 || activityFilters.length > 0 || dateFrom || dateTo || prValueMin !== undefined || prValueMax !== undefined) && (
+            <div className="mt-2">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
+                variant="outline"
+                size="sm"
+                onClick={() => {
                     setToneFilters([]);
                     setSearch("");
-                  }}
+                    setMediaFilters([]);
+                    setprogramFilters([]);
+                    setActivityFilters([]);
+                    setDateFrom("");
+                    setDateTo("");
+                    setPrValueMin(undefined);
+                    setPrValueMax(undefined);
+                }}
                 >
-                  Clear All Filters
+                Clear All Filters
                 </Button>
-              </div>
+            </div>
             )}
           </div>
         ) : isMobileView ? (

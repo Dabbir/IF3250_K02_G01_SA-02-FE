@@ -31,7 +31,7 @@ const NewsPublication = () => {
         }
 
         const response = await fetch(
-          `${API_URL}/api/publikasi`,
+          `${API_URL}/api/publication`,
           {
             method: "GET",
             headers: {
