@@ -93,7 +93,7 @@ export default function StakeholderSection({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor={`stakeholder-name-${index}`}>Nama Stakeholder</Label>
+                                <Label htmlFor={`stakeholder-name-${index}`}>Nama Pemangku Kepentingan</Label>
                                 <p>{stakeholder.nama_stakeholder || "N/A"}</p>
                             </div>
                             <div className="space-y-2">

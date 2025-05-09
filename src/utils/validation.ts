@@ -4,11 +4,11 @@ export function validateStakeholderForm(stakeholder: Partial<Stakeholder>): Reco
     const errors: Record<string, string> = {}
 
     if (!stakeholder.nama_stakeholder?.trim()) {
-        errors.nama_stakeholder = "Nama stakeholder wajib diisi!"
+        errors.nama_stakeholder = "Nama pemangku kepentingan wajib diisi!"
     }
 
     if (!stakeholder.jenis?.trim()) {
-        errors.jenis = "Jenis stakeholder wajib diisi!"
+        errors.jenis = "Jenis pemangku kepentingan wajib diisi!"
     }
 
     if (!stakeholder.telepon?.trim()) {
