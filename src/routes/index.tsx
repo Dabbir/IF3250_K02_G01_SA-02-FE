@@ -25,6 +25,10 @@ import GalleryPage from "@/pages/galeri.tsx";
 import Employee from "@/pages/employee.tsx";
 import DetailEmployee from "@/pages/detailemployee.tsx";
 import LaporanAktivitas from "@/pages/reportActivity.tsx";
+import DetailTraining from "@/pages/detailtraining.tsx";
+import PublicTraining from "@/pages/trainingpublic.tsx";
+import Training from "@/pages/training.tsx";
+import LaporanProgram from "@/pages/reportProgram.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -84,13 +88,16 @@ const AppRoutes = () => (
         <Route path="/karyawan" element={<Employee/>} />
         <Route path="/karyawan/:id" element={<DetailEmployee/>} />
         <Route path="/galeri" element={<GalleryPage />} />
-        <Route path="/laporan-program" element={<div className="p-4">Laporan Program Content</div>} />
+        <Route path="/laporan-program" element={<LaporanProgram />} />
         <Route path="/laporan-kegiatan" element={<LaporanAktivitas/>} />
         <Route path="/pelatihan" element={<div className="p-4">Pelatihan Content</div>} />
         <Route path="/viewer-access" element={<ViewerAccessManagement />} />
         <Route path="/penerima-manfaat" element={<Beneficiary />} />
         <Route path="/penerima-manfaat/:id" element={<DetailBeneficiary />} />
         <Route path="/publikasi/:id" element={<DetailPublikasi />} />
+        <Route path="/pelatihan" element={<Training />} />
+        <Route path="/pelatihan/:id" element={<DetailTraining />} />
+        <Route path="/pelatihan-umum" element={<PublicTraining />} />
       </Route>
     </Routes>
   </BrowserRouter>
