@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus } from 'lucide-react'
 import { SearchBar } from "./search-bar"
 import { MasjidTable } from "./masjid-table"
-import { Pagination } from "./pagination"
+import Pagination from "@/components/pagination/pagination"
 import { MasjidDetailsDialog } from "./masjid-details-dialog"
 import { MasjidFormDialog } from "./masjid-form-dialog"
 import { ConfirmDialog } from "./confirm-dialog"

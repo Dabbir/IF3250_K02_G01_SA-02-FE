@@ -24,11 +24,11 @@ export const MyAccessTable = ({ isLoading, displayedItems }: MyAccessTableProps)
             </TableCell>
           </TableRow>
         ) : displayedItems.length > 0 ? (
-          displayedItems.map((masjid) => (
+          displayedItems.map((masjid, index) => (
             <TableRow key={masjid.id}>
               <TableCell className="font-medium">{masjid.nama_masjid}</TableCell>
               <TableCell>{masjid.alamat || "-"}</TableCell>
-              <TableCell>Viewer</TableCell>
+              <TableCell>{index === 0 ? "Editor" : "Viewer"}</TableCell>
             </TableRow>
           ))
         ) : (
