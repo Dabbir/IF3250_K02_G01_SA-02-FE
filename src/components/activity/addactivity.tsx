@@ -9,71 +9,71 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "react-toastify";
+import StakeholderSection from "./stakeholdersection";
+import BeneficiarySection from "./beneficiarysection";
+import EmployeeSection from "./employeesection";
+
+import { DetailedKegiatan, ImageData } from "@/types/activity";
+
+// Hooks
+import useDetailActivity from "@/hooks/use-detailactivity"
+import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_HOST_NAME
-
-interface Kegiatan {
-    namaKegiatan: string;
-    programTerafiliasi: string;
-    idProgram: number;
-    tanggalMulai: string;
-    tanggalSelesai: string;
-    status: string;
-    biayaImplementasi: string;
-    deskripsi: string;
-    stakeholders: Stakeholder[];
-    beneficiary: Beneficiary[];
-    employee: Employee[];
-}
-
-type ImageData = {
-    url: string;
-    file: File;
-};
 
 interface AddKegiatanDialogProps {
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
 }
 
-interface Stakeholder {
-    nama_stakeholder: string
-    jenis: "Individu" | "Organisasi" | "Perusahaan"
-    telepon: string
-    email: string
-}
-
-interface Beneficiary {
-    nama_instansi: string
-    nama_kontak: string
-    telepon: string
-    email: string
-    alamat: string
-}
-
-interface Employee {
-    nama: string
-    email: string
-    telepon: string
-    alamat: string
-}
-
 export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDialogProps) {
+    const {
+        handleEditClick,
+        programs,
+        stakeholders,
+        beneficiaries,
+        karyawan,
+        removeStakeholder,
+        removeBeneficiary,
+        removeKaryawan,
+        allStakeholders,
+        showStakeholderDropdown,
+        setShowStakeholderDropdown,
+        stakeholderSearch,
+        handleStakeholderSearchChange,
+        handleSelectStakeholder,
+        handleStakeholderDropdownBlur,
+        allBeneficiaries,
+        showBeneficiaryDropdown,
+        setShowBeneficiaryDropdown,
+        beneficiarySearch,
+        handleBeneficiarySearchChange,
+        handleSelectBeneficiary,
+        handleBeneficiaryDropdownBlur,
+        allKaryawan,
+        showKaryawanDropdown,
+        setShowKaryawanDropdown,
+        karyawanSearch,
+        handleKaryawanSearchChange,
+        handleSelectKaryawan,
+        handleKaryawanDropdownBlur,
+    } = useDetailActivity('')
+
     const [isSaving, setIsSaving] = useState(false);
 
     // DATA INPUT HANDLING
-    const [newKegiatan, setNewKegiatan] = useState<Kegiatan>({
-        namaKegiatan: "",
-        programTerafiliasi: "",
-        idProgram: 0,
-        tanggalMulai: "",
-        tanggalSelesai: "",
-        status: "",
-        biayaImplementasi: "",
+    const [newKegiatan, setNewKegiatan] = useState<DetailedKegiatan>({
+        nama_aktivitas: "",
+        program_id: "",
+        nama_program: "",
         deskripsi: "",
+        tanggal_mulai: "",
+        tanggal_selesai: "",
+        status: "Belum Mulai",
+        biaya_implementasi: 0,
         stakeholders: [],
-        beneficiary: [],
-        employee: [],
+        penerima_manfaat: [],
+        karyawan: [],
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -84,108 +84,23 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         setNewKegiatan((prev) => ({ ...prev, [name]: value }));
     };
 
-    const addStakeholder = () => {
-        setNewKegiatan({
-            ...newKegiatan,
-            stakeholders: [...newKegiatan.stakeholders, { nama_stakeholder: "", jenis: "Individu", telepon: "", email: "" }],
-        })
-    }
-
-    const addBeneficiary = () => {
-        setNewKegiatan({
-            ...newKegiatan,
-            beneficiary: [
-                ...newKegiatan.beneficiary,
-                { nama_instansi: "", nama_kontak: "", telepon: "", email: "", alamat: "" },
-            ],
-        })
-    }
-
-    const addKaryawan = () => {
-        setNewKegiatan({
-            ...newKegiatan,
-            employee: [...newKegiatan.employee, { nama: "", email: "", telepon: "", alamat: "" }],
-        })
-    }
-
-    const handleStakeholderChange = (index: number, field: keyof Stakeholder, value: string) => {
-        const updatedStakeholders = [...newKegiatan.stakeholders]
-        updatedStakeholders[index] = { ...updatedStakeholders[index], [field]: value }
-        setNewKegiatan({ ...newKegiatan, stakeholders: updatedStakeholders })
-    }
-
-    const handleBeneficiaryChange = (index: number, field: keyof Beneficiary, value: string) => {
-        const updatedBeneficiaries = [...newKegiatan.beneficiary]
-        updatedBeneficiaries[index] = { ...updatedBeneficiaries[index], [field]: value }
-        setNewKegiatan({ ...newKegiatan, beneficiary: updatedBeneficiaries })
-    }
-
-    const handleKaryawanChange = (index: number, field: keyof Employee, value: string) => {
-        const updatedemployee = [...newKegiatan.employee]
-        updatedemployee[index] = { ...updatedemployee[index], [field]: value }
-        setNewKegiatan({ ...newKegiatan, employee: updatedemployee })
-    }
-
-    const removeStakeholder = (index: number) => {
-        if (newKegiatan.stakeholders.length > 0) {
-            const updatedStakeholders = newKegiatan.stakeholders.filter((_, i) => i !== index)
-            setNewKegiatan({ ...newKegiatan, stakeholders: updatedStakeholders })
-        }
-    }
-
-    const removeBeneficiary = (index: number) => {
-        if (newKegiatan.beneficiary.length > 0) {
-            const updatedBeneficiaries = newKegiatan.beneficiary.filter((_, i) => i !== index)
-            setNewKegiatan({ ...newKegiatan, beneficiary: updatedBeneficiaries })
-        }
-    }
-
-    const removeKaryawan = (index: number) => {
-        if (newKegiatan.employee.length > 0) {
-            const updatedemployee = newKegiatan.employee.filter((_, i) => i !== index)
-            setNewKegiatan({ ...newKegiatan, employee: updatedemployee })
-        }
-    }
-
     // PROGRAM HANDLING
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [filteredPrograms, setFilteredPrograms] = useState<{ id: number; nama_program: string }[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [programs, setPrograms] = useState<{ id: number; nama_program: string }[]>([]);
 
-    useEffect(() => {
-        const fetchPrograms = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/activity/idprogram`, {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                if (!response.ok) throw new Error("Gagal mengambil data program");
-
-                const data = await response.json();
-                setPrograms(data.idProgram);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-
-        if (isOpen) fetchPrograms();
-    }, [isOpen]);
+    const navigate = useNavigate();
 
     const handleInputChangeProgram = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setNewKegiatan({ ...newKegiatan, programTerafiliasi: value });
+        setNewKegiatan({ ...newKegiatan, nama_program: value });
         setShowDropdown(true);
         setFilteredPrograms(programs.filter(p => p.nama_program.toLowerCase().includes(value.toLowerCase())));
     };
 
     const handleSelectProgram = (program: { id: number; nama_program: string }) => {
-        setNewKegiatan((prev) => ({ ...prev, programTerafiliasi: program.nama_program, idProgram: program.id }));
+        setNewKegiatan((prev) => ({ ...prev, nama_program: program.nama_program, program_id: program.id.toString() }));
         setShowDropdown(false);
     };
 
@@ -226,17 +141,17 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         // Clear previous error refs
         errorRefs.current = {}
 
-        if (!newKegiatan.namaKegiatan) {
-            newErrors.namaKegiatan = "Nama kegiatan wajib diisi!"
-            firstErrorField = firstErrorField || "namaKegiatan"
+        if (!newKegiatan.nama_aktivitas) {
+            newErrors.nama_aktivitas = "Nama kegiatan wajib diisi!"
+            firstErrorField = firstErrorField || "nama_aktivitas"
         }
 
-        if (!newKegiatan.programTerafiliasi || !programs.some((p) => p.nama_program === newKegiatan.programTerafiliasi)) {
-            newErrors.programTerafiliasi = "Pilih program dari daftar!"
-            firstErrorField = firstErrorField || "programTerafiliasi"
+        if (!newKegiatan.nama_program || !programs.some((p) => p.nama_program === newKegiatan.nama_program)) {
+            newErrors.nama_program = "Pilih program dari daftar!"
+            firstErrorField = firstErrorField || "nama_program"
         }
 
-        if (!newKegiatan.tanggalMulai || !newKegiatan.tanggalSelesai) {
+        if (!newKegiatan.tanggal_mulai || !newKegiatan.tanggal_selesai) {
             newErrors.tanggal = "Tanggal mulai dan selesai wajib diisi!"
             firstErrorField = firstErrorField || "tanggal"
         }
@@ -246,107 +161,15 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             firstErrorField = firstErrorField || "status"
         }
 
-        if (!newKegiatan.biayaImplementasi || Number.parseInt(newKegiatan.biayaImplementasi) < 0) {
-            newErrors.biayaImplementasi = "Biaya implementasi harus 0 atau lebih!"
-            firstErrorField = firstErrorField || "biayaImplementasi"
+        if (!newKegiatan.biaya_implementasi || newKegiatan.biaya_implementasi < 0) {
+            newErrors.biaya_implementasi = "Biaya implementasi harus lebih dari 0!"
+            firstErrorField = firstErrorField || "biaya_implementasi"
         }
 
-        if (!newKegiatan.deskripsi) {
-            newErrors.deskripsi = "Deskripsi harus lebih dari 10 karakter!"
+        if (!newKegiatan.deskripsi || newKegiatan.deskripsi.length < 10) {
+            newErrors.deskripsi = "Deskripsi minimal 10 karakter!"
             firstErrorField = firstErrorField || "deskripsi"
         }
-
-        // Validate each stakeholder individually
-        newKegiatan.stakeholders.forEach((stakeholder, index) => {
-            if (!stakeholder.nama_stakeholder) {
-                newErrors[`stakeholder_${index}_nama`] = "Nama stakeholder wajib diisi!"
-                firstErrorField = firstErrorField || `stakeholder_${index}_nama`
-            }
-
-            if (!stakeholder.jenis) {
-                newErrors[`stakeholder_${index}_jenis`] = "Jenis stakeholder wajib diisi!"
-                firstErrorField = firstErrorField || `stakeholder_${index}_jenis`
-            }
-
-            if (!stakeholder.telepon || stakeholder.telepon.trim() === "") {
-                newErrors[`stakeholder_${index}_telepon`] = "Telepon wajib diisi!"
-                firstErrorField = firstErrorField || `stakeholder_${index}_telepon`
-            } else if (!/^\d{10,15}$/.test(stakeholder.telepon)) {
-                newErrors[`stakeholder_${index}_telepon`] = "Nomor telepon harus berupa angka (10-15 digit)!"
-                firstErrorField = firstErrorField || `stakeholder_${index}_telepon`
-            }
-
-            if (!stakeholder.email.trim()) {
-                newErrors[`stakeholder_${index}_email`] = "Email tidak boleh kosong!"
-                firstErrorField = firstErrorField || `stakeholder_${index}_email`
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(stakeholder.email)) {
-                newErrors[`stakeholder_${index}_email`] = "Format email tidak valid!"
-                firstErrorField = firstErrorField || `stakeholder_${index}_email`
-            }
-        })
-
-        // Validate each beneficiary individually
-        newKegiatan.beneficiary.forEach((beneficiary, index) => {
-            if (!beneficiary.nama_instansi) {
-                newErrors[`beneficiary_${index}_instansi`] = "Nama instansi wajib diisi!"
-                firstErrorField = firstErrorField || `beneficiary_${index}_instansi`
-            }
-
-            if (!beneficiary.nama_kontak) {
-                newErrors[`beneficiary_${index}_kontak`] = "Nama kontak wajib diisi!"
-                firstErrorField = firstErrorField || `beneficiary_${index}_kontak`
-            }
-
-            if (!beneficiary.telepon) {
-                newErrors[`beneficiary_${index}_telepon`] = "Telepon wajib diisi!"
-                firstErrorField = firstErrorField || `beneficiary_${index}_telepon`
-            } else if (!/^\d{10,15}$/.test(beneficiary.telepon)) {
-                newErrors[`beneficiary_${index}_telepon`] = "Nomor telepon harus berupa angka (10-15 digit)!"
-                firstErrorField = firstErrorField || `beneficiary_${index}_telepon`
-            }
-
-            if (!beneficiary.email) {
-                newErrors[`beneficiary_${index}_email`] = "Email wajib diisi!"
-                firstErrorField = firstErrorField || `beneficiary_${index}_email`
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(beneficiary.email)) {
-                newErrors[`beneficiary_${index}_email`] = "Format email tidak valid!"
-                firstErrorField = firstErrorField || `beneficiary_${index}_email`
-            }
-
-            if (!beneficiary.alamat) {
-                newErrors[`beneficiary_${index}_alamat`] = "Alamat wajib diisi!"
-                firstErrorField = firstErrorField || `beneficiary_${index}_alamat`
-            }
-        })
-
-        // Validate each employee individually
-        newKegiatan.employee.forEach((employee, index) => {
-            if (!employee.nama) {
-                newErrors[`employee_${index}_nama`] = "Nama karyawan wajib diisi!"
-                firstErrorField = firstErrorField || `employee_${index}_nama`
-            }
-
-            if (!employee.email) {
-                newErrors[`employee_${index}_email`] = "Email wajib diisi!"
-                firstErrorField = firstErrorField || `employee_${index}_email`
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employee.email)) {
-                newErrors[`employee_${index}_email`] = "Format email tidak valid!"
-                firstErrorField = firstErrorField || `employee_${index}_email`
-            }
-
-            if (!employee.telepon) {
-                newErrors[`employee_${index}_telepon`] = "Telepon wajib diisi!"
-                firstErrorField = firstErrorField || `employee_${index}_telepon`
-            } else if (!/^\d{10,15}$/.test(employee.telepon)) {
-                newErrors[`employee_${index}_telepon`] = "Nomor telepon harus berupa angka (10-15 digit)!"
-                firstErrorField = firstErrorField || `employee_${index}_telepon`
-            }
-
-            if (!employee.alamat) {
-                newErrors[`employee_${index}_alamat`] = "Alamat wajib diisi!"
-                firstErrorField = firstErrorField || `employee_${index}_alamat`
-            }
-        })
 
         setErrors(newErrors)
 
@@ -363,34 +186,31 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     }
 
     const handleSubmit = async () => {
-        if (!validateForm()) return;
+        if (!validateForm) return;
 
         setIsSaving(true);
         try {
             const formData = new FormData();
-            formData.append("nama_aktivitas", newKegiatan.namaKegiatan);
-            formData.append("programTerafiliasi", newKegiatan.programTerafiliasi);
-            formData.append("program_id", String(newKegiatan.idProgram));
-            formData.append("tanggal_mulai", newKegiatan.tanggalMulai);
-            formData.append("tanggal_selesai", newKegiatan.tanggalSelesai);
+            formData.append("nama_aktivitas", newKegiatan.nama_aktivitas);
+            formData.append("nama_program", newKegiatan.nama_program);
+            formData.append("program_id", String(newKegiatan.program_id));
+            formData.append("tanggal_mulai", newKegiatan.tanggal_mulai);
+            formData.append("tanggal_selesai", newKegiatan.tanggal_selesai);
             formData.append("status", newKegiatan.status);
-            formData.append("biaya_implementasi", String(newKegiatan.biayaImplementasi));
+            formData.append("biaya_implementasi", String(newKegiatan.biaya_implementasi));
             formData.append("deskripsi", newKegiatan.deskripsi);
 
-            // Add stakeholders
-            formData.append("stakeholders", JSON.stringify(newKegiatan.stakeholders))
-
-            // Add beneficiaries
-            formData.append("beneficiary", JSON.stringify(newKegiatan.beneficiary))
-
-            // Add employee
-            formData.append("employee", JSON.stringify(newKegiatan.employee))
+            formData.append("stakeholders", JSON.stringify(stakeholders.map((s) => s.id)))
+            formData.append("beneficiaries", JSON.stringify(beneficiaries.map((b) => b.id)))
+            formData.append("employees", JSON.stringify(karyawan.map((k) => k.id)))
+            console.log("Form data:", formData.get("stakeholders"));
+            console.log("Form data:", formData.get("beneficiaries"));
+            console.log("Form data:", formData.get("employees"));
 
             images.forEach((image) => {
                 formData.append("dokumentasi", image.file);
             });
 
-            console.log("Form data:", formData.get("dokumentasi"));
 
             const token = localStorage.getItem("token");
 
@@ -405,11 +225,10 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             if (!response.ok) {
                 throw new Error("Gagal menyimpan data");
             }
-
-            console.log("Data berhasil dikirim");
-
             setIsOpen(false);
-            setTimeout(() => window.location.reload(), 500)
+
+            const data = await response.json(); 
+            navigate(`/kegiatan/${data.id}`);
 
             toast.success("Kegiatan berhasil ditambahkan!")
 
@@ -424,23 +243,26 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     useEffect(() => {
         if (!isOpen) {
             setNewKegiatan({
-                namaKegiatan: "",
-                programTerafiliasi: "",
-                idProgram: 0,
-                tanggalMulai: "",
-                tanggalSelesai: "",
-                status: "",
-                biayaImplementasi: "",
+                nama_aktivitas: "",
+                program_id: "",
+                nama_program: "",
                 deskripsi: "",
+                tanggal_mulai: "",
+                tanggal_selesai: "",
+                status: "Belum Mulai",
+                biaya_implementasi: 0,
                 stakeholders: [],
-                beneficiary: [],
-                employee: [],
+                penerima_manfaat: [],
+                karyawan: [],
             })
             setErrors({})
             setImages([])
-            setPrograms([])
             setShowDropdown(false)
         }
+
+        handleEditClick()
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen])
 
     return (
@@ -452,36 +274,36 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="namaKegiatan">Nama Kegiatan</Label>
+                            <Label htmlFor="nama_aktivitas">Nama Kegiatan</Label>
                             <Input
-                                name="namaKegiatan"
-                                id="namaKegiatan"
+                                name="nama_aktivitas"
+                                id="nama_aktivitas"
                                 placeholder="Nama Kegiatan"
-                                value={newKegiatan.namaKegiatan}
+                                value={newKegiatan.nama_aktivitas}
                                 onChange={handleInputChange}
                                 className="w-full"
                             />
-                            {errors.namaKegiatan && (
-                                <p ref={(el) => { (errorRefs.current.namaKegiatan = el) }} className="text-red-500 text-[12px]">
-                                    {errors.namaKegiatan}
+                            {errors.nama_aktivitas && (
+                                <p ref={(el) => { (errorRefs.current.nama_aktivitas = el) }} className="text-red-500 text-[12px]">
+                                    {errors.nama_aktivitas}
                                 </p>
                             )}
                         </div>
 
                         <div className="relative space-y-2" onBlur={handleBlur}>
-                            <Label htmlFor="programTerafiliasi">Program Terafiliasi</Label>
+                            <Label htmlFor="nama_program">Program Terafiliasi</Label>
                             <Input
-                                id="programTerafiliasi"
+                                id="nama_program"
                                 ref={inputRef}
-                                value={newKegiatan.programTerafiliasi}
+                                value={newKegiatan.nama_program}
                                 onChange={handleInputChangeProgram}
                                 onFocus={() => setShowDropdown(true)}
                                 placeholder="Pilih program"
                                 className="w-full"
                             />
-                            {errors.programTerafiliasi && (
-                                <p ref={(el) => { (errorRefs.current.programTerafiliasi = el) }} className="text-red-500 text-[12px]">
-                                    {errors.programTerafiliasi}
+                            {errors.nama_program && (
+                                <p ref={(el) => { (errorRefs.current.nama_program = el) }} className="text-red-500 text-[12px]">
+                                    {errors.nama_program}
                                 </p>
                             )}
 
@@ -526,23 +348,23 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                         <div className="space-y-2">
                             <div className="flex justify-left space-x-5">
                                 <div className="space-y-2 width-full">
-                                    <Label htmlFor="tanggalMulai">Tanggal Mulai</Label>
+                                    <Label htmlFor="tanggal_mulai">Tanggal Mulai</Label>
                                     <Input
-                                        name="tanggalMulai"
-                                        id="tanggalMulai"
+                                        name="tanggal_mulai"
+                                        id="tanggal_mulai"
                                         type="date"
-                                        value={newKegiatan.tanggalMulai}
+                                        value={newKegiatan.tanggal_mulai}
                                         onChange={handleInputChange}
                                         className="w-full"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="tanggalSelesai">Tanggal Selesai</Label>
+                                    <Label htmlFor="tanggal_selesai">Tanggal Selesai</Label>
                                     <Input
-                                        name="tanggalSelesai"
-                                        id="tanggalSelesai"
+                                        name="tanggal_selesai"
+                                        id="tanggal_selesai"
                                         type="date"
-                                        value={newKegiatan.tanggalSelesai}
+                                        value={newKegiatan.tanggal_selesai}
                                         onChange={handleInputChange}
                                         className="w-full"
                                     />
@@ -556,22 +378,22 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="biayaImplementasi">Biaya Implementasi</Label>
+                            <Label htmlFor="biaya_implementasi">Biaya Implementasi</Label>
                             <div className="flex items-center space-x-2">
                                 <span>Rp.</span>
                                 <Input
-                                    name="biayaImplementasi"
-                                    id="biayaImplementasi"
+                                    name="biaya_implementasi"
+                                    id="biaya_implementasi"
                                     type="number"
                                     placeholder="100000"
-                                    value={newKegiatan.biayaImplementasi}
+                                    value={newKegiatan.biaya_implementasi}
                                     onChange={handleInputChange}
                                     className="w-full"
                                 />
                             </div>
-                            {errors.biayaImplementasi && (
-                                <p ref={(el) => { (errorRefs.current.biayaImplementasi = el) }} className="text-red-500 text-[12px]">
-                                    {errors.biayaImplementasi}
+                            {errors.biaya_implementasi && (
+                                <p ref={(el) => { (errorRefs.current.biaya_implementasi = el) }} className="text-red-500 text-[12px]">
+                                    {errors.biaya_implementasi}
                                 </p>
                             )}
                         </div>
@@ -580,7 +402,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                             <Label htmlFor="status">Status</Label>
                             <Select name="status" onValueChange={(value) => handleSelectChange("status", value)}>
                                 <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Pilih Status" />
+                                    <SelectValue placeholder="Belum Mulai" />
                                 </SelectTrigger>
                                 <SelectContent className="w-full">
                                     <SelectItem value="Belum Mulai">Belum Mulai</SelectItem>
@@ -613,375 +435,48 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                         </div>
 
                     </div>
+
                     {/* Stakeholder Section */}
-                    <div className="space-y-4 mt-6 border-t pt-4">
-                        <Label htmlFor="deskripsi">Pemangku Kepentingan</Label>
-
-                        {newKegiatan.stakeholders.map((stakeholder, index) => (
-                            <div key={`stakeholder-${index}`} className="p-4 border rounded-md space-y-3 relative">
-                                {newKegiatan.stakeholders.length > 0 && (
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeStakeholder(index)}
-                                        variant="destructive"
-                                        size="icon"
-                                        className="absolute top-2 right-2 h-6 w-6"
-                                    >
-                                        <X size={14} />
-                                    </Button>
-                                )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`stakeholder-nama-${index}`}>Nama Stakeholder</Label>
-                                        <Input
-                                            id={`stakeholder-nama-${index}`}
-                                            value={stakeholder.nama_stakeholder}
-                                            onChange={(e) => handleStakeholderChange(index, "nama_stakeholder", e.target.value)}
-                                            placeholder="Nama stakeholder"
-                                        />
-                                        {errors[`stakeholder_${index}_nama`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`stakeholder_${index}_nama`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`stakeholder_${index}_nama`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`stakeholder-jenis-${index}`}>Jenis</Label>
-                                        <Select
-                                            value={stakeholder.jenis}
-                                            onValueChange={(value) =>
-                                                handleStakeholderChange(index, "jenis", value as "Individu" | "Organisasi" | "Perusahaan")
-                                            }
-                                        >
-                                            <SelectTrigger id={`stakeholder-jenis-${index}`}>
-                                                <SelectValue placeholder="Pilih jenis" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Individu">Individu</SelectItem>
-                                                <SelectItem value="Organisasi">Organisasi</SelectItem>
-                                                <SelectItem value="Perusahaan">Perusahaan</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        {errors[`stakeholder_${index}_jenis`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`stakeholder_${index}_jenis`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`stakeholder_${index}_jenis`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`stakeholder-telepon-${index}`}>No Telepon</Label>
-                                        <Input
-                                            id={`stakeholder-telepon-${index}`}
-                                            value={stakeholder.telepon}
-                                            onChange={(e) => handleStakeholderChange(index, "telepon", e.target.value)}
-                                            placeholder="No telepon"
-                                        />
-                                        {errors[`stakeholder_${index}_telepon`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`stakeholder_${index}_telepon`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`stakeholder_${index}_telepon`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`stakeholder-email-${index}`}>Email</Label>
-                                        <Input
-                                            id={`stakeholder-email-${index}`}
-                                            type="email"
-                                            value={stakeholder.email}
-                                            onChange={(e) => handleStakeholderChange(index, "email", e.target.value)}
-                                            placeholder="Email"
-                                        />
-                                        {errors[`stakeholder_${index}_email`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`stakeholder_${index}_email`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`stakeholder_${index}_email`]}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                        <Button
-                            type="button"
-                            onClick={addStakeholder}
-                            variant="outline"
-                            size="sm"
-                            className="text-[12px] text-[var(--green)]"
-                        >
-                            + Tambah Pemangku Kepentingan
-                        </Button>
-                    </div>
+                    <StakeholderSection
+                        stakeholders={stakeholders}
+                        isEditing={true}
+                        onRemove={removeStakeholder}
+                        allStakeholders={allStakeholders}
+                        showStakeholderDropdown={showStakeholderDropdown}
+                        setShowStakeholderDropdown={setShowStakeholderDropdown}
+                        stakeholderSearch={stakeholderSearch}
+                        onSearchChange={handleStakeholderSearchChange}
+                        onSelect={handleSelectStakeholder}
+                        onDropdownBlur={handleStakeholderDropdownBlur}
+                    />
 
                     {/* Penerima Manfaat Section */}
-                    <div className="space-y-4 mt-6 border-t pt-4">
-                        <Label htmlFor="deskripsi">Penerima Manfaat</Label>
-
-                        {newKegiatan.beneficiary.map((beneficiary, index) => (
-                            <div key={`beneficiary-${index}`} className="p-4 border rounded-md space-y-3 relative">
-                                {newKegiatan.beneficiary.length > 0 && (
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeBeneficiary(index)}
-                                        variant="destructive"
-                                        size="icon"
-                                        className="absolute top-2 right-2 h-6 w-6"
-                                    >
-                                        <X size={14} />
-                                    </Button>
-                                )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`beneficiary-instansi-${index}`}>Nama Instansi/Lembaga</Label>
-                                        <Input
-                                            id={`beneficiary-instansi-${index}`}
-                                            value={beneficiary.nama_instansi}
-                                            onChange={(e) => handleBeneficiaryChange(index, "nama_instansi", e.target.value)}
-                                            placeholder="Nama instansi/lembaga"
-                                        />
-                                        {errors[`beneficiary_${index}_instansi`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`beneficiary_${index}_instansi`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`beneficiary_${index}_instansi`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`beneficiary-kontak-${index}`}>Nama Kontak Personil</Label>
-                                        <Input
-                                            id={`beneficiary-kontak-${index}`}
-                                            value={beneficiary.nama_kontak}
-                                            onChange={(e) => handleBeneficiaryChange(index, "nama_kontak", e.target.value)}
-                                            placeholder="Nama kontak personil"
-                                        />
-                                        {errors[`beneficiary_${index}_kontak`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`beneficiary_${index}_kontak`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`beneficiary_${index}_kontak`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`beneficiary-telepon-${index}`}>No Telepon</Label>
-                                        <Input
-                                            id={`beneficiary-telepon-${index}`}
-                                            value={beneficiary.telepon}
-                                            onChange={(e) => handleBeneficiaryChange(index, "telepon", e.target.value)}
-                                            placeholder="No telepon"
-                                        />
-                                        {errors[`beneficiary_${index}_telepon`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`beneficiary_${index}_telepon`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`beneficiary_${index}_telepon`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`beneficiary-email-${index}`}>Email</Label>
-                                        <Input
-                                            id={`beneficiary-email-${index}`}
-                                            type="email"
-                                            value={beneficiary.email}
-                                            onChange={(e) => handleBeneficiaryChange(index, "email", e.target.value)}
-                                            placeholder="Email"
-                                        />
-                                        {errors[`beneficiary_${index}_email`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`beneficiary_${index}_email`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`beneficiary_${index}_email`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2 md:col-span-2">
-                                        <Label htmlFor={`beneficiary-alamat-${index}`}>Alamat</Label>
-                                        <Textarea
-                                            id={`beneficiary-alamat-${index}`}
-                                            value={beneficiary.alamat}
-                                            onChange={(e) => handleBeneficiaryChange(index, "alamat", e.target.value)}
-                                            placeholder="Alamat lengkap"
-                                            rows={2}
-                                        />
-                                        {errors[`beneficiary_${index}_alamat`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`beneficiary_${index}_alamat`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`beneficiary_${index}_alamat`]}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                        <Button
-                            type="button"
-                            onClick={addBeneficiary}
-                            variant="outline"
-                            size="sm"
-                            className="text-[12px] text-[var(--green)]"
-                        >
-                            + Tambah Penerima Manfaat
-                        </Button>
-                    </div>
+                    <BeneficiarySection
+                        beneficiaries={beneficiaries}
+                        isEditing={true}
+                        onRemove={removeBeneficiary}
+                        allBeneficiaries={allBeneficiaries}
+                        showBeneficiaryDropdown={showBeneficiaryDropdown}
+                        setShowBeneficiaryDropdown={setShowBeneficiaryDropdown}
+                        beneficiarySearch={beneficiarySearch}
+                        onSearchChange={handleBeneficiarySearchChange}
+                        onSelect={handleSelectBeneficiary}
+                        onDropdownBlur={handleBeneficiaryDropdownBlur}
+                    />
 
                     {/* Karyawan Section */}
-                    <div className="space-y-4 mt-6 border-t pt-4">
-                        <Label htmlFor="deskripsi">Tambah Karyawan</Label>
-
-                        {newKegiatan.employee.map((karyawan, index) => (
-                            <div key={`karyawan-${index}`} className="p-4 border rounded-md space-y-3 relative">
-                                {newKegiatan.employee.length > 0 && (
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeKaryawan(index)}
-                                        variant="destructive"
-                                        size="icon"
-                                        className="absolute top-2 right-2 h-6 w-6"
-                                    >
-                                        <X size={14} />
-                                    </Button>
-                                )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`karyawan-nama-${index}`}>Nama</Label>
-                                        <Input
-                                            id={`karyawan-nama-${index}`}
-                                            value={karyawan.nama}
-                                            onChange={(e) => handleKaryawanChange(index, "nama", e.target.value)}
-                                            placeholder="Nama karyawan"
-                                        />
-                                        {errors[`employee_${index}_nama`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`employee_${index}_nama`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`employee_${index}_nama`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`karyawan-email-${index}`}>Email</Label>
-                                        <Input
-                                            id={`karyawan-email-${index}`}
-                                            type="email"
-                                            value={karyawan.email}
-                                            onChange={(e) => handleKaryawanChange(index, "email", e.target.value)}
-                                            placeholder="Email"
-                                        />
-                                        {errors[`employee_${index}_email`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`employee_${index}_email`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`employee_${index}_email`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`karyawan-telepon-${index}`}>No Telepon</Label>
-                                        <Input
-                                            id={`karyawan-telepon-${index}`}
-                                            value={karyawan.telepon}
-                                            onChange={(e) => handleKaryawanChange(index, "telepon", e.target.value)}
-                                            placeholder="No telepon"
-                                        />
-                                        {errors[`employee_${index}_telepon`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`employee_${index}_telepon`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`employee_${index}_telepon`]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2 md:col-span-2">
-                                        <Label htmlFor={`karyawan-alamat-${index}`}>Alamat</Label>
-                                        <Textarea
-                                            id={`karyawan-alamat-${index}`}
-                                            value={karyawan.alamat}
-                                            onChange={(e) => handleKaryawanChange(index, "alamat", e.target.value)}
-                                            placeholder="Alamat lengkap"
-                                            rows={2}
-                                        />
-                                        {errors[`employee_${index}_alamat`] && (
-                                            <p
-                                                ref={(el) => {
-                                                    errorRefs.current[`employee_${index}_alamat`] = el
-                                                }}
-                                                className="text-red-500 text-[12px]"
-                                            >
-                                                {errors[`employee_${index}_alamat`]}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                        <Button
-                            type="button"
-                            onClick={addKaryawan}
-                            variant="outline"
-                            size="sm"
-                            className="text-[12px] text-[var(--green)]"
-                        >
-                            + Tambah Karyawan
-                        </Button>
-                    </div>
+                    <EmployeeSection
+                        karyawan={karyawan}
+                        isEditing={true}
+                        onRemove={removeKaryawan}
+                        allKaryawan={allKaryawan}
+                        showKaryawanDropdown={showKaryawanDropdown}
+                        setShowKaryawanDropdown={setShowKaryawanDropdown}
+                        karyawanSearch={karyawanSearch}
+                        onSearchChange={handleKaryawanSearchChange}
+                        onSelect={handleSelectKaryawan}
+                        onDropdownBlur={handleKaryawanDropdownBlur}
+                    />
 
                     {/* Upload Documentation Section */}
                     <div className="space-y-4 mt-6 border-t pt-4">

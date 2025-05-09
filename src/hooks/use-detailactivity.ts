@@ -473,6 +473,8 @@ export default function useDetailActivity(id: string | undefined) {
         saving,
         error,
         isEditing,
+        setIsEditing,
+        fetchPrograms,
         editedKegiatan,
         dokumentasiList,
         programs,

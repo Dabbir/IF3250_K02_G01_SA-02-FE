@@ -37,7 +37,7 @@ export interface Kegiatan {
 export const STATUS_OPTIONS = ["Belum Mulai", "Berjalan", "Selesai"]
 
 export interface DetailedKegiatan {
-  id: string
+  id?: string
   nama_aktivitas: string
   program_id: string
   nama_program: string
