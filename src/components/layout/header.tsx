@@ -53,7 +53,7 @@ export default function Header() {
                         className="flex items-center gap-2 text-slate-600 hover:bg-gray-100"
                         onClick={handleLogout}
                     >
-                        <span className="text-sm">Keluar</span>
+                        <span className="text-text-xs md:text-sm hidden sm:inline">Keluar</span>
                         <LogOut className="h-4 w-4" />
                     </Button>
                 </div>

@@ -75,7 +75,7 @@ export default function DetailStakeholder() {
                         <Table className="border rounded-lg overflow-hidden mb-2">
                             <TableBody>
                                 <TableRow>
-                                    <TableHead>Nama Stakeholder</TableHead>
+                                    <TableHead>Nama Pemangku Kepentingan</TableHead>
                                     <TableCell>
                                         {isEditing ? (
                                             <>
@@ -96,7 +96,7 @@ export default function DetailStakeholder() {
                                 </TableRow>
 
                                 <TableRow>
-                                    <TableHead>Jenis Stakeholder</TableHead>
+                                    <TableHead>Jenis Pemangku Kepentingan</TableHead>
                                     <TableCell>
                                         {isEditing ? (
                                             <>

@@ -111,14 +111,14 @@ export default function StakeholderPage() {
 
                     <div className="flex items-center gap-2">
                         <Button className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto" onClick={() => setIsOpen(true)}>
-                            Tambah Stakeholder
+                            Tambah Pemangku Kepentingan
                         </Button>
                     </div>
                 </div>
 
                 {filteredStakeholders.length === 0 ? (
                     <div className="text-center py-8 border rounded-lg">
-                        <p className="text-gray-500">No stakeholder found</p>
+                        <p className="text-gray-500">Pemangku kepentingan tidak ditemukan</p>
                         {(jenisFilters.length > 0 || search) && (
                             <div className="mt-2">
                                 <Button variant="outline" size="sm" onClick={clearAllFilters}>
