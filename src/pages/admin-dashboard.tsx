@@ -26,7 +26,13 @@ interface User {
   foto_profil?: string;
   masjid_id?: string;
   nama_masjid?: string;
+  dokumen_pendaftaran?: string;
+  dokumen_file_id?: string;
+  dokumen_file_name?: string;
+  dokumen_file_type?: string;
+  dokumen_view_link?: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface Masjid {
@@ -701,6 +707,16 @@ export default function AdminDashboard() {
                                 >
                                   Detail
                                 </Button>
+                                {user.dokumen_view_link && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center text-purple-600"
+                                    onClick={() => window.open(user.dokumen_view_link, '_blank')}
+                                  >
+                                    Dokumen
+                                  </Button>
+                                )}
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
@@ -1053,6 +1069,38 @@ export default function AdminDashboard() {
                   <h4 className="font-medium text-gray-700">Alasan Bergabung</h4>
                   <p className="text-gray-600">{selectedUser.alasan_bergabung || "-"}</p>
                 </div>
+
+                {selectedUser.dokumen_file_name && (
+                  <div className="space-y-2 pt-4 border-t">
+                    <h4 className="font-medium text-gray-700">Dokumen Pendaftaran</h4>
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <p className="text-gray-600">{selectedUser.dokumen_file_name}</p>
+                        <p className="text-sm text-gray-500">{selectedUser.dokumen_file_type}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {selectedUser.dokumen_view_link && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(selectedUser.dokumen_view_link, '_blank')}
+                          >
+                            Lihat
+                          </Button>
+                        )}
+                        {selectedUser.dokumen_pendaftaran && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(selectedUser.dokumen_pendaftaran, '_blank')}
+                          >
+                            Download
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             

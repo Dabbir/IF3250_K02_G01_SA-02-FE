@@ -84,7 +84,21 @@ const RegisterDataDiri = () => {
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setSelectedFile(e.target.files[0]);
+            const file = e.target.files[0];
+            
+            if (file.type !== 'application/pdf') {
+                toast.error("Hanya file PDF yang diizinkan");
+                e.target.value = '';
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                toast.error("Ukuran file tidak boleh lebih dari 10MB");
+                e.target.value = '';
+                return;
+            }
+
+            setSelectedFile(file);
         }
     };
     
@@ -95,6 +109,17 @@ const RegisterDataDiri = () => {
         setSearchTerm("");
     };
     
+    interface UserDataUpdate {
+        masjid_id: number | null;
+        alasan_bergabung: string;
+        short_bio: string;
+        dokumen_pendaftaran?: string;
+        dokumen_file_id?: string;
+        dokumen_file_name?: string;
+        dokumen_file_type?: string;
+        dokumen_view_link?: string;
+    }
+
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
@@ -107,22 +132,55 @@ const RegisterDataDiri = () => {
             toast.error("Alasan bergabung harus lebih dari 8 karakter.");
             return;
         }
-
+    
         try {
-
             if (localStorage.getItem('token')) {
                 localStorage.removeItem('token');
                 console.log('Token lama berhasil dihapus dari localStorage');
             }
+    
+            let fileUploadData = null;
+    
+            if (selectedFile) {
+                const fileFormData = new FormData();
+                fileFormData.append('file', selectedFile);
+    
+                const uploadResponse = await fetch(`${API_URL}/api/files/upload`, {
+                    method: 'POST',
+                    body: fileFormData,
+                });
+    
+                if (!uploadResponse.ok) {
+                    throw new Error('Gagal mengupload file ke Google Drive');
+                }
+    
+                const uploadResult = await uploadResponse.json();
+                fileUploadData = uploadResult.file;
+                console.log('File uploaded:', fileUploadData);
+            }
+    
+            const userData: UserDataUpdate = {
+                masjid_id: masjidId,
+                alasan_bergabung: alasan_bergabung,
+                short_bio: short_bio,
+            };
+    
+            if (fileUploadData) {
+                userData.dokumen_pendaftaran = fileUploadData.webContentLink;
+                userData.dokumen_file_id = fileUploadData.id;
+                userData.dokumen_file_name = fileUploadData.name;
+                userData.dokumen_file_type = fileUploadData.mimeType;
+                userData.dokumen_view_link = fileUploadData.webViewLink;
+            }
+    
+            console.log('Updating user with data:', userData);
             
             const response = await fetch(`${API_URL}/api/users/${userId}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    masjid_id: masjidId,
-                    alasan_bergabung,
-                    short_bio
-                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
             });
     
             if (response.ok) {
