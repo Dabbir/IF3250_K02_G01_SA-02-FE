@@ -37,13 +37,12 @@ const INITIAL_FORM: TrainingForm = {
   lokasi: "",
   kuota: 20,
   status: "Upcoming",
-  masjid_id: 0 // Default, will be replaced with user's masjid_id
+  masjid_id: 0 
 };
 
 const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess, masjidNameParam, masjidId }) => {
   const [formData, setFormData] = useState<TrainingForm>({...INITIAL_FORM, masjid_id: masjidId});
   const [loading, setLoading] = useState(false);
-  const [masjidOptions, setMasjidOptions] = useState<{id: number, nama_masjid: string}[]>([]);
   const API_URL = import.meta.env.VITE_HOST_NAME;
 
   useEffect(() => {
@@ -54,28 +53,6 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
       });
     }
   }, [isOpen, masjidId]);
-
-  const fetchMasjidOptions = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const response = await fetch(`${API_URL}/api/masjid`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setMasjidOptions(data.data);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching masjid options:", error);
-    }
-  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -135,7 +112,6 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
         throw new Error("Authentication token not found");
       }
 
-      // Format dates to MySQL format (YYYY-MM-DD HH:MM:SS)
       const formattedData = {
         ...formData,
         waktu_mulai: new Date(formData.waktu_mulai).toISOString().replace('T', ' ').slice(0, 19),

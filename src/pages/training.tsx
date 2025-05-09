@@ -13,7 +13,6 @@ import AddTraining from "@/components/training/addTraining";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import TrainingStatusFilter from "@/components/training/trainingStatusFilter";
 import { Training } from "@/lib/training";
 
 interface userData {
@@ -21,13 +20,12 @@ interface userData {
   masjid_id: number;
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 6;
 const API_URL = import.meta.env.VITE_HOST_NAME;
 const STATUS_OPTIONS = ["Upcoming", "Ongoing", "Completed", "Cancelled"];
 
 export default function TrainingPage() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +51,7 @@ export default function TrainingPage() {
 
   useEffect(() => {
     fetchTrainings();
-  }, [currentPage, search, status, statusFilters]);
+  }, [currentPage, search, statusFilters]);
 
   useEffect(() => {
     if (user.masjid_id) {
@@ -190,11 +188,6 @@ export default function TrainingPage() {
     };
   }, []);
 
-  const handleStatusChange = (newStatus: string) => {
-    setStatus(newStatus);
-    setCurrentPage(1); 
-  };
-
   const handleDeleteTraining = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
@@ -218,11 +211,9 @@ export default function TrainingPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Remove the deleted training from the state
         setTrainings((prevTrainings) => prevTrainings.filter(training => training.id !== id));
         toast.success("Pelatihan berhasil dihapus");
         
-        // If this was the last item on the page and not the first page, go back one page
         if (trainings.length === 1 && currentPage > 1) {
           setCurrentPage(prev => prev - 1);
         }
@@ -254,14 +245,14 @@ export default function TrainingPage() {
 
       // Set column widths
       const columnWidths = [
-        { wch: 30 }, // Name
-        { wch: 40 }, // Description
-        { wch: 25 }, // Location
-        { wch: 22 }, // Start time
-        { wch: 22 }, // End time
-        { wch: 10 }, // Quota
-        { wch: 15 }, // Status
-        { wch: 25 }, // Mosque
+        { wch: 30 },
+        { wch: 40 }, 
+        { wch: 25 }, 
+        { wch: 22 },
+        { wch: 22 }, 
+        { wch: 10 }, 
+        { wch: 15 }, 
+        { wch: 25 }, 
       ];
       worksheet['!cols'] = columnWidths;
 
@@ -334,24 +325,33 @@ export default function TrainingPage() {
 
   const getStatusBadge = (status: string) => {
     let color = "";
+    let text = "";
   
     switch (status) {
       case "Upcoming":
         color = "bg-blue-100 text-blue-800 border border-blue-300";
+        text = "Akan Datang";
         break;
       case "Ongoing":
         color = "bg-green-100 text-green-800 border border-green-300";
+        text = "Sedang Berlangsung";
         break;
       case "Completed":
         color = "bg-purple-100 text-purple-800 border border-purple-300";
+        text = "Selesai";
+        break;
+      case "Cancelled":
+        color = "bg-red-100 text-red-800 border border-red-300";
+        text = "Dibatalkan";
         break;
       default:
         color = "bg-gray-100 text-gray-800 border border-gray-300";
+        text = status;
     }
   
     return (
-      <Badge className={`px-3 py-1 text-xs font-medium rounded-md min-w-[90px] text-center ${color}`}>
-        {status}
+      <Badge className={`px-3 py-1 text-xs font-medium rounded-md min-w-[140px] text-center ${color}`}>
+        {text}
       </Badge>
     );
   };
@@ -464,11 +464,6 @@ export default function TrainingPage() {
                 </div>
               </PopoverContent>
             </Popover>
-
-          {/* <TrainingStatusFilter 
-            status={status} 
-            onChange={handleStatusChange}
-          /> */}
 
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <Button
