@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Leaf, Search, Download, Loader2 } from "lucide-react"
+import { Leaf, Search, Loader2 } from "lucide-react"
 
 // Components
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,6 @@ import ActivityTable from "@/components/activity/activitytable"
 // Hooks and Utils
 import useResponsive from "@/hooks/use-responsive"
 import useActivity from "@/hooks/use-activity"
-import { exportActivitiesToXlsx } from "@/utils/exportactivity"
 
 export default function KegiatanPage() {
   // State and Hooks
@@ -91,15 +90,6 @@ export default function KegiatanPage() {
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-2">
-            {/* Export Button */}
-            <Button
-              className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center gap-1"
-              onClick={() => exportActivitiesToXlsx(activities)}
-            >
-              <Download className="h-4 w-4" />
-              Unduh Kegiatan
-            </Button>
-
             {/* Add Kegiatan Button */}
             <Button
               className="bg-[#3A786D] text-[14px] text-white w-full md:w-auto flex items-center justify-center"

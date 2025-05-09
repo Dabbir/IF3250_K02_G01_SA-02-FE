@@ -33,6 +33,9 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         stakeholders,
         beneficiaries,
         karyawan,
+        setStakeholders,
+        setBeneficiaries,
+        setKaryawan,
         removeStakeholder,
         removeBeneficiary,
         removeKaryawan,
@@ -71,9 +74,6 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
         tanggal_selesai: "",
         status: "Belum Mulai",
         biaya_implementasi: 0,
-        stakeholders: [],
-        penerima_manfaat: [],
-        karyawan: [],
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -186,7 +186,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
     }
 
     const handleSubmit = async () => {
-        if (!validateForm) return;
+        if (!validateForm()) return;
 
         setIsSaving(true);
         try {
@@ -255,6 +255,9 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                 penerima_manfaat: [],
                 karyawan: [],
             })
+            setStakeholders([])
+            setBeneficiaries([])
+            setKaryawan([])
             setErrors({})
             setImages([])
             setShowDropdown(false)

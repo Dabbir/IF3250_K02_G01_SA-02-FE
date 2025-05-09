@@ -59,7 +59,7 @@ export default function LaporanAktivitas() {
           throw new Error("Authentication token not found");
         }
 
-        const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
+        const response = await fetch(`${API_URL}/api/activity/getreport/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -74,7 +74,7 @@ export default function LaporanAktivitas() {
         const data = await response.json();
 
         if (data.success) {
-          setActivities(data.activity.data || []);
+          setActivities(data.activity || []);
         } else {
           throw new Error(data.message || "Failed to fetch activities");
         }
