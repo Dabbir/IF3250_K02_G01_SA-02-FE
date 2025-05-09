@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, MapPin, Users, Search, Loader2, BookOpen, GraduationCap, ChevronDown } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Search, Loader2, BookOpen, GraduationCap, ChevronDown, History} from "lucide-react";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/ui/badge";
 import { Training, TrainingAvailability } from "@/lib/training";
@@ -64,6 +64,10 @@ export default function PublicTrainingPage() {
 
       if (!token) {
         throw new Error("Authentication token not found");
+      }
+
+      if (search && currentPage != 1) {
+        setCurrentPage(1);
       }
 
       const response = await fetch(
@@ -237,7 +241,7 @@ export default function PublicTrainingPage() {
       </CardHeader>
       <CardContent>
         <div className="mb-6">
-          <div className="relative w-full md:w-2/3 mb-6">
+          <div className="relative flex mb-6 w-full justify-between gap-8">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
             <Input
               type="text"
@@ -246,6 +250,14 @@ export default function PublicTrainingPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
             />
+
+            <Button
+              className="bg-[#3A786D] text-white"
+              onClick={() => navigate("/riwayat-pendaftaran")}
+            >
+              <History className="h-4 w-4" />
+              <span className="hidden md:inline">Riwayat Pendaftaran</span>
+            </Button>
           </div>
 
           {trainings.length === 0 ? (
