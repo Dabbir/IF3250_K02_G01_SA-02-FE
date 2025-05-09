@@ -88,7 +88,8 @@ const RegisterTrainingDialog: React.FC<RegisterTrainingDialogProps> = ({
           <div className="bg-blue-50 p-3 rounded-md">
             <h4 className="text-sm font-medium text-blue-800">Informasi Pelatihan</h4>
             <ul className="mt-2 space-y-1 text-sm text-blue-700">
-              <li>Waktu: {formatDateTimeToWIB(new Date(training.waktu_mulai))}</li>
+              <li>Waktu Mulai: {formatDateTimeToWIB(new Date(training.waktu_mulai))}</li>
+              <li>Waktu Akhir: {formatDateTimeToWIB(new Date(training.waktu_akhir))}</li>
               <li>Lokasi: {training.lokasi}</li>
               <li>Kuota tersedia: {availability.available_slots} dari {availability.total_kuota}</li>
             </ul>

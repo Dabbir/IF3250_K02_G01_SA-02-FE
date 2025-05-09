@@ -25,6 +25,8 @@ interface AddTrainingProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onSuccess: () => void;
+  masjidNameParam: string;
+  masjidId: number;
 }
 
 const INITIAL_FORM: TrainingForm = {
@@ -35,33 +37,23 @@ const INITIAL_FORM: TrainingForm = {
   lokasi: "",
   kuota: 20,
   status: "Upcoming",
-  masjid_id: 1 // Default, will be replaced with user's masjid_id
+  masjid_id: 0 // Default, will be replaced with user's masjid_id
 };
 
-const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess }) => {
-  const [formData, setFormData] = useState<TrainingForm>(INITIAL_FORM);
+const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess, masjidNameParam, masjidId }) => {
+  const [formData, setFormData] = useState<TrainingForm>({...INITIAL_FORM, masjid_id: masjidId});
   const [loading, setLoading] = useState(false);
   const [masjidOptions, setMasjidOptions] = useState<{id: number, nama_masjid: string}[]>([]);
   const API_URL = import.meta.env.VITE_HOST_NAME;
 
   useEffect(() => {
-    // Reset form when dialog opens
     if (isOpen) {
-      setFormData(INITIAL_FORM);
-      
-      // If the user is associated with a masjid, set it as default
-      const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
-      if (userInfo && userInfo.masjid_id) {
-        setFormData(prev => ({
-          ...prev,
-          masjid_id: userInfo.masjid_id
-        }));
-      }
-      
-      // Load masjid options
-      fetchMasjidOptions();
+      setFormData({
+        ...INITIAL_FORM,
+        masjid_id: masjidId
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, masjidId]);
 
   const fetchMasjidOptions = async () => {
     try {
@@ -98,7 +90,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "masjid_id" ? parseInt(value) : value,
+      [name]: value,
     }));
   };
 
@@ -147,7 +139,8 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess 
       const formattedData = {
         ...formData,
         waktu_mulai: new Date(formData.waktu_mulai).toISOString().replace('T', ' ').slice(0, 19),
-        waktu_akhir: new Date(formData.waktu_akhir).toISOString().replace('T', ' ').slice(0, 19)
+        waktu_akhir: new Date(formData.waktu_akhir).toISOString().replace('T', ' ').slice(0, 19),
+        masjid_id: masjidId 
       };
 
       const response = await fetch(`${API_URL}/api/trainings`, {
@@ -178,7 +171,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tambah Pelatihan Baru</DialogTitle>
           <DialogDescription>
@@ -286,21 +279,9 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess 
 
             <div className="grid gap-2">
               <Label htmlFor="masjid_id">Masjid <span className="text-red-500">*</span></Label>
-              <Select 
-                value={formData.masjid_id.toString()} 
-                onValueChange={(value) => handleSelectChange("masjid_id", value)}
-              >
-                <SelectTrigger id="masjid_id">
-                  <SelectValue placeholder="Pilih masjid" />
-                </SelectTrigger>
-                <SelectContent>
-                  {masjidOptions.map((masjid) => (
-                    <SelectItem key={masjid.id} value={masjid.id.toString()}>
-                      {masjid.nama_masjid}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="p-3 border rounded-md bg-gray-50">
+                <p className='text-sm text-gray-700'>{masjidNameParam || "Loading masjid information..."}</p>
+              </div>
             </div>
           </div>
 

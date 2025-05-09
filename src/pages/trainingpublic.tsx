@@ -286,17 +286,36 @@ export default function PublicTrainingPage() {
                       <div className="flex items-start">
                         <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
                         <div>
-                          <div className="font-medium text-gray-700">Waktu</div>
+                          <div className="font-medium text-gray-700">Waktu Mulai</div>
                           <div className="text-gray-600">{formatDateTimeToWIB(new Date(training.waktu_mulai))}</div>
                         </div>
                       </div>
-                      
+                   
+                      <div className="flex items-start">
+                        <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
+                        <div>
+                          <div className="font-medium text-gray-700">Waktu Akhir</div>
+                          <div className="text-gray-600">{formatDateTimeToWIB(new Date(training.waktu_akhir))}</div>
+                        </div>
+                      </div>
+
                       <div className="flex items-start">
                         <Clock className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
                         <div>
                           <div className="font-medium text-gray-700">Durasi</div>
                           <div className="text-gray-600">
-                            {Math.round((new Date(training.waktu_akhir).getTime() - new Date(training.waktu_mulai).getTime()) / (1000 * 60 * 60))} jam
+                            {(() => {
+                              const start = new Date(training.waktu_mulai).getTime();
+                              const end = new Date(training.waktu_akhir).getTime();
+                              const durationInHours = (end - start) / (1000 * 60 * 60);
+
+                              if (durationInHours < 24) {
+                                return `${Math.round(durationInHours)} jam`;
+                              } else {
+                                const durationInDays = durationInHours / 24;
+                                return `${Math.round(durationInDays)} hari`;
+                              }
+                            })()}
                           </div>
                         </div>
                       </div>

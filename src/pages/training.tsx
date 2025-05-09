@@ -12,6 +12,11 @@ import AddTraining from "@/components/training/addTraining";
 import TrainingStatusFilter from "@/components/training/trainingStatusFilter";
 import { Training } from "@/lib/training";
 
+interface userData {
+  id: number;
+  masjid_id: number;
+}
+
 const ITEMS_PER_PAGE = 10;
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -29,51 +34,111 @@ export default function TrainingPage() {
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
+  const [masjidName, setMasjidName] = useState("");
+  const [user, setUser] = useState<userData>({
+    id: 0,
+    masjid_id: 0,
+  });
 
   useEffect(() => {
-    const fetchTrainings = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
+    fetchUser();
+  }, []);
 
-        if (!token) {
-          throw new Error("Authentication token not found");
-        }
-
-        const response = await fetch(
-          `${API_URL}/api/trainings?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${search}&status=${status}&trainingRegistration=false`, 
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch trainings: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-          setTrainings(data.data || []);
-          setTotalPages(data.pagination?.totalPages || 1);
-          setTotalItems(data.pagination?.total || 0);
-        } else {
-          throw new Error(data.message || "Failed to fetch trainings");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        toast.error("Pelatihan gagal dimuat!");
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchTrainings();
   }, [currentPage, search, status]);
+
+  useEffect(() => {
+    if (user.masjid_id) {
+      fetchMasjidDetails();
+    }
+  }, [user.masjid_id]);
+
+  const fetchUser = async () => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/api/users`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Gagal memuat data pengguna");
+        }
+
+        const { id, masjid_id } = data.user;
+        setUser({ id, masjid_id });
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast.error("Gagal memuat data pengguna");
+    }
+  };
+
+  const fetchMasjidDetails = async () => {
+    try {
+        const token = localStorage.getItem("token");
+        const masjidResponse = await fetch(`${API_URL}/api/masjid/${user.masjid_id}`, {
+            headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            },
+        });
+      
+        if (masjidResponse.ok) {
+            const masjidData = await masjidResponse.json();
+            if (masjidData.success && masjidData.data) {
+            setMasjidName(masjidData.data.nama_masjid);
+            }
+        }
+    } catch (error) {
+      console.error("Error fetching masjid details:", error);
+    }
+  };
+
+  const fetchTrainings = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/trainings?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${search}&status=${status}&trainingRegistration=false`, 
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch trainings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setTrainings(data.data || []);
+        setTotalPages(data.pagination?.totalPages || 1);
+        setTotalItems(data.pagination?.total || 0);
+      } else {
+        throw new Error(data.message || "Failed to fetch trainings");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      toast.error("Pelatihan gagal dimuat!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -211,7 +276,7 @@ export default function TrainingPage() {
     }
   };
 
-  if (loading) {
+  if (loading && trainings.length === 0) {
     return (
       <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
         <CardContent className="flex justify-center items-center h-[400px]">
@@ -221,7 +286,7 @@ export default function TrainingPage() {
     );
   }
 
-  if (error) {
+  if (error && trainings.length === 0) {
     return (
       <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
         <CardContent className="flex justify-center items-center h-[400px]">
@@ -339,6 +404,8 @@ export default function TrainingPage() {
           isOpen={isAddDialogOpen} 
           setIsOpen={setIsAddDialogOpen} 
           onSuccess={refreshData}
+          masjidNameParam={masjidName || ""}
+          masjidId={user.masjid_id || 0}
         />
       </CardContent>
     </Card>
