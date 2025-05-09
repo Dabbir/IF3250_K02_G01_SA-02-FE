@@ -161,7 +161,7 @@ const MyRegistrationsTable = () => {
                   <TableHead className="w-[20%]">Penyelenggara</TableHead>
                   <TableHead className="w-[20%]">Tanggal Daftar</TableHead>
                   <TableHead className="w-[20%]">Tanggal Mulai</TableHead>
-                  <TableHead className="w-[15%] text-center">Status</TableHead>
+                  <TableHead className="w-[15%]">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,7 +179,7 @@ const MyRegistrationsTable = () => {
                     <TableCell className="hidden md:table-cell">{registration.nama_masjid}</TableCell>
                     <TableCell>{registration.created_at ? formatDate(new Date(registration.created_at)) : "-"}</TableCell>
                     <TableCell>{registration.waktu_mulai ? formatDate(new Date(registration.waktu_mulai)) : "-"}</TableCell>
-                    <TableCell className="text-center">{getStatusBadge(registration.status_pendaftaran)}</TableCell>
+                    <TableCell>{getStatusBadge(registration.status_pendaftaran)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
