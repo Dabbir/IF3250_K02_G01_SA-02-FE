@@ -31,7 +31,6 @@ const RegisterDataDiri = () => {
     const location = useLocation();
     const userId = location.state?.userId;
 
-    // Fetch masjid data when component mounts
     useEffect(() => {
         const fetchMasjids = async () => {
             try {
@@ -197,68 +196,71 @@ const RegisterDataDiri = () => {
 
     return (
         <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-white min-h-screen">
-            {/* Left Side - Form (Full width on mobile, half on desktop) */}
-            <div className="w-full md:w-1/2 z-10 flex flex-col justify-start p-4 md:p-8 lg:p-12 order-2 md:order-1 overflow-y-auto no-scrollbar">
+            <div className="w-full md:w-1/2 z-10 flex flex-col justify-start p-4 md:p-8 lg:p-12 order-2 md:order-1 overflow-y-auto no-scrollbar bg-gradient-to-br from-white to-gray-50">
                 <div className="max-w-[430px] w-full mx-auto md:mx-0 md:ml-auto md:mr-12 lg:mr-24">
-                    <h1 className="text-3xl md:text-4xl lg:text-[48px] font-semibold font-cooper text-[#3A786D] tracking-[-1px] mb-4 md:mb-8">Data Diri</h1>
+                    <h1 className="text-3xl md:text-4xl lg:text-[48px] font-semibold font-cooper text-[#3A786D] tracking-[-1px] mb-4 md:mb-8 animate-[fade-in-up_0.6s_ease-out_forwards]">
+                        Data Diri
+                    </h1>
                     
-                    <form onSubmit={handleRegister} className="w-full">
+                    <form onSubmit={handleRegister} className="w-full animate-[fade-in-up_0.6s_ease-out_forwards_200ms]">
                         <div className="mb-4">
-                            <label className="block text-sm font-cooper mb-2">Asal Masjid</label>
+                            <label className="block text-sm font-cooper mb-2 text-gray-700">Asal Masjid</label>
                             <div className="relative" ref={dropdownRef}>
                                 <div 
-                                    className="flex items-center justify-between font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                                    className="flex items-center justify-between font-cooper w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 cursor-pointer"
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 >
                                     <span className={nama_masjid ? "text-black" : "text-gray-400"}>
                                         {nama_masjid || "Pilih Masjid"}
                                     </span>
-                                    {isDropdownOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    {isDropdownOpen ? <ChevronUp size={20} className="text-gray-500" /> : <ChevronDown size={20} className="text-gray-500" />}
                                 </div>
                                 
                                 {isDropdownOpen && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
                                         <div className="p-2 sticky top-0 bg-white border-b">
                                             <div className="relative">
                                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                                                 <input
                                                     type="text"
                                                     placeholder="Cari masjid..."
-                                                    className="w-full p-2 pl-9 border border-gray-300 rounded-md"
+                                                    className="w-full p-2 pl-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                 />
                                             </div>
                                         </div>
                                         
-                                        {isLoading ? (
-                                            <div className="p-4 text-center text-gray-500">Memuat data masjid...</div>
-                                        ) : filteredMasjidList.length === 0 ? (
-                                            <div className="p-4 text-center text-gray-500">Tidak ada masjid yang ditemukan</div>
-                                        ) : (
-                                            filteredMasjidList.map((masjid) => (
-                                                <div
-                                                    key={masjid.id}
-                                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                                    onClick={() => handleMasjidSelect(masjid)}
-                                                >
-                                                    <div className="font-medium">{masjid.nama_masjid}</div>
-                                                    {masjid.alamat && (
-                                                        <div className="text-sm text-gray-500">{masjid.alamat}</div>
-                                                    )}
-                                                </div>
-                                            ))
-                                        )}
+                                        <div className="overflow-y-auto max-h-52">
+                                            {isLoading ? (
+                                                <div className="p-4 text-center text-gray-500">Memuat data masjid...</div>
+                                            ) : filteredMasjidList.length === 0 ? (
+                                                <div className="p-4 text-center text-gray-500">Tidak ada masjid yang ditemukan</div>
+                                            ) : (
+                                                filteredMasjidList.map((masjid) => (
+                                                    <div
+                                                        key={masjid.id}
+                                                        className="px-4 py-3 hover:bg-teal-50 cursor-pointer transition-colors"
+                                                        onClick={() => handleMasjidSelect(masjid)}
+                                                    >
+                                                        <div className="font-medium text-gray-900">{masjid.nama_masjid}</div>
+                                                        {masjid.alamat && (
+                                                            <div className="text-sm text-gray-500">{masjid.alamat}</div>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         </div>
                         
                         <div className="mb-4">
-                            <label className="block text-sm font-cooper mb-2">Alasan Bergabung</label>
+                            <label className="block text-sm font-cooper mb-2 text-gray-700">Alasan Bergabung</label>
                             <textarea 
                                 placeholder="Masukkan alasan bergabung" 
-                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none h-24"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 resize-none h-24"
                                 value={alasan_bergabung}
                                 onChange={(e) => setAlasanBergabung(e.target.value)}
                                 required
@@ -267,10 +269,10 @@ const RegisterDataDiri = () => {
                         </div>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-cooper mb-2">Bio</label>
+                            <label className="block text-sm font-cooper mb-2 text-gray-700">Bio</label>
                             <textarea 
                                 placeholder="Masukkan bio Anda" 
-                                className="font-cooper w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none h-24"
+                                className="font-cooper w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 resize-none h-24"
                                 value={short_bio}
                                 onChange={(e) => setBio(e.target.value)}
                                 required
@@ -278,13 +280,13 @@ const RegisterDataDiri = () => {
                         </div>
 
                         <div className="mb-6">
-                            <label className="block text-sm font-cooper">Unggah Bukti Keanggotaan</label>
+                            <label className="block text-sm font-cooper text-gray-700">Unggah Bukti Keanggotaan</label>
                             <p className='text-sm text-[#9E9E9E] py-2 font-cooper'>Lampirkan bukti keanggotaan dengan mengunggah surat keterangan aktif DKM terkait atau bukti keanggotaan lainnya</p>
                             <div 
-                                className="flex flex-col py-4 items-center justify-center w-full border gap-3 border-gray-300 rounded p-3 hover:bg-gray-100 cursor-pointer transition-colors"
+                                className="flex flex-col py-6 items-center justify-center w-full border-2 border-dashed gap-3 border-gray-300 rounded-lg p-3 hover:bg-teal-50 hover:border-teal-300 cursor-pointer transition-all duration-200 group"
                                 onClick={() => document.getElementById('file-upload')?.click()}
                             >
-                                <FileText className="text-[#9E9E9E] w-10 h-10 md:w-14 md:h-14" />
+                                <FileText className="text-[#9E9E9E] w-10 h-10 md:w-14 md:h-14 group-hover:text-teal-600 transition-colors" />
                                 <input
                                     type="file"
                                     className="hidden"
@@ -292,15 +294,18 @@ const RegisterDataDiri = () => {
                                     accept=".pdf"
                                     onChange={handleFileChange}
                                 />
-                                <label htmlFor="file-upload" className="cursor-pointer text-[#9E9E9E] text-center">
-                                    {selectedFile ? selectedFile.name : "Dokumen PDF (maksimal 10 MB)"}
+                                <label htmlFor="file-upload" className="cursor-pointer text-[#9E9E9E] text-center group-hover:text-teal-600 transition-colors">
+                                    {selectedFile ? 
+                                        <span className="text-teal-600 font-medium">{selectedFile.name}</span> : 
+                                        "Dokumen PDF (maksimal 10 MB)"
+                                    }
                                 </label>
                             </div>
                         </div>
                         
                         <Button 
                             type="submit"
-                            className="w-full bg-teal-700 hover:bg-teal-800 text-[#FBFAF8] py-2 rounded-md transition-colors h-10 mb-8 md:mb-0"
+                            className="w-full text-white py-3 rounded-lg transition-all duration-300 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 transform hover:scale-[1.02] hover:shadow-lg h-11 mb-8 md:mb-0"
                         >
                             Daftar
                         </Button>
@@ -308,11 +313,9 @@ const RegisterDataDiri = () => {
                 </div>
             </div>
             
-            {/* Right Side - Image (Hidden on small screens, shown on md and up) */}
             <div className="relative w-full md:w-1/2 h-40 md:h-full order-1 md:order-2 overflow-hidden">
-                {/* Skewed edge - Hidden on mobile */}
                 <div 
-                    className="absolute top-0 bottom-0 left-0 w-24 bg-white hidden md:block"
+                    className="absolute top-0 bottom-0 left-0 w-24 bg-white hidden md:block shadow-2xl"
                     style={{
                         transform: 'skewX(-6deg) translateX(-50%)',
                         zIndex: 5,
@@ -320,10 +323,25 @@ const RegisterDataDiri = () => {
                     }}
                 ></div>
                 
-                <div className="h-full w-full bg-[#E7DECD] flex flex-col items-center justify-center pt-4 md:pt-12 px-4 md:px-8">
-                    <img src="/logo-green.svg" className="w-40 md:w-70" alt="Logo" />
-                    <div className="py-2 md:py-8 hidden md:block">
-                        <img src={DashboardDisplay} alt="Dashboard Preview" className="max-w-full" />
+                <div className="h-full w-full bg-gradient-to-br from-[#E7DECD] via-[#F0E6D9] to-[#D8CCBA] flex flex-col items-center justify-center pt-4 md:pt-12 px-4 md:px-8 relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-10">
+                        <div className="absolute top-0 left-0 w-96 h-96 bg-teal-600 rounded-full mix-blend-multiply filter blur-3xl animate-[blob_10s_infinite]"></div>
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-600 rounded-full mix-blend-multiply filter blur-3xl animate-[blob_10s_infinite_2s]"></div>
+                        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-orange-600 rounded-full mix-blend-multiply filter blur-3xl animate-[blob_10s_infinite_4s]"></div>
+                    </div>
+
+                    <img 
+                        src="/logo-green.svg" 
+                        className="w-40 md:w-70 animate-[scale-in_0.6s_ease-out_forwards] drop-shadow-2xl" 
+                        alt="Logo"
+                    />
+                    
+                    <div className="py-2 md:py-8 hidden md:block animate-[fade-in-up_0.6s_ease-out_forwards_600ms]">
+                        <img 
+                            src={DashboardDisplay} 
+                            alt="Dashboard Preview" 
+                            className="max-w-full drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
+                        />
                     </div>
                 </div>
             </div>
