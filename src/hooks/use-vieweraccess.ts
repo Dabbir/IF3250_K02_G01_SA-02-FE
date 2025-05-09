@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Masjid } from "@/types/masjid"
 import type { ViewerRequest, CurrentAction } from "@/types/viewer"
-import * as AccessService from "@/services/access-service"
+import type { Masjid } from "@/types/masjid"
+import { toast } from "sonner"
 
+const API_URL = import.meta.env.VITE_HOST_NAME
 const ITEMS_PER_PAGE = 10
 
-export const useViewerAccess = () => {
+export default function useViewerAccess() {
   const [search, setSearch] = useState("")
   const [currentTab, setCurrentTab] = useState("available-masjids")
   const [currentPage, setCurrentPage] = useState(1)
@@ -22,10 +23,42 @@ export const useViewerAccess = () => {
   const [userMasjidId, setUserMasjidId] = useState<string | null>(null)
 
   useEffect(() => {
+    const getUserMasjidId = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) return null
+
+        const response = await fetch(`${API_URL}/api/users/`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user data: ${response.status}`)
+        }
+
+        const userData = await response.json()
+        if (userData.success && userData.user) {
+          setUserMasjidId(userData.user.masjid_id)
+          return userData.user.masjid_id
+        } else if (userData.user.id) {
+          setUserMasjidId(userData.user.masjid_id)
+          return userData.user.masjid_id
+        }
+
+        return null
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+        return null
+      }
+    }
+
     const initializeData = async () => {
-      const masjidId = await AccessService.getUserMasjidId()
+      const masjidId = await getUserMasjidId()
       if (masjidId) {
-        setUserMasjidId(masjidId)
         fetchData(masjidId)
       }
     }
@@ -44,67 +77,299 @@ export const useViewerAccess = () => {
       ])
     } catch (error) {
       console.error("Error fetching data:", error)
+      toast.error("Gagal memuat data")
     } finally {
       setIsLoading(false)
     }
   }
 
   const fetchAvailableMasjids = async () => {
-    const data = await AccessService.fetchAvailableMasjids()
-    setAvailableMasjids(data)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`${API_URL}/api/masjid`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch available masjids: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success && Array.isArray(result.data)) {
+        setAvailableMasjids(result.data)
+      } else {
+        console.warn("Format data tidak sesuai:", result)
+        setAvailableMasjids([])
+      }
+    } catch (error) {
+      console.error("Error fetching available masjids:", error)
+      setAvailableMasjids([])
+    }
   }
 
   const fetchAccessibleMasjids = async () => {
-    const data = await AccessService.fetchAccessibleMasjids()
-    setAccessibleMasjids(data)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`${API_URL}/api/access/masjids`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch accessible masjids: ${response.status}`)
+      }
+
+      const data = await response.json()
+      if (data.success && Array.isArray(data.data)) {
+        setAccessibleMasjids(data.data)
+      } else {
+        console.warn("Format data tidak sesuai:", data)
+        setAccessibleMasjids([])
+      }
+    } catch (error) {
+      console.error("Error fetching accessible masjids:", error)
+      setAccessibleMasjids([])
+    }
   }
 
   const fetchPendingViewerRequests = async (masjidId: string) => {
-    const data = await AccessService.fetchPendingViewerRequests(masjidId)
-    setPendingViewerRequests(data)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`${API_URL}/api/access/viewers/pending/masjid/${masjidId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch pending viewer requests: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success && Array.isArray(data.data)) {
+        setPendingViewerRequests(data.data)
+      } else {
+        console.warn("Format data tidak sesuai:", data)
+        setPendingViewerRequests([])
+      }
+    } catch (error) {
+      console.error("Error fetching pending viewer requests:", error)
+      setPendingViewerRequests([])
+    }
   }
 
   const fetchApprovedViewers = async (masjidId: string) => {
-    const data = await AccessService.fetchApprovedViewers(masjidId)
-    setApprovedViewers(data)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`${API_URL}/api/access/viewers/masjid/${masjidId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch approved viewers: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success && Array.isArray(data.data)) {
+        setApprovedViewers(data.data)
+      } else {
+        console.warn("Format data tidak sesuai:", data)
+        setApprovedViewers([])
+      }
+    } catch (error) {
+      console.error("Error fetching approved viewers:", error)
+      setApprovedViewers([])
+    }
+  }
+
+  const requestViewerAccess = async (masjidId: string) => {
+    try {
+      setIsLoading(true)
+      const token = localStorage.getItem("token")
+
+      const response = await fetch(`${API_URL}/api/access/viewers/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ masjidId }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to request viewer access: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success("Permintaan akses berhasil dikirim")
+        await fetchAccessibleMasjids()
+        return true
+      } else {
+        throw new Error(data.message || "Gagal mengirim permintaan akses")
+      }
+    } catch (error) {
+      console.error("Error requesting viewer access:", error)
+      toast.error(error instanceof Error ? error.message : "Gagal mengirim permintaan akses")
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const approveViewerRequest = async (requestId: string) => {
+    try {
+      setIsLoading(true)
+      const token = localStorage.getItem("token")
+
+      const response = await fetch(`${API_URL}/api/access/viewers/${requestId}/approve`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ masjidId: userMasjidId }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to approve viewer request: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success("Permintaan akses viewer berhasil disetujui")
+
+        if (userMasjidId) {
+          await Promise.all([fetchPendingViewerRequests(userMasjidId), fetchApprovedViewers(userMasjidId)])
+        }
+        return true
+      } else {
+        throw new Error(data.message || "Gagal menyetujui permintaan akses")
+      }
+    } catch (error) {
+      console.error("Error approving viewer request:", error)
+      toast.error(error instanceof Error ? error.message : "Gagal menyetujui permintaan akses")
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const rejectViewerRequest = async (requestId: string) => {
+    try {
+      setIsLoading(true)
+      const token = localStorage.getItem("token")
+
+      const response = await fetch(`${API_URL}/api/access/viewers/${requestId}/reject`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ masjidId: userMasjidId }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to reject viewer request: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success("Permintaan akses viewer berhasil ditolak")
+
+        if (userMasjidId) {
+          await fetchPendingViewerRequests(userMasjidId)
+        }
+        return true
+      } else {
+        throw new Error(data.message || "Gagal menolak permintaan akses")
+      }
+    } catch (error) {
+      console.error("Error rejecting viewer request:", error)
+      toast.error(error instanceof Error ? error.message : "Gagal menolak permintaan akses")
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const removeViewerAccess = async (requestId: string) => {
+    try {
+      setIsLoading(true)
+      const token = localStorage.getItem("token")
+
+      const response = await fetch(`${API_URL}/api/access/viewers/${requestId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ masjidId: userMasjidId }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to remove viewer access: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success("Akses viewer berhasil dihapus")
+
+        if (userMasjidId) {
+          await fetchApprovedViewers(userMasjidId)
+        }
+        return true
+      } else {
+        throw new Error(data.message || "Gagal menghapus akses viewer")
+      }
+    } catch (error) {
+      console.error("Error removing viewer access:", error)
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus akses viewer")
+      return false
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleAction = async () => {
     if (!currentAction) return
-    setIsLoading(true)
 
-    try {
-      switch (currentAction.type) {
-        case "request":
-          const requestSuccess = await AccessService.requestViewerAccess(currentAction.itemId)
-          if (requestSuccess) {
-            await fetchAccessibleMasjids()
-          }
-          break
-        case "approve":
-          const approveSuccess = await AccessService.approveViewerRequest(currentAction.itemId, userMasjidId)
-          if (approveSuccess && userMasjidId) {
-            await Promise.all([fetchPendingViewerRequests(userMasjidId), fetchApprovedViewers(userMasjidId)])
-          }
-          break
-        case "reject":
-          const rejectSuccess = await AccessService.rejectViewerRequest(currentAction.itemId, userMasjidId)
-          if (rejectSuccess && userMasjidId) {
-            await fetchPendingViewerRequests(userMasjidId)
-          }
-          break
-        case "remove":
-          const removeSuccess = await AccessService.removeViewerAccess(currentAction.itemId, userMasjidId)
-          if (removeSuccess && userMasjidId) {
-            await fetchApprovedViewers(userMasjidId)
-          }
-          break
-      }
-    } finally {
-      setIsLoading(false)
-      setIsConfirmOpen(false)
-      setCurrentAction(null)
+    switch (currentAction.type) {
+      case "request":
+        await requestViewerAccess(currentAction.itemId)
+        break
+      case "approve":
+        await approveViewerRequest(currentAction.itemId)
+        break
+      case "reject":
+        await rejectViewerRequest(currentAction.itemId)
+        break
+      case "remove":
+        await removeViewerAccess(currentAction.itemId)
+        break
     }
+    setIsConfirmOpen(false)
+    setCurrentAction(null)
   }
 
   const confirmAction = (type: "request" | "approve" | "reject" | "remove", itemId: string, itemName: string) => {

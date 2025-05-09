@@ -90,11 +90,6 @@ export const training = [
         url: "/pelatihan",
         icon: GraduationCap,
     },
-    {
-        title: "Pelatihan",
-        url: "/pelatihan-umum",
-        icon: GraduationCap,
-    },
 ]
 
 export const viewerAccess = [

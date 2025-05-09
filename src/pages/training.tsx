@@ -31,7 +31,7 @@ export default function TrainingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [, setTotalItems] = useState(0);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -247,7 +247,6 @@ export default function TrainingPage() {
         "Masjid": training.nama_masjid || ""
       })));
 
-      // Set column widths
       const columnWidths = [
         { wch: 30 },
         { wch: 40 }, 
