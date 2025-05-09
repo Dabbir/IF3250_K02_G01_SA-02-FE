@@ -74,7 +74,7 @@ export default function LaporanAktivitas() {
         const data = await response.json();
 
         if (data.success) {
-          setActivities(data.activity || []);
+          setActivities(data.activity.data || []);
         } else {
           throw new Error(data.message || "Failed to fetch activities");
         }
