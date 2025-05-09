@@ -1,58 +1,299 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Building, Pencil, Save, Loader2, X, Upload } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "react-toastify";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import useActivity from '@/hooks/use-activity';
-import ActivityTable from '@/components/activity/activitytable';
-import useDetailProgram from '@/hooks/use-detailprogram';
-import { pilarOptions, Program } from '@/types/program';
+
+const API_URL = import.meta.env.VITE_HOST_NAME;
+
+interface Program {
+    id: number;
+    nama_program: string;
+    deskripsi_program: string;
+    pilar_program: string[];
+    kriteria_program: string;
+    waktu_mulai: string;
+    waktu_selesai: string;
+    rancangan_anggaran: number;
+    aktualisasi_anggaran: number;
+    status_program: "Belum Mulai" | "Berjalan" | "Selesai";
+    cover_image: string | null;
+    masjid_id: number;
+    created_by: number;
+    created_at: string;
+    updated_at: string;
+}
+
+interface Kegiatan {
+    idKegiatan: string;
+    namaKegiatan: string;
+    tanggalMulai: string;
+    tanggalSelesai: string;
+    status: string;
+    biayaImplementasi: string;
+    deskripsi: string;
+}
+
+const pilarOptions = [
+    { id: 1, name: "Tanpa Kemiskinan" },
+    { id: 2, name: "Tanpa Kelaparan" },
+    { id: 3, name: "Kehidupan Sehat dan Sejahtera" },
+    { id: 4, name: "Pendidikan Berkualitas" },
+    { id: 5, name: "Kesetaraan Gender" },
+    { id: 6, name: "Air Bersih dan Sanitasi Layak" },
+    { id: 7, name: "Energi Bersih dan Terjangkau" },
+    { id: 8, name: "Pekerjaan Layak dan Pertumbuhan Ekonomi" },
+    { id: 9, name: "Industri, Inovasi dan Infrastruktur" },
+    { id: 10, name: "Berkurangnya Kesenjangan" },
+    { id: 11, name: "Kota dan Pemukiman yang Berkelanjutan" },
+    { id: 12, name: "Konsumsi dan Produksi yang Bertanggung Jawab" },
+    { id: 13, name: "Penanganan Perubahan Iklim" },
+    { id: 14, name: "Ekosistem Lautan" },
+    { id: 15, name: "Ekosistem Daratan" },
+    { id: 16, name: "Perdamaian, Keadilan dan Kelembagaan yang Tangguh" },
+    { id: 17, name: "Kemitraan untuk Mencapai Tujuan" },
+];
 
 const DetailProgram = () => {
-    const {
-        loading,
-        kegiatanLoading,
-        program,
-        editedProgram,
-        setEditedProgram,
-        saving,
-        isEditing,
-        kegiatanList,
-        coverPreview,
-        setCoverPreview,
-        coverFile,
-        setCoverFile,
-        statusBg,
-        editedStatusBg,
-        handleChange,
-        handleEditClick,
-        handleCancel,
-        handleSaveClick,
-        handleCoverChange,
-        handleNavigateDetail
-    } = useDetailProgram()
+    const { id } = useParams<{ id: string }>();
+    const [loading, setLoading] = useState(true);
+    const [kegiatanLoading, setKegiatanLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedProgram, setEditedProgram] = useState<Program | null>(null);
+    const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
+    const [coverFile, setCoverFile] = useState<File | null>(null);
+    const [coverPreview, setCoverPreview] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const [program, setProgram] = useState<Program>({
+        id: 0,
+        nama_program: "",
+        deskripsi_program: "",
+        pilar_program: [],
+        kriteria_program: "",
+        waktu_mulai: "",
+        waktu_selesai: "",
+        rancangan_anggaran: 0,
+        aktualisasi_anggaran: 0,
+        status_program: "Belum Mulai",
+        cover_image: null,
+        masjid_id: 0,
+        created_by: 0,
+        created_at: "",
+        updated_at: ""
+    });
 
-    const {
-        displayedActivities,
-        handleNavigate,
-        handleShareActivity,
-        handleDeleteClick,
-        sortColumn,
-        handleSortChange
-    } = useActivity()
+    const statusBg = {
+        "Berjalan": "bg-[#ECA72C]",
+        "Selesai": "bg-[#3A786D]",
+        "Belum Mulai": "bg-slate-500",
+    }[program.status_program] || "bg-gray-200";
+
+    const STATUS_BG_MAP: Record<Program["status_program"], string> = {
+        "Belum Mulai": "bg-slate-500",
+        Berjalan: "bg-[#ECA72C]",
+        Selesai: "bg-[#3A786D]",
+    };
+
+    const editedStatusBg = editedProgram
+        ? STATUS_BG_MAP[editedProgram.status_program]
+        : "";
+
+    useEffect(() => {
+        const fetchProgram = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/program/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.message || "Gagal memuat data program");
+
+                setProgram(data);
+                setEditedProgram(data);
+                setCoverPreview(data.cover_image);
+            } catch (error) {
+                console.error("Error fetching program:", error);
+                toast.error("Gagal memuat data program");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProgram();
+    }, [id]);
+
+    useEffect(() => {
+        const fetchKegiatan = async () => {
+            setKegiatanLoading(true);
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/api/activity/program/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.status === 404 || !data.success || !Array.isArray(data.activity)) {
+                    setKegiatanList([]);
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Gagal memuat kegiatan program");
+                }
+
+                const listKegiatan: Kegiatan[] = data.activity.map((item: any) => ({
+                    idKegiatan: String(item.id),
+                    namaKegiatan: item.nama_aktivitas,
+                    tanggalMulai: new Date(item.tanggal_mulai).toISOString().split("T")[0],
+                    tanggalSelesai: new Date(item.tanggal_selesai).toISOString().split("T")[0],
+                    status: item.status,
+                    biayaImplementasi: String(item.biaya_implementasi),
+                    deskripsi: item.deskripsi,
+                }));
+
+                setKegiatanList(listKegiatan);
+            } catch (error) {
+                console.error("Error fetching kegiatan:", error);
+                toast.error("Gagal memuat data kegiatan");
+            } finally {
+                setKegiatanLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchKegiatan();
+        }
+    }, [id]);
+
+    const handleChange = (field: keyof Program, value: string | number) => {
+        setEditedProgram((prev) => ({ ...prev!, [field]: value }));
+    };
+
+    const handleEditClick = () => {
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setEditedProgram(program);
+        setIsEditing(false);
+    };
+
+    const handleSaveClick = async () => {
+        if (!editedProgram) return;
+
+        const now = new Date();
+        const start = new Date(editedProgram.waktu_mulai);
+        const end = new Date(editedProgram.waktu_selesai);
+
+        switch (editedProgram.status_program) {
+            case "Belum Mulai":
+                if (start <= now) {
+                    toast.error("Status “Belum Mulai” hanya boleh jika tanggal mulai di masa depan.");
+                    return;
+                }
+                break;
+            case "Berjalan":
+                if (start > now || end < now) {
+                    toast.error("Status “Berjalan” hanya boleh jika sekarang berada di antara tanggal mulai dan selesai.");
+                    return;
+                }
+                break;
+            case "Selesai":
+                if (end >= now) {
+                    toast.error("Status “Selesai” hanya boleh jika tanggal selesai sudah terlewati.");
+                    return;
+                }
+                break;
+        }
+
+        setSaving(true);
+        try {
+            const token = localStorage.getItem("token")!;
+            const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+            let body: string | FormData;
+
+            if (coverFile) {
+                const form = new FormData();
+                form.append("cover_image", coverFile);
+
+                for (const key of Object.keys(editedProgram) as (keyof Program)[]) {
+                    if (key === "cover_image") continue;
+
+                    if (key === "pilar_program") {
+                        form.append(key, JSON.stringify(editedProgram.pilar_program));
+                    } else {
+                        form.append(key, String((editedProgram as any)[key]));
+                    }
+                }
+
+                body = form;
+            } else {
+                if (coverPreview === null) {
+                    (editedProgram as any).cover_image = "";
+                }
+                headers["Content-Type"] = "application/json";
+                body = JSON.stringify(editedProgram);
+            }
+
+            const response = await fetch(`${API_URL}/api/program/${id}`, {
+                method: "PUT",
+                headers,
+                body,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Gagal memperbarui program");
+            }
+
+            const data = await response.json();
+            console.log(data);
+
+            setProgram(data);
+            setIsEditing(false);
+            toast.success("Program berhasil diperbarui");
+        } catch (error) {
+            console.error("Error updating program:", error);
+            toast.error("Gagal memperbarui program");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        if (file) {
+            setCoverFile(file);
+            setCoverPreview(URL.createObjectURL(file));
+        }
+    };
 
     return (
         <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
             <CardHeader>
                 <div className='justify-between items-top flex'>
                     <div className="flex items-center space-x-2">
-                        <ArrowLeft 
-                        className="h-6 w-6 text-slate-700 hover:cursor-pointer" 
-                        onClick={() => { handleNavigateDetail() }}
+                        <ArrowLeft
+                            className="h-6 w-6 text-slate-700 hover:cursor-pointer"
+                            onClick={() => { navigate(`/data-program`); }}
                         />
                         <h2 className="text-xl font-medium text-[var(--blue)]">Detail Program</h2>
                     </div>
@@ -79,38 +320,38 @@ const DetailProgram = () => {
                             <div className="mb-4">
                                 {coverPreview ? (
                                     <div className="relative w-full h-96 overflow-hidden rounded-lg">
-                                    <img
-                                        src={coverPreview}
-                                        className="w-full h-full object-cover"
-                                        alt="Cover"
-                                    />
-                                    {isEditing && (
-                                        <button
-                                        className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
-                                        onClick={() => {
-                                            setCoverFile(null);
-                                            setCoverPreview(null);
-                                        }}
-                                        >
-                                        <X className="w-4 h-4 text-red-500" />
-                                        </button>
-                                    )}
+                                        <img
+                                            src={coverPreview}
+                                            className="w-full h-full object-cover"
+                                            alt="Cover"
+                                        />
+                                        {isEditing && (
+                                            <button
+                                                className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
+                                                onClick={() => {
+                                                    setCoverFile(null);
+                                                    setCoverPreview(null);
+                                                }}
+                                            >
+                                                <X className="w-4 h-4 text-red-500" />
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     isEditing && (
-                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center">
-                                        <input
-                                        id="cover-upload"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleCoverChange}
-                                        className="hidden"
-                                        />
-                                        <label htmlFor="cover-upload" className="flex items-center gap-2 text-[var(--green)] cursor-pointer">
-                                        <Upload className="w-5 h-5" />
-                                        <span>Unggah Cover Program</span>
-                                        </label>
-                                    </div>
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center">
+                                            <input
+                                                id="cover-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleCoverChange}
+                                                className="hidden"
+                                            />
+                                            <label htmlFor="cover-upload" className="flex items-center gap-2 text-[var(--green)] cursor-pointer">
+                                                <Upload className="w-5 h-5" />
+                                                <span>Unggah Cover Program</span>
+                                            </label>
+                                        </div>
                                     )
                                 )}
                             </div>
@@ -121,38 +362,38 @@ const DetailProgram = () => {
                                         <Select
                                             value={editedProgram?.status_program}
                                             onValueChange={(value) =>
-                                            handleChange("status_program", value as Program["status_program"])
+                                                handleChange("status_program", value as Program["status_program"])
                                             }
                                         >
                                             <SelectTrigger
-                                            className={`
+                                                className={`
                                                 w-32 flex items-center justify-between
                                                 ${editedStatusBg} text-white
                                             `}
                                             >
-                                            <SelectValue placeholder="Pilih status" />
+                                                <SelectValue placeholder="Pilih status" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                            {(
-                                                ["Belum Mulai", "Berjalan", "Selesai"] as Program["status_program"][]
-                                            ).map((status) => (
-                                                <SelectItem
-                                                key={status}
-                                                value={status}
-                                                className={`
+                                                {(
+                                                    ["Belum Mulai", "Berjalan", "Selesai"] as Program["status_program"][]
+                                                ).map((status) => (
+                                                    <SelectItem
+                                                        key={status}
+                                                        value={status}
+                                                        className={`
                                                     flex items-center px-2 py-1text-white rounded
                                                 `}
-                                                >
-                                                {status}
-                                                </SelectItem>
-                                            ))}
+                                                    >
+                                                        {status}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     ) : (
                                         <div
-                                        className={`mt-2 flex justify-center items-center font-semibold w-28 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${statusBg}`}
+                                            className={`mt-2 flex justify-center items-center font-semibold w-28 h-8 rounded-xl md:rounded-2xl text-xs md:text-sm text-white ${statusBg}`}
                                         >
-                                        {program.status_program}
+                                            {program.status_program}
                                         </div>
                                     )}
                                 </div>
@@ -166,9 +407,9 @@ const DetailProgram = () => {
                                             <Button variant="outline" size="sm" onClick={handleCancel}>
                                                 Batal
                                             </Button>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={handleSaveClick}
                                                 disabled={saving}
                                             >
@@ -187,11 +428,11 @@ const DetailProgram = () => {
                                 </div>
                             </div>
                             <div className="flex items-center mt-4 space-x-2">
-                                <Building className='h-5 w-5 text-[#3A786D]'/>
+                                <Building className='h-5 w-5 text-[#3A786D]' />
                                 <p className='text-[#3A786D] font-semibold'>Masjid Salman</p>
                             </div>
                             <div className="flex items-center space-x-2 ">
-                                <User className='h-5 w-5 text-gray-500'/>
+                                <User className='h-5 w-5 text-gray-500' />
                                 <p className='text-gray-500 font-semibold'> Dibuat oleh {String(program?.created_by ?? "Editor")}</p>
                             </div>
                         </div>
@@ -219,35 +460,35 @@ const DetailProgram = () => {
                                             <div className="grid grid-cols-1 max-h-[300px] overflow-y-auto p-2">
                                                 {pilarOptions.map((pilar) => (
                                                     <div key={pilar.name} className="flex items-center space-x-2 py-1">
-                                                        <Checkbox 
-                                                            id={`pilar-${pilar.name}`} 
+                                                        <Checkbox
+                                                            id={`pilar-${pilar.name}`}
                                                             checked={
-                                                                Array.isArray(editedProgram?.pilar_program) 
-                                                                ? editedProgram.pilar_program.includes(pilar.name)
-                                                                : false
+                                                                Array.isArray(editedProgram?.pilar_program)
+                                                                    ? editedProgram.pilar_program.includes(pilar.name)
+                                                                    : false
                                                             }
                                                             onCheckedChange={(checked) => {
-                                                                const currentPilars = Array.isArray(editedProgram?.pilar_program) 
-                                                                    ? editedProgram.pilar_program 
+                                                                const currentPilars = Array.isArray(editedProgram?.pilar_program)
+                                                                    ? editedProgram.pilar_program
                                                                     : [];
-                                                                
-                                                                const newPilars = checked 
+
+                                                                const newPilars = checked
                                                                     ? [...currentPilars, pilar.name]
                                                                     : currentPilars.filter(p => p !== pilar.name);
-                                                                console.log("current pillars",currentPilars)
+                                                                console.log("current pillars", currentPilars)
                                                                 setEditedProgram(prev => {
                                                                     if (!prev) {
                                                                         return null;
                                                                     }
-                                                                    
+
                                                                     return {
                                                                         ...prev,
-                                                                        pilar_program: newPilars, 
+                                                                        pilar_program: newPilars,
                                                                     };
                                                                 });
                                                             }}
                                                         />
-                                                        <Label 
+                                                        <Label
                                                             htmlFor={`pilar-${pilar.name}`}
                                                             className="text-sm font-normal"
                                                         >
@@ -258,8 +499,8 @@ const DetailProgram = () => {
                                             </div>
                                         ) : (
                                             <div className="whitespace-pre-wrap">
-                                                {Array.isArray(program?.pilar_program) 
-                                                    ? program.pilar_program.join(', ') 
+                                                {Array.isArray(program?.pilar_program)
+                                                    ? program.pilar_program.join(', ')
                                                     : String(program?.pilar_program)}
                                             </div>
                                         )}
@@ -356,14 +597,42 @@ const DetailProgram = () => {
                             ) : kegiatanList.length === 0 ? (
                                 <p className="text-gray-500 text-center py-4">Tidak terdapat kegiatan untuk program ini.</p>
                             ) : (
-                                <ActivityTable
-                                    activities={displayedActivities}
-                                    sortColumn={sortColumn}
-                                    onSortChange={handleSortChange}
-                                    onNavigate={handleNavigate}
-                                    onShare={handleShareActivity}
-                                    onDelete={handleDeleteClick}
-                                />
+                                <Table className="border overflow-hidden">
+                                    <TableHeader>
+                                        <TableRow className="bg-gray-100">
+                                            <TableHead className="pl-7 w-[200px]">Nama Kegiatan</TableHead>
+                                            <TableHead className="w-[120px] text-center">Tanggal Mulai</TableHead>
+                                            <TableHead className="w-[120px] text-center">Tanggal Selesai</TableHead>
+                                            <TableHead className="w-[120px] text-center">Status</TableHead>
+                                            <TableHead className="w-[180px]">Biaya Implementasi</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+
+                                    <TableBody>
+                                        {kegiatanList.map((item, index) => (
+                                            <TableRow
+                                                key={index}
+                                                className="border-b cursor-pointer hover:bg-gray-100 transition"
+                                                onClick={() => {
+                                                    navigate(`/kegiatan/${item.idKegiatan}`);
+                                                }}
+                                            >
+                                                <TableCell className="pl-7 truncate max-w-[180px]">{item.namaKegiatan}</TableCell>
+                                                <TableCell className="text-center truncate">{item.tanggalMulai}</TableCell>
+                                                <TableCell className="text-center truncate">{item.tanggalSelesai}</TableCell>
+                                                <TableCell className="text-center truncate">
+                                                    <span className={`px-2 py-1 rounded-full text-xs ${item.status === "Finished" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                                                        }`}>
+                                                        {item.status}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-left truncate max-w-[180px]">
+                                                    Rp{parseInt(item.biayaImplementasi).toLocaleString()}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             )}
                         </div>
                     </>
