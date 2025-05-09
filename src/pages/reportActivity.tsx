@@ -33,6 +33,8 @@ export default function LaporanAktivitas() {
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [minBudget, setMinBudget] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
+  const [programList, setProgramList] = useState<string[]>([]);
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
 
   const formatRupiah = (amount: number): string => {
     const roundedAmount = Math.floor(amount);
@@ -87,6 +89,13 @@ export default function LaporanAktivitas() {
     fetchActivities();
   }, []);
 
+  useEffect(() => {
+    if (activities.length > 0) {
+      const uniquePrograms = Array.from(new Set(activities.map(a => a.nama_program))).filter(Boolean);
+      setProgramList(uniquePrograms.sort());
+    }
+  }, [activities]);
+
   const toggleStatusFilter = (status: string) => {
     setStatusFilters(prev => {
       if (prev.includes(status)) {
@@ -117,15 +126,28 @@ export default function LaporanAktivitas() {
     return budget >= min && budget <= max;
   };
 
+  const toggleProgramFilter = (program: string) => {
+    setSelectedPrograms(prev => {
+      if (prev.includes(program)) {
+        return prev.filter(p => p !== program);
+      } else {
+        return [...prev, program];
+      }
+    });
+  };
+
   const filteredActivities = activities.filter(activity => {
     const matchesStatus = statusFilters.length === 0 ||
       statusFilters.includes(activity.status);
-
+  
     const matchesDateRange = isDateInRange(activity.tanggal_mulai) || isDateInRange(activity.tanggal_selesai);
     
     const matchesBudget = isBudgetInRange(activity.biaya_implementasi);
-
-    return matchesStatus && matchesDateRange && matchesBudget;
+    
+    const matchesProgram = selectedPrograms.length === 0 || 
+      selectedPrograms.includes(activity.nama_program);
+  
+    return matchesStatus && matchesDateRange && matchesBudget && matchesProgram;
   });
 
   const getSummary = () => {
@@ -214,6 +236,7 @@ export default function LaporanAktivitas() {
     setEndDate("");
     setMinBudget("");
     setMaxBudget("");
+    setSelectedPrograms([]);
   };
 
   if (error) {
@@ -255,7 +278,7 @@ export default function LaporanAktivitas() {
           </div>
 
           {/* Filter Section*/}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="pl-4 pr-4">
                 <div className="flex items-center gap-2 mb-3">
@@ -344,6 +367,36 @@ export default function LaporanAktivitas() {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="mb-6">
+            <CardContent className="pl-4 pr-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Filter className="h-4 w-4 text-[#3A786D]" />
+                <h3 className="text-sm font-medium">Filter Program</h3>
+              </div>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {programList.length > 0 ? (
+                  programList.map((program) => (
+                    <div key={program} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={`program-${program}`}
+                        checked={selectedPrograms.includes(program)}
+                        onCheckedChange={() => toggleProgramFilter(program)}
+                      />
+                      <Label 
+                        htmlFor={`program-${program}`} 
+                        className="text-sm truncate"
+                      >
+                        {program}
+                      </Label>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-500">Tidak ada program tersedia</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Summary Preview */}
           <Card className="mb-6">
