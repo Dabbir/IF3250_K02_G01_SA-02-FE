@@ -12,6 +12,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     if (localStorage.getItem("showSuccessLogoutToast") === "true") {
@@ -20,23 +22,45 @@ const Login = () => {
     }
   }, []);
 
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+  
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+  
+    let isValid = true;
+  
+    if (!email.trim()) {
+      setEmailError("Alamat email wajib diisi.");
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError("Format email tidak valid.");
+      isValid = false;
+    } else {
+      setEmailError("");
+    }
+  
+    if (!password.trim()) {
+      setPasswordError("Kata sandi wajib diisi.");
+      isValid = false;
+    } else {
+      setPasswordError("");
+    }
+  
+    if (!isValid) return;
+  
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+        body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("showSuccessLoginToast", "true");
@@ -45,13 +69,11 @@ const Login = () => {
         setError(data.message || "Login gagal. Silakan coba lagi.");
       }
     } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Login gagal. Silakan coba lagi.");
-      }
+      toast.error(err instanceof Error ? err.message : "Login gagal. Silakan coba lagi.");
     }
   };
+  
+  
 
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_HOST_NAME}/api/auth/google?source=login`;
@@ -69,25 +91,29 @@ const Login = () => {
             <div className="mb-4 md:mb-6">
               <label className="block text-sm font-cooper mb-2 text-gray-700">Alamat Email</label>
               <input
-                type="email"
+                className={`w-full p-3 border ${emailError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError("");
+                }}
                 placeholder="Masukkan alamat email Anda"
-                className="font-cooper w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400"
-                required
               />
+              {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
             </div>
 
             <div className="mb-4 relative">
               <label className="block text-sm font-cooper mb-2 text-gray-700">Kata Sandi</label>
               <div className="relative">
                 <input
+                  className={`w-full p-3 border ${passwordError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
                   type={showPassword ? "text" : "password"}
-                  placeholder="Masukkan kata sandi Anda"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setPasswordError("")
+                  }}
+                  placeholder="Masukkan kata sandi Anda"
                 />
                 <button
                   type="button"
@@ -97,6 +123,7 @@ const Login = () => {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
             </div>
 
             <div className="mb-6">

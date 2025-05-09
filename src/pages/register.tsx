@@ -18,9 +18,58 @@ const Register = () => {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [error, setError] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [passwordError, setPasswordError] = useState("");           
+    const [confirmPasswordError, setconfirmPasswordError] = useState("");           
+    const [lastnameError, setLastnameError] = useState("");
+    const [firstnameError, setfirstnameError] = useState("");
+
+
+    const validateEmail = (email: string) => {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
 
     const handleNext = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+
+      let isValid = true;
+  
+      if (!email.trim()) {
+        setEmailError("Alamat email wajib diisi.");
+        isValid = false;
+      } else if (!validateEmail(email)) {
+        setEmailError("Format email tidak valid.");
+        isValid = false;
+      } else {
+        setEmailError("");
+      }
+      if (!password.trim()) {
+        setPasswordError("Kata sandi wajib diisi.");
+        isValid = false;
+      } else {
+        setPasswordError("");
+      }
+      if (!confirmPassword.trim()) {
+        setconfirmPasswordError("Konfirmasi kata sandi wajib diisi.");
+        isValid = false;
+      } else {
+        setconfirmPasswordError("");
+      }
+      if (!firstName.trim()) {
+        setfirstnameError("Nama Depan wajib diisi.");
+        isValid = false;
+      } else {
+        setfirstnameError("");
+      }
+      if (!lastName.trim()) {
+        setLastnameError("Nama Belakang wajib diisi.");
+        isValid = false;
+      } else {
+        setLastnameError("");
+      }
+  
+      if (!isValid) return;
+
       if (!termsAccepted) {
           setError("Anda harus menyetujui Syarat & Ketentuan.");
           return;
@@ -83,33 +132,41 @@ const Register = () => {
                     <input 
                       type="text" 
                       placeholder="Masukkan nama depan" 
-                      className="font-cooper w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400"
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required
+                      className={`w-full p-3 border ${firstnameError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
+                      onChange={(e) => {
+                        setFirstName(e.target.value);
+                        setfirstnameError("");
+                      }}
                     />
+                    {firstnameError && <p className="text-red-500 text-sm mt-1">{firstnameError}</p>}
                   </div>
                   <div className="w-full md:w-1/2">
                     <label className="block text-sm font-cooper mb-2 text-gray-700">Nama Belakang</label>
                     <input 
                       type="text" 
                       placeholder="Masukkan nama belakang" 
-                      className="font-cooper w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400"
-                      onChange={(e) => setLastName(e.target.value)}
-                      required
+                      className={`w-full p-3 border ${lastnameError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
+                      onChange={(e) => {
+                        setLastName(e.target.value);
+                        setLastnameError("");
+                      }}
                     />
+                    {lastnameError && <p className="text-red-500 text-sm mt-1">{lastnameError}</p>}
                   </div>
                 </div>
                 
                 <div className="mb-4">
                   <label className="block text-sm font-cooper mb-2 text-gray-700">Alamat Email</label>
-                  <input 
-                    type="email" 
-                    placeholder="Masukkan alamat email Anda" 
-                    className="font-cooper w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400"
+                  <input
+                    className={`w-full p-3 border ${emailError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setEmailError("");
+                    }}
+                    placeholder="Masukkan alamat email Anda"
                   />
+                  {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
                 </div>
                 
                 <div className="mb-4">
@@ -118,10 +175,8 @@ const Register = () => {
                     <input 
                       type={showPassword ? "text" : "password"}
                       placeholder="Masukkan kata sandi Anda" 
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10"
-                      value={password}
+                      className={`w-full p-3 border ${passwordError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
                       onChange={(e) => setPassword(e.target.value)}
-                      required
                     />
                     <button 
                       type="button" 
@@ -131,6 +186,7 @@ const Register = () => {
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
+                  {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
                 </div>
 
                 <div className="mb-4">
@@ -139,10 +195,9 @@ const Register = () => {
                     <input 
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Konfirmasi kata sandi Anda" 
-                      className="font-cooper w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10"
+                      className={`w-full p-3 border ${confirmPasswordError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
                     />
                     <button 
                       type="button" 
@@ -152,6 +207,7 @@ const Register = () => {
                       {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
+                  {confirmPasswordError && <p className="text-red-500 text-sm mt-1">{confirmPasswordError}</p>}
                 </div>
                 
                 <div className="mb-6">
