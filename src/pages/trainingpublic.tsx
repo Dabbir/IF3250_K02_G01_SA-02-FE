@@ -237,7 +237,7 @@ export default function PublicTrainingPage() {
       </CardHeader>
       <CardContent>
         <div className="mb-6">
-          <div className="relative w-full md:w-2/3 mx-auto mb-6">
+          <div className="relative w-full md:w-2/3 mb-6">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
             <Input
               type="text"
@@ -264,7 +264,7 @@ export default function PublicTrainingPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {trainings.map((training) => (
-                <Card key={training.id} className="overflow-hidden hover:shadow-lg transition">
+                <Card key={training.id} className="overflow-hidden hover:shadow-lg transition p-0">
                   <div className="p-4 bg-gradient-to-r from-[#3A786D] to-[#4A9B8F] text-white">
                     <h3 className="font-bold text-lg">{training.nama_pelatihan}</h3>
                     <div className="mt-1">
@@ -272,15 +272,21 @@ export default function PublicTrainingPage() {
                     </div>
                   </div>
                   
-                  <CardContent className="p-4">
+                  <CardContent className="px-4">
                     <div className="space-y-3 mb-4 text-sm">
                       {training.deskripsi && (
-                        <p className="text-gray-700 mb-3">
-                          {training.deskripsi.length > 100 
-                            ? `${training.deskripsi.substring(0, 100)}...` 
-                            : training.deskripsi
-                          }
-                        </p>
+                        <>
+                          <p className="text-gray-700 mb-3 md:hidden">
+                            {training.deskripsi.length > 100
+                              ? `${training.deskripsi.substring(0, 83)}...`
+                              : training.deskripsi}
+                          </p>
+                          <p className="text-gray-700 mb-3 hidden md:block">
+                            {training.deskripsi.length > 100
+                              ? `${training.deskripsi.substring(0, 74)}...`
+                              : training.deskripsi}
+                          </p>
+                        </>
                       )}
                       
                       <div className="flex items-start">

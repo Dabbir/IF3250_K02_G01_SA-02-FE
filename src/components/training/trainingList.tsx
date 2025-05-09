@@ -108,7 +108,7 @@ const TrainingList: React.FC<TrainingListProps> = ({
         {trainings.map((training) => (
           <Card 
             key={training.id} 
-            className="overflow-hidden hover:shadow-md transition cursor-pointer"
+            className="overflow-hidden hover:shadow-md transition cursor-pointer p-0"
             onClick={() => navigate(`/pelatihan/${training.id}`)}
           >
             <div className="w-full p-4 bg-gradient-to-r from-[#3A786D] to-[#4A9B8F] text-white">
@@ -119,7 +119,7 @@ const TrainingList: React.FC<TrainingListProps> = ({
                 {training.status}
               </Badge>
             </div>
-            <CardContent className="p-4">
+            <CardContent className="px-4">
               <div className="space-y-3 mb-4">
                 <div className="flex items-start">
                   <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />

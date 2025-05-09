@@ -5,10 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Download, GraduationCap, ChevronDown, BookOpen } from "lucide-react";
+import { Search, Loader2, Download, GraduationCap, ChevronDown, BookOpen, Filter } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
 import TrainingList from "@/components/training/trainingList";
 import AddTraining from "@/components/training/addTraining";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import TrainingStatusFilter from "@/components/training/trainingStatusFilter";
 import { Training } from "@/lib/training";
 
@@ -19,6 +23,7 @@ interface userData {
 
 const ITEMS_PER_PAGE = 10;
 const API_URL = import.meta.env.VITE_HOST_NAME;
+const STATUS_OPTIONS = ["Upcoming", "Ongoing", "Completed", "Cancelled"];
 
 export default function TrainingPage() {
   const [search, setSearch] = useState("");
@@ -35,6 +40,8 @@ export default function TrainingPage() {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
   const [masjidName, setMasjidName] = useState("");
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [user, setUser] = useState<userData>({
     id: 0,
     masjid_id: 0,
@@ -46,7 +53,7 @@ export default function TrainingPage() {
 
   useEffect(() => {
     fetchTrainings();
-  }, [currentPage, search, status]);
+  }, [currentPage, search, status, statusFilters]);
 
   useEffect(() => {
     if (user.masjid_id) {
@@ -108,9 +115,19 @@ export default function TrainingPage() {
         throw new Error("Authentication token not found");
       }
 
-      const response = await fetch(
-        `${API_URL}/api/trainings?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${search}&status=${status}&trainingRegistration=false`, 
-        {
+      let url = new URL(`${API_URL}/api/trainings`);
+      url.searchParams.append('page', currentPage.toString());
+      url.searchParams.append('limit', ITEMS_PER_PAGE.toString());
+
+      if (search) {
+        url.searchParams.append('search', search);
+      }
+
+      if (statusFilters.length > 0) {
+        url.searchParams.append('status', statusFilters.join(','));
+      }
+
+      const response = await fetch(url.toString(), {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -142,6 +159,17 @@ export default function TrainingPage() {
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
+  };
+
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilters(prev => {
+      if (prev.includes(status)) {
+        return prev.filter(t => t !== status);
+      } else {
+        return [...prev, status];
+      }
+    });
+    setCurrentPage(1); 
   };
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -304,6 +332,30 @@ export default function TrainingPage() {
     );
   }
 
+  const getStatusBadge = (status: string) => {
+    let color = "";
+  
+    switch (status) {
+      case "Upcoming":
+        color = "bg-blue-100 text-blue-800 border border-blue-300";
+        break;
+      case "Ongoing":
+        color = "bg-green-100 text-green-800 border border-green-300";
+        break;
+      case "Completed":
+        color = "bg-purple-100 text-purple-800 border border-purple-300";
+        break;
+      default:
+        color = "bg-gray-100 text-gray-800 border border-gray-300";
+    }
+  
+    return (
+      <Badge className={`px-3 py-1 text-xs font-medium rounded-md min-w-[90px] text-center ${color}`}>
+        {status}
+      </Badge>
+    );
+  };
+
   return (
     <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
       <CardHeader className="flex flex-row items-center justify-between md:justify-start md:gap-4">
@@ -366,10 +418,57 @@ export default function TrainingPage() {
             />
           </div>
 
-          <TrainingStatusFilter 
+          <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="max-md:h-8 flex items-center gap-1 md:w-auto">
+                  <Filter className="h-3 w-3 md:-h4 md:w-4" />
+                  <span className="max-md:text-[12px]">Filter Status</span>
+                  {statusFilters.length > 0 && (
+                    <Badge className="ml-1 bg-[#3A786D]">{statusFilters.length}</Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-4">
+                <h4 className="text-[12px] font-medium mb-3">Filter berdasarkan status</h4>
+                <div className="space-y-2">
+                  {STATUS_OPTIONS.map((status) => (
+                    <div key={status} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`status-${status}`}
+                        checked={statusFilters.includes(status)}
+                        onCheckedChange={() => toggleStatusFilter(status)}
+                      />
+                      <Label htmlFor={`status-${status}`} className="flex items-center">
+                        {getStatusBadge(status)}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStatusFilters([])}
+                    disabled={statusFilters.length === 0}
+                    className="text-[12px]"
+                  >
+                    Clear All
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setFilterOpen(false)}
+                    className="bg-[#3A786D] text-[12px]"
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+          {/* <TrainingStatusFilter 
             status={status} 
             onChange={handleStatusChange}
-          />
+          /> */}
 
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <Button
