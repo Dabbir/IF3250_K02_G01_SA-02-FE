@@ -30,6 +30,7 @@ export default function StakeholderPage() {
     const [isOpen, setIsOpen] = useState(false)
 
     const {
+        stakeholders,
         search,
         setSearch,
         currentPage,
@@ -44,9 +45,7 @@ export default function StakeholderPage() {
         filterOpen,
         setFilterOpen,
         sortColumn,
-        displayedStakeholders,
         totalPages,
-        filteredStakeholders,
         handleDeleteStakeholder,
         handleSortChange,
         toggleJenisFilter,
@@ -116,7 +115,7 @@ export default function StakeholderPage() {
                     </div>
                 </div>
 
-                {filteredStakeholders.length === 0 ? (
+                {stakeholders.length === 0 ? (
                     <div className="text-center py-8 border rounded-lg">
                         <p className="text-gray-500">Pemangku kepentingan tidak ditemukan</p>
                         {(jenisFilters.length > 0 || search) && (
@@ -130,7 +129,7 @@ export default function StakeholderPage() {
                 ) : isMobileView ? (
                     // Mobile card view
                     <div className="space-y-4">
-                        {displayedStakeholders.map((item) => (
+                        {stakeholders.map((item) => (
                             <MobileStakeholderCard
                                 key={item.id}
                                 item={item}
@@ -142,7 +141,7 @@ export default function StakeholderPage() {
                 ) : (
                     // Desktop table view
                     <StakeholderTable
-                        stakeholders={displayedStakeholders}
+                        stakeholders={stakeholders}
                         sortColumn={sortColumn}
                         onSortChange={handleSortChange}
                         onNavigate={handleNavigate}

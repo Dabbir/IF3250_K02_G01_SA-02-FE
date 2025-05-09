@@ -4,7 +4,6 @@ export interface Stakeholder {
   jenis: string
   telepon: string
   email: string
-  foto: string
   masjid_id: string
   created_by: string
 }

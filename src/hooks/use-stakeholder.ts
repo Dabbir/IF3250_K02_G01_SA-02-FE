@@ -10,6 +10,7 @@ const ITEMS_PER_PAGE = 20
 export default function useStakeholders() {
     const [search, setSearch] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
+    const [totalItem, setTotalItem] = useState(0)
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null)
     const [stakeholders, setStakeholders] = useState<Stakeholder[]>([])
@@ -21,45 +22,57 @@ export default function useStakeholders() {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
 
     useEffect(() => {
-        fetchStakeholders()
-    }, [])
 
-    const fetchStakeholders = async () => {
-        try {
-            setLoading(true)
-            const token = localStorage.getItem("token")
+        const fetchStakeholders = async () => {
+            try {
+                setLoading(true)
+                const token = localStorage.getItem("token")
 
-            if (!token) {
-                throw new Error("Authentication token not found")
+                if (!token) {
+                    throw new Error("Authentication token not found")
+                }
+
+                const params = new URLSearchParams({
+                    page: currentPage.toString(),
+                    limit: ITEMS_PER_PAGE.toString(),
+                    nama_instansi: search,
+                    jenis: jenisFilters.join(","),
+                    sortColumn: sortColumn,
+                    sortOrder: sortOrder,
+                })
+
+                const response = await fetch(`${API_URL}/api/stakeholder/getAll?${params.toString()}`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                })
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch stakeholders: ${response.status}`)
+                }
+
+                const data = await response.json()
+
+                if (data.success) {
+                    setStakeholders(data.stakeholders || [])
+                    setTotalItem(data.total || 0)                 
+                } else {
+                    throw new Error(data.message || "Failed to fetch stakeholders")
+                }
+            } catch (err) {
+                console.error(err)
+                setError("Terjadi kesalahan saat memuat pemangku kepentingan")
+                toast.error("Gagal memuat pemangku kepentingan!")
+            } finally {
+                setLoading(false)
             }
+        };
 
-            const response = await fetch(`${API_URL}/api/stakeholder/getAll/`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            })
+        fetchStakeholders();
 
-            if (!response.ok) {
-                throw new Error(`Failed to fetch stakeholders: ${response.status}`)
-            }
-
-            const data = await response.json()
-
-            if (data.success) {
-                setStakeholders(data.stakeholders || [])
-            } else {
-                throw new Error(data.message || "Failed to fetch stakeholder")
-            }
-        } catch (err) {
-            console.error(err)
-            setError("Terjadi kesalahan saat memuat pemangku kepentingan")
-            toast.error("Gagal memuat pemangku kepentingan!")
-        } finally {
-            setLoading(false)
-        }
-    }
+    }, [currentPage, search, jenisFilters, sortColumn, sortOrder]);
 
     const handleDeleteStakeholder = async (id: string | undefined) => {
         if (!id) return
@@ -127,36 +140,7 @@ export default function useStakeholders() {
         setSearch("")
     }
 
-    // Filter stakeholders by search and jenis
-    const filteredStakeholders = stakeholders.filter((item) => {
-        const nama = item.nama_stakeholder?.toLowerCase() || ""
-        const jenis = item.jenis?.toLowerCase() || ""
-
-        const matchesSearch = nama.includes(search.toLowerCase())
-        const matchesJenis = jenisFilters.length === 0 || jenisFilters.map((j) => j.toLowerCase()).includes(jenis)
-
-        return matchesSearch && matchesJenis
-    })
-
-    // Sort the filtered stakeholders
-    const sortedStakeholders = [...filteredStakeholders].sort((a, b) => {
-        const valueA = a[sortColumn as keyof Stakeholder]
-        const valueB = b[sortColumn as keyof Stakeholder]
-
-        // Handle string sorting
-        if (typeof valueA === "string" && typeof valueB === "string") {
-            return sortOrder === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA)
-        }
-
-        return 0
-    })
-
-    // Apply pagination
-    const totalPages = Math.ceil(sortedStakeholders.length / ITEMS_PER_PAGE)
-    const displayedStakeholders = sortedStakeholders.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE,
-    )
+    const totalPages = Math.ceil(totalItem / ITEMS_PER_PAGE)
 
     return {
         search,
@@ -175,9 +159,6 @@ export default function useStakeholders() {
         setFilterOpen,
         sortColumn,
         sortOrder,
-        filteredStakeholders,
-        sortedStakeholders,
-        displayedStakeholders,
         totalPages,
         handleDeleteStakeholder,
         handleSortChange,

@@ -9,11 +9,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import LoadingState from "@/components/loading/loading"
 import ErrorState from "@/components/error/error"
+import DetailHeader from "@/components/shared/detailheader"
+import EditButton from "@/components/shared/editbutton"
+import SaveCancelButtons from "@/components/shared/savecancelbutton"
 
 // hooks
 import useDetailStakeholder from "@/hooks/use-detailstakeholder"
-import DetailHeader from "@/components/shared/detailheader"
-import EditButtons from "@/components/shared/editbutton"
 
 export default function DetailStakeholder() {
     const navigate = useNavigate()
@@ -64,12 +65,9 @@ export default function DetailStakeholder() {
 
                 <CardContent className="pb-10">
                     <div className="space-y-4">
-                        <EditButtons
-                            isEditing={isEditing}
-                            saving={saving}
+                        <EditButton
                             onEdit={handleEditClick}
-                            onSave={handleSaveClick}
-                            onCancel={handleCancel}
+                            isEditing={isEditing}
                         />
 
                         <Table className="border rounded-lg overflow-hidden mb-2">
@@ -162,6 +160,13 @@ export default function DetailStakeholder() {
                                 </TableRow>
                             </TableBody>
                         </Table>
+                        {isEditing && (
+                            <SaveCancelButtons
+                                saving={saving}
+                                onSave={handleSaveClick}
+                                onCancel={handleCancel}
+                            />
+                        )}
                     </div>
                 </CardContent>
             </Card>
