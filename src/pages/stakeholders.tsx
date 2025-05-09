@@ -5,10 +5,9 @@ import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Search, Users } from "lucide-react"
+import { Loader2, Search, Users } from "lucide-react"
 
 // Components
-import LoadingState from "@/components/loading/loading"
 import ErrorState from "@/components/error/error"
 import { ConfirmDeleteDialog } from "@/components/dialog/deletedialog"
 import Pagination from "@/components/pagination/pagination"
@@ -62,13 +61,6 @@ export default function StakeholderPage() {
         setShowDeleteDialog(true)
     }
 
-    if (loading) {
-        return <LoadingState
-            title="Pemangku Kepentingan"
-            Icon={Users}
-        />
-    }
-
     if (error) {
         return <ErrorState
             error={error}
@@ -115,7 +107,11 @@ export default function StakeholderPage() {
                     </div>
                 </div>
 
-                {stakeholders.length === 0 ? (
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+                    </div>
+                ) : stakeholders.length === 0 ? (
                     <div className="text-center py-8 border rounded-lg">
                         <p className="text-gray-500">Pemangku kepentingan tidak ditemukan</p>
                         {(jenisFilters.length > 0 || search) && (
