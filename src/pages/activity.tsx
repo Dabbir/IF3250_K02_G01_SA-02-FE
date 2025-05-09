@@ -1,13 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Leaf, Search, Download } from "lucide-react"
+import { Leaf, Search, Download, Loader2 } from "lucide-react"
 
 // Components
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import LoadingState from "@/components/loading/loading"
 import ErrorState from "@/components/error/error"
 import { ConfirmDeleteDialog } from "@/components/dialog/deletedialog"
 import Pagination from "@/components/pagination/pagination"
@@ -34,9 +33,7 @@ export default function KegiatanPage() {
     toggleStatusFilter,
     clearStatusFilters,
     activities,
-    filteredActivities,
     clearAllFilters,
-    displayedActivities,
     handleNavigate,
     handleShareActivity,
     handleDeleteClick,
@@ -53,13 +50,6 @@ export default function KegiatanPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const { isMobileView } = useResponsive()
-
-  if (loading) {
-    return <LoadingState
-      title="Kegiatan"
-      Icon={Leaf}
-    />
-  }
 
   if (error) {
     return <ErrorState
@@ -120,7 +110,11 @@ export default function KegiatanPage() {
           </div>
         </div>
 
-        {filteredActivities.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+          </div>
+        ) : activities.length === 0 ? (
           <div className="text-center py-8 border rounded-lg">
             <p className="text-gray-500">No activities found</p>
             {(statusFilters.length > 0 || search) && (
@@ -134,7 +128,7 @@ export default function KegiatanPage() {
         ) : isMobileView ? (
           // Mobile card view
           <div className="space-y-4">
-            {displayedActivities.map((item) => (
+            {activities.map((item) => (
               <MobileActivityCard
                 key={item.id}
                 item={item}
@@ -147,7 +141,7 @@ export default function KegiatanPage() {
         ) : (
           // Desktop table view
           <ActivityTable
-            activities={displayedActivities}
+            activities={activities}
             sortColumn={sortColumn}
             onSortChange={handleSortChange}
             onNavigate={handleNavigate}

@@ -9,11 +9,17 @@ const API_URL = import.meta.env.VITE_HOST_NAME
 
 export default function useActivity() {
     const [search, setSearch] = useState("")
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalItem, setTotalItem] = useState(0)
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [selectedActivity, setSelectedActivity] = useState<Kegiatan | null>(null)
     const [activities, setActivities] = useState<Kegiatan[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [statusFilters, setStatusFilters] = useState<string[]>([])
+    const [filterOpen, setFilterOpen] = useState(false)
+    const [sortColumn, setSortColumn] = useState<string>("nama_aktivitas")
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
     const navigate = useNavigate()
 
     // Fetching data
@@ -27,7 +33,16 @@ export default function useActivity() {
                     throw new Error("Authentication token not found")
                 }
 
-                const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
+                const params = new URLSearchParams({
+                    page: currentPage.toString(),
+                    limit: ITEMS_PER_PAGE.toString(),
+                    nama_aktivitas: search,
+                    status: statusFilters.join(","),
+                    sortColumn: sortColumn,
+                    sortOrder: sortOrder,
+                })
+
+                const response = await fetch(`${API_URL}/api/activity/getactivity?${params.toString()}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -42,7 +57,8 @@ export default function useActivity() {
                 const data = await response.json()
 
                 if (data.success) {
-                    setActivities(data.activity || [])
+                    setActivities(data.activity.data || [])
+                    setTotalItem(data.activity.total || 0)
                 } else {
                     throw new Error(data.message || "Failed to fetch activities")
                 }
@@ -56,7 +72,7 @@ export default function useActivity() {
         }
 
         fetchActivities()
-    }, [])
+    }, [currentPage, search, sortColumn, sortOrder, statusFilters])
 
     const toggleStatusFilter = (status: string) => {
         setStatusFilters((prev) => {
@@ -73,21 +89,6 @@ export default function useActivity() {
         setStatusFilters([])
     }
 
-    // Filter activities
-    const [statusFilters, setStatusFilters] = useState<string[]>([])
-    const [filterOpen, setFilterOpen] = useState(false)
-    const filteredActivities = activities.filter((activity) => {
-        const matchesSearch =
-            activity.nama_aktivitas && activity.nama_aktivitas.toLowerCase().includes(search.toLowerCase())
-
-        const matchesStatus = statusFilters.length === 0 || statusFilters.includes(activity.status)
-
-        return matchesSearch && matchesStatus
-    })
-
-    // Sorting
-    const [sortColumn, setSortColumn] = useState<string>("nama_aktivitas")
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
     const handleSortChange = (column: string) => {
         if (sortColumn === column) {
             setSortOrder(sortOrder === "asc" ? "desc" : "asc")
@@ -97,34 +98,7 @@ export default function useActivity() {
         }
     }
 
-    const sortedActivities = [...filteredActivities].sort((a, b) => {
-        const valueA = a[sortColumn as keyof Kegiatan]
-        const valueB = b[sortColumn as keyof Kegiatan]
-
-        // Handle date sorting
-        if (sortColumn === "tanggal_mulai" || sortColumn === "tanggal_selesai") {
-            const dateA = new Date(valueA as string).getTime()
-            const dateB = new Date(valueB as string).getTime()
-            return sortOrder === "asc" ? dateA - dateB : dateB - dateA
-        }
-
-        // Handle string sorting
-        if (typeof valueA === "string" && typeof valueB === "string") {
-            return sortOrder === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA)
-        }
-
-        // Handle number sorting
-        if (typeof valueA === "number" && typeof valueB === "number") {
-            return sortOrder === "asc" ? valueA - valueB : valueB - valueA
-        }
-
-        return 0
-    })
-
-    // Pagination
-    const [currentPage, setCurrentPage] = useState(1)
-    const totalPages = Math.ceil(sortedActivities.length / ITEMS_PER_PAGE)
-    const displayedActivities = sortedActivities.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    const totalPages = Math.ceil(totalItem / ITEMS_PER_PAGE)
 
     const handleDeleteActivity = async (id: string | undefined) => {
         if (!id) return
@@ -195,9 +169,7 @@ export default function useActivity() {
         toggleStatusFilter,
         clearStatusFilters,
         activities,
-        filteredActivities,
         clearAllFilters,
-        displayedActivities,
         handleNavigate,
         handleShareActivity,
         handleDeleteClick,
