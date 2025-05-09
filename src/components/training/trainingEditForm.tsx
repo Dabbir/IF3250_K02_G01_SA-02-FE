@@ -25,16 +25,12 @@ const TrainingEditForm: React.FC<TrainingEditFormProps> = ({ training, onSuccess
   const [masjidOptions, setMasjidOptions] = useState<{id: number, nama_masjid: string}[]>([]);
   const API_URL = import.meta.env.VITE_HOST_NAME;
   
-  // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:MM)
   const formatDateForInput = (dateString: string): string => {
     return new Date(dateString).toISOString().slice(0, 16);
   };
 
   useEffect(() => {
-    // Reset form when training changes
     setFormData({ ...training });
-    
-    // Load masjid options
     fetchMasjidOptions();
   }, [training]);
 
@@ -118,7 +114,6 @@ const TrainingEditForm: React.FC<TrainingEditFormProps> = ({ training, onSuccess
         throw new Error("Authentication token not found");
       }
 
-      // Format dates to MySQL format (YYYY-MM-DD HH:MM:SS)
       const formattedData = {
         ...formData,
         waktu_mulai: new Date(formData.waktu_mulai).toISOString().replace('T', ' ').slice(0, 19),
@@ -137,7 +132,6 @@ const TrainingEditForm: React.FC<TrainingEditFormProps> = ({ training, onSuccess
       const data = await response.json();
 
       if (data.success) {
-        // Refresh training data
         const trainingResponse = await fetch(`${API_URL}/api/trainings/${training.id}`, {
           headers: {
             "Authorization": `Bearer ${token}`
@@ -150,7 +144,6 @@ const TrainingEditForm: React.FC<TrainingEditFormProps> = ({ training, onSuccess
             onSuccess(trainingData.data);
           }
         } else {
-          // If we can't fetch updated data, use what we have
           onSuccess({
             ...formData,
             waktu_mulai: formattedData.waktu_mulai,

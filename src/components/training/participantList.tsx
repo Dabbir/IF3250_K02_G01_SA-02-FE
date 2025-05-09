@@ -30,7 +30,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("");
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
@@ -55,8 +55,6 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
         url.searchParams.append("status", statusFilter);
       }
       
-      // Note: The backend might not support search for participants directly,
-      // but we'll prepare the UI for it anyway
       if (search) {
         url.searchParams.append("search", search);
       }
@@ -122,7 +120,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
 
       if (data.success) {
         toast.success("Status peserta berhasil diperbarui");
-        fetchParticipants(); // Refresh the list
+        fetchParticipants(); 
       } else {
         throw new Error(data.message || "Failed to update participant status");
       }
@@ -152,14 +150,13 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
         "Tanggal Pendaftaran": participant.created_at ? formatDate(new Date(participant.created_at)) : ""
       })));
 
-      // Set column widths
       const columnWidths = [
-        { wch: 30 }, // Name
-        { wch: 30 }, // Email
-        { wch: 15 }, // Phone
-        { wch: 15 }, // Status
-        { wch: 40 }, // Notes
-        { wch: 20 }, // Registration date
+        { wch: 30 }, 
+        { wch: 30 },
+        { wch: 15 },
+        { wch: 15 }, 
+        { wch: 40 }, 
+        { wch: 20 }, 
       ];
       worksheet['!cols'] = columnWidths;
 
@@ -246,7 +243,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
       {participants.length === 0 ? (
         <div className="text-center py-8 border rounded-lg">
           <p className="text-gray-500">Tidak ada data peserta pelatihan</p>
-          {(search || statusFilter) && (
+          {(search || statusFilter !== "") && (
             <div className="mt-2">
               <Button
                 variant="outline"

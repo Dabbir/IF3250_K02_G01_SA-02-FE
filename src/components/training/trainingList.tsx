@@ -48,6 +48,21 @@ const TrainingList: React.FC<TrainingListProps> = ({
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "Upcoming":
+        return <Badge className="font-medium bg-blue-100 text-blue-800">Akan Datang</Badge>;
+      case "Ongoing":
+        return <Badge className="font-medium bg-green-100 text-green-800">Sedang Berlangsung</Badge>;
+      case "Completed":
+        return <Badge className="font-medium bg-purple-100 text-purple-800">Selesai</Badge>;
+      case "Cancelled":
+        return <Badge className="font-medium bg-red-100 text-red-800">Dibatalkan</Badge>;
+      default:
+        return <Badge className="font-medium bg-gray-100 text-gray-800">{status}</Badge>;
+    }
+  };
+
   const handleShareToWhatsApp = (training: Training, e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -108,18 +123,16 @@ const TrainingList: React.FC<TrainingListProps> = ({
         {trainings.map((training) => (
           <Card 
             key={training.id} 
-            className="overflow-hidden hover:shadow-md transition cursor-pointer"
+            className="overflow-hidden hover:shadow-md transition cursor-pointer p-0"
             onClick={() => navigate(`/pelatihan/${training.id}`)}
           >
             <div className="w-full p-4 bg-gradient-to-r from-[#3A786D] to-[#4A9B8F] text-white">
               <h3 className="font-semibold truncate text-lg mb-1">
                 {training.nama_pelatihan}
               </h3>
-              <Badge className={`font-medium ${getStatusColor(training.status)}`}>
-                {training.status}
-              </Badge>
+              {getStatusBadge(training.status)}
             </div>
-            <CardContent className="p-4">
+            <CardContent className="px-4">
               <div className="space-y-3 mb-4">
                 <div className="flex items-start">
                   <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />

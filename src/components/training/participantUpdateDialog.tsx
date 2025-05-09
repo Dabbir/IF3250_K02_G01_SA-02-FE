@@ -29,7 +29,6 @@ interface ParticipantUpdateDialogProps {
   onSuccess: () => void;
 }
 
-// Define a type for the status to fix type issues
 type StatusType = "Pending" | "Approved" | "Rejected" | "Attended";
 
 const ParticipantUpdateDialog: React.FC<ParticipantUpdateDialogProps> = ({
@@ -44,7 +43,6 @@ const ParticipantUpdateDialog: React.FC<ParticipantUpdateDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const API_URL = import.meta.env.VITE_HOST_NAME;
 
-  // Create a handler for status change that explicitly handles the typing
   const handleStatusChange = (value: string) => {
     setStatus(value as StatusType);
   };
