@@ -65,7 +65,7 @@ const Dashboard = () => {
     return (
         <div className="relative p-3 md:p-6 bg-gradient-to-b from-[#96D4E7] to-[#EEEEEE] min-h-screen">
             <div
-                className="absolute top-0 left-0 w-full h-full bg-no-repeat bg-top bg-cover"
+                className="absolute top-0 left-0 w-full h-full bg-no-repeat bg-top bg-cover z-0"
                 style={{
                     backgroundImage: `url(${mapImage})`,
                     WebkitMaskImage:
@@ -75,7 +75,7 @@ const Dashboard = () => {
                 }}
             ></div>
 
-            <div className="relative z-10 w-full max-w-[95%] md:max-w-[95%] mx-auto">
+            <div className="relative z-1 w-full max-w-[95%] md:max-w-[95%] mx-auto">
                 <div className="w-full">
                     <DashboardHeader />
                 </div>
