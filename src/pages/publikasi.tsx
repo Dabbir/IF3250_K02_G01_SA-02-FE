@@ -269,15 +269,7 @@ export default function PublikasiPage() {
         ["Lainnya"]
       ];
       const wsMedia = XLSX.utils.aoa_to_sheet(mediaList);
-      
-      const toneList = [
-        ["Tone yang dapat digunakan"], 
-        ["Positif"], 
-        ["Netral"], 
-        ["Negatif"]
-      ];
-      const wsTone = XLSX.utils.aoa_to_sheet(toneList);
-      
+        
       const guidanceSheet = XLSX.utils.aoa_to_sheet([
         ["Panduan Pengisian Data Publikasi dengan Mekanisme Unggah File"],
         [""],

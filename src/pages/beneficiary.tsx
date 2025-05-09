@@ -34,7 +34,7 @@ export default function BeneficiaryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [, setTotalItems] = useState(0);
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
