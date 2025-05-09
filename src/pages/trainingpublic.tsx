@@ -12,7 +12,7 @@ import { Training, TrainingAvailability } from "@/lib/training";
 import { formatDateTimeToWIB } from "@/utils/dateUtils";
 import RegisterTrainingDialog from "@/components/training/registerTrainingDialog";
 
-const ITEMS_PER_PAGE = 6; // Show more per page for public view
+const ITEMS_PER_PAGE = 6; 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function PublicTrainingPage() {
