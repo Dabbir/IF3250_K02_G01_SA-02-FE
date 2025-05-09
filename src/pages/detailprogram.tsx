@@ -10,6 +10,8 @@ import { toast } from "react-toastify";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import useActivity from '@/hooks/use-activity';
+import ActivityTable from '@/components/activity/activitytable';
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -72,6 +74,16 @@ const DetailProgram = () => {
     const [coverFile,    setCoverFile]    = useState<File|null>(null);
     const [coverPreview, setCoverPreview] = useState<string|null>(null);
     const navigate = useNavigate();
+
+    const {
+        displayedActivities,
+        handleNavigate,
+        handleShareActivity,
+        handleDeleteClick,
+        sortColumn,
+        handleSortChange
+    } = useActivity()
+
     const [program, setProgram] = useState<Program>({
         id: 0,
         nama_program: "",
@@ -597,43 +609,14 @@ const DetailProgram = () => {
                             ) : kegiatanList.length === 0 ? (
                                 <p className="text-gray-500 text-center py-4">Tidak terdapat kegiatan untuk program ini.</p>
                             ) : (
-                                <Table className="border overflow-hidden">
-                                    <TableHeader>
-                                        <TableRow className="bg-gray-100">
-                                            <TableHead className="pl-7 w-[200px]">Nama Kegiatan</TableHead>
-                                            <TableHead className="w-[120px] text-center">Tanggal Mulai</TableHead>
-                                            <TableHead className="w-[120px] text-center">Tanggal Selesai</TableHead>
-                                            <TableHead className="w-[120px] text-center">Status</TableHead>
-                                            <TableHead className="w-[180px]">Biaya Implementasi</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-
-                                    <TableBody>
-                                        {kegiatanList.map((item, index) => (
-                                            <TableRow
-                                                key={index}
-                                                className="border-b cursor-pointer hover:bg-gray-100 transition"
-                                                onClick={() => {
-                                                    navigate(`/kegiatan/${item.idKegiatan}`);
-                                                }}
-                                            >
-                                                <TableCell className="pl-7 truncate max-w-[180px]">{item.namaKegiatan}</TableCell>
-                                                <TableCell className="text-center truncate">{item.tanggalMulai}</TableCell>
-                                                <TableCell className="text-center truncate">{item.tanggalSelesai}</TableCell>
-                                                <TableCell className="text-center truncate">
-                                                    <span className={`px-2 py-1 rounded-full text-xs ${
-                                                        item.status === "Finished" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                                                    }`}>
-                                                        {item.status}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-left truncate max-w-[180px]">
-                                                    Rp{parseInt(item.biayaImplementasi).toLocaleString()}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                <ActivityTable
+                                    activities={displayedActivities}
+                                    sortColumn={sortColumn}
+                                    onSortChange={handleSortChange}
+                                    onNavigate={handleNavigate}
+                                    onShare={handleShareActivity}
+                                    onDelete={handleDeleteClick}
+                                />
                             )}
                         </div>
                     </>
