@@ -184,25 +184,24 @@ const DashboardOverview: React.FC = () => {
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-blue-600" />
-          Stakeholder & SDM
+          Pemangku Kepentingan & Karyawan
         </h2>
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-            <p className="text-gray-600 text-xs">Total Stakeholder</p>
-            <p className="text-xl font-bold text-blue-700">{stats.stakeholders.total}</p>
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex flex-col">
+            <p className="text-gray-600 text-xs mb-1">Total Pemangku Kepentingan</p>
+            <p className="text-xl font-bold text-blue-700 mt-auto">{stats.stakeholders.total}</p>
           </div>
-          <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-            <p className="text-gray-600 text-xs">Karyawan Aktif</p>
-            <p className="text-xl font-bold text-green-700">{stats.employees.active}</p>
+          <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex flex-col">
+            <p className="text-gray-600 text-xs mb-1">Karyawan Aktif</p>
+            <p className="text-xl font-bold text-green-700 mt-auto">{stats.employees.active}</p>
           </div>
-          <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
-            <p className="text-gray-600 text-xs">Perusahaan</p>
-            <p className="text-xl font-bold text-purple-700">{stats.stakeholders.types.perusahaan}</p>
+          <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 flex flex-col">
+            <p className="text-gray-600 text-xs mb-1">Perusahaan</p>
+            <p className="text-xl font-bold text-purple-700 mt-auto">{stats.stakeholders.types.perusahaan}</p>
           </div>
         </div>
       </div>
 
-      {/* Program Overview */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
           <Target className="w-5 h-5 text-green-600" />
