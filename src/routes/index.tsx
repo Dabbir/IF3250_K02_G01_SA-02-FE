@@ -8,13 +8,13 @@ import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard.tsx";
 import AuthCallback from "@/pages/AuthCallback";
 import GoogleCallback from "@/pages/googlecallback.tsx";
-import Publikasi from "@/pages/publikasi.tsx";
+import Publikasi from "@/pages/publication.tsx";
 import Kegiatan from "@/pages/activity.tsx";
 import { UnauthenticatedProtectedRoute, AuthenticatedProtectedRoute } from "../utils/auth.tsx"
 import DetailKegiatan from "@/pages/detailactivity.tsx";
 import Program from "@/pages/program.tsx";
 import DetailProgram from "@/pages/detailprogram.tsx";
-import DetailPublikasi from "@/pages/detailpublikasi.tsx";
+import DetailPublikasi from "@/pages/detailpublication.tsx";
 import AdminDashboard from "@/pages/admin-dashboard.tsx";
 import ViewerAccessManagement from "@/pages/viewer-access.tsx";
 import StakeholderPage from "@/pages/stakeholders.tsx";

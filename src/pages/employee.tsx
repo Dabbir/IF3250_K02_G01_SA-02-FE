@@ -18,7 +18,6 @@ const Employee = () => {
         setSearch,
         isOpen,
         setIsOpen,
-        isEditMode,
         submitting,
         masjidName,
         newEmployee,
