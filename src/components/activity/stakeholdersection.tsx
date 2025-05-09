@@ -13,7 +13,6 @@ interface StakeholderSectionProps {
     isEditing: boolean
     onRemove: (index: number) => void
     allStakeholders: StakeholderActivity[]
-    filteredStakeholders: StakeholderActivity[]
     showStakeholderDropdown: boolean
     setShowStakeholderDropdown: React.Dispatch<React.SetStateAction<boolean>>
     stakeholderSearch: string
@@ -27,7 +26,6 @@ export default function StakeholderSection({
     isEditing,
     onRemove,
     allStakeholders,
-    filteredStakeholders,
     showStakeholderDropdown,
     setShowStakeholderDropdown,
     stakeholderSearch,
@@ -52,21 +50,8 @@ export default function StakeholderSection({
                         </div>
 
                         {showStakeholderDropdown && (
-                            <div className="absolute z-10 w-64 mt-1 bg-white border rounded-md shadow-md max-h-60 overflow-auto">
-                                {filteredStakeholders.length > 0 ? (
-                                    filteredStakeholders.map((stakeholder) => (
-                                        <div
-                                            key={stakeholder.id}
-                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                            onMouseDown={(e) => {
-                                                e.preventDefault()
-                                                onSelect(stakeholder)
-                                            }}
-                                        >
-                                            {stakeholder.nama_stakeholder} ({stakeholder.jenis})
-                                        </div>
-                                    ))
-                                ) : allStakeholders.length > 0 ? (
+                            <div className="absolute z-10 w-100 mt-1 bg-white border rounded-md shadow-md max-h-60 overflow-auto">
+                                {allStakeholders.length > 0 ? (
                                     allStakeholders.map((stakeholder) => (
                                         <div
                                             key={stakeholder.id}
@@ -80,7 +65,7 @@ export default function StakeholderSection({
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="px-4 py-2 text-gray-500">Tidak ada data stakeholder</div>
+                                    <div className="px-4 py-2 text-gray-500">Data tidak ditemukan</div>
                                 )}
                             </div>
                         )}

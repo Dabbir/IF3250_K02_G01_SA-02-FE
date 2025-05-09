@@ -47,7 +47,6 @@ export default function DetailKegiatan() {
         removeBeneficiary,
         removeKaryawan,
         allStakeholders,
-        filteredStakeholders,
         showStakeholderDropdown,
         setShowStakeholderDropdown,
         stakeholderSearch,
@@ -55,7 +54,6 @@ export default function DetailKegiatan() {
         handleSelectStakeholder,
         handleStakeholderDropdownBlur,
         allBeneficiaries,
-        filteredBeneficiaries,
         showBeneficiaryDropdown,
         setShowBeneficiaryDropdown,
         beneficiarySearch,
@@ -63,7 +61,6 @@ export default function DetailKegiatan() {
         handleSelectBeneficiary,
         handleBeneficiaryDropdownBlur,
         allKaryawan,
-        filteredKaryawan,
         showKaryawanDropdown,
         setShowKaryawanDropdown,
         karyawanSearch,
@@ -126,7 +123,6 @@ export default function DetailKegiatan() {
                             isEditing={isEditing}
                             onRemove={removeStakeholder}
                             allStakeholders={allStakeholders}
-                            filteredStakeholders={filteredStakeholders}
                             showStakeholderDropdown={showStakeholderDropdown}
                             setShowStakeholderDropdown={setShowStakeholderDropdown}
                             stakeholderSearch={stakeholderSearch}
@@ -141,7 +137,6 @@ export default function DetailKegiatan() {
                             isEditing={isEditing}
                             onRemove={removeBeneficiary}
                             allBeneficiaries={allBeneficiaries}
-                            filteredBeneficiaries={filteredBeneficiaries}
                             showBeneficiaryDropdown={showBeneficiaryDropdown}
                             setShowBeneficiaryDropdown={setShowBeneficiaryDropdown}
                             beneficiarySearch={beneficiarySearch}
@@ -156,7 +151,6 @@ export default function DetailKegiatan() {
                             isEditing={isEditing}
                             onRemove={removeKaryawan}
                             allKaryawan={allKaryawan}
-                            filteredKaryawan={filteredKaryawan}
                             showKaryawanDropdown={showKaryawanDropdown}
                             setShowKaryawanDropdown={setShowKaryawanDropdown}
                             karyawanSearch={karyawanSearch}

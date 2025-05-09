@@ -27,11 +27,7 @@ export default function useDetailActivity(id: string | undefined) {
 
     const [allStakeholders, setAllStakeholders] = useState<StakeholderActivity[]>([])
     const [allBeneficiaries, setAllBeneficiaries] = useState<BeneficiaryActivity[]>([])
-    const [allKaryawan, setAllKaryawan] = useState<EmployeeActivity[]>([])
-
-    const [filteredStakeholders, setFilteredStakeholders] = useState<StakeholderActivity[]>([])
-    const [filteredBeneficiaries, setFilteredBeneficiaries] = useState<BeneficiaryActivity[]>([])
-    const [filteredKaryawan, setFilteredKaryawan] = useState<EmployeeActivity[]>([])
+    const [allKaryawan, setAllKaryawan] = useState<EmployeeActivity[]>([])    
 
     const [showStakeholderDropdown, setShowStakeholderDropdown] = useState(false)
     const [showBeneficiaryDropdown, setShowBeneficiaryDropdown] = useState(false)
@@ -126,10 +122,18 @@ export default function useDetailActivity(id: string | undefined) {
         }
     }
 
-    const fetchAllStakeholders = async () => {
+    const fetchAllStakeholders = React.useCallback(async (page = 1, limit = 10) => {
         try {
-            const token = localStorage.getItem("token")
-            const response = await fetch(`${API_URL}/api/stakeholder/getAll/`, {
+            const token = localStorage.getItem("token");
+
+            const params = new URLSearchParams();
+            params.append("page", page.toString());
+            params.append("limit", limit.toString());
+            if (stakeholderSearch) {
+                params.append("nama_stakeholder", stakeholderSearch);
+            }
+
+            const response = await fetch(`${API_URL}/api/stakeholder/getAll?${params.toString()}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -146,7 +150,7 @@ export default function useDetailActivity(id: string | undefined) {
         } catch (error) {
             console.error(error)
         }
-    }
+    }, [stakeholderSearch]);
 
     const fetchAllBeneficiaries = React.useCallback(async (page = 1, limit = 10) => {
         try {
@@ -210,7 +214,25 @@ export default function useDetailActivity(id: string | undefined) {
         }
     }, [karyawanSearch]);
 
+    const [debouncedSearchStakeholder, setDebouncedSearchStakeholder] = useState(stakeholderSearch);
     const [debouncedSearchBeneficiary, setDebouncedSearchBeneficiary] = useState(beneficiarySearch);
+    const [debouncedSearchKaryawan, setDebouncedSearchKaryawan] = useState(karyawanSearch);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchStakeholder(stakeholderSearch);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [stakeholderSearch]);
+
+    useEffect(() => {
+        if (!stakeholderSearch) return;
+        fetchAllStakeholders(1, 10);
+    }, [debouncedSearchStakeholder, fetchAllStakeholders, stakeholderSearch]);
+
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearchBeneficiary(beneficiarySearch);
@@ -222,10 +244,10 @@ export default function useDetailActivity(id: string | undefined) {
     }, [beneficiarySearch]);
 
     useEffect(() => {
+        if (!beneficiarySearch) return;
         fetchAllBeneficiaries(1, 10);
-    }, [debouncedSearchBeneficiary, fetchAllBeneficiaries]);
+    }, [debouncedSearchBeneficiary, fetchAllBeneficiaries, beneficiarySearch]);
 
-    const [debouncedSearchKaryawan, setDebouncedSearchKaryawan] = useState(karyawanSearch);
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearchKaryawan(karyawanSearch);
@@ -237,15 +259,13 @@ export default function useDetailActivity(id: string | undefined) {
     }, [karyawanSearch]);
 
     useEffect(() => {
+        if (!karyawanSearch) return;
         fetchAllKaryawan();
-    }, [debouncedSearchKaryawan, fetchAllKaryawan]);
+    }, [debouncedSearchKaryawan, fetchAllKaryawan, karyawanSearch]);
 
     const handleEditClick = () => {
         setIsEditing(true)
         fetchPrograms()
-        fetchAllStakeholders()
-        // fetchAllBeneficiaries()
-        fetchAllKaryawan()
         setPrevDokumentasi(dokumentasiList)
         setImages([])
     }
@@ -318,23 +338,16 @@ export default function useDetailActivity(id: string | undefined) {
     const handleStakeholderSearchChange = (value: string) => {
         setStakeholderSearch(value)
         setShowStakeholderDropdown(true)
-        setFilteredStakeholders(
-            allStakeholders.filter((s) => s.nama_stakeholder.toLowerCase().includes(value.toLowerCase())),
-        )
     }
 
     const handleBeneficiarySearchChange = (value: string) => {
         setBeneficiarySearch(value)
         setShowBeneficiaryDropdown(true)
-        setFilteredBeneficiaries(
-            allBeneficiaries.filter((b) => b.nama_instansi.toLowerCase().includes(value.toLowerCase())),
-        )
     }
 
     const handleKaryawanSearchChange = (value: string) => {
         setKaryawanSearch(value)
         setShowKaryawanDropdown(true)
-        setFilteredKaryawan(allKaryawan.filter((k) => k.nama.toLowerCase().includes(value.toLowerCase())))
     }
 
     const handleSelectStakeholder = (stakeholder: StakeholderActivity) => {
@@ -469,9 +482,6 @@ export default function useDetailActivity(id: string | undefined) {
         allStakeholders,
         allBeneficiaries,
         allKaryawan,
-        filteredStakeholders,
-        filteredBeneficiaries,
-        filteredKaryawan,
         showStakeholderDropdown,
         setShowStakeholderDropdown,
         showBeneficiaryDropdown,
