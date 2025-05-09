@@ -240,7 +240,7 @@ export default function AddPublicationDialog({ isOpen, setIsOpen, onSuccess }: A
                 return;
             }
 
-            const response = await fetch(`${API_URL}/api/publikasi`, {
+            const response = await fetch(`${API_URL}/api/publication`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

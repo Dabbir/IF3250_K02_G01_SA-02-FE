@@ -1,27 +1,16 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+"use client"
+
 import { Button } from "@/components/ui/button";
 import CardProgram from "@/components/ui/card-program";
 import {
   Database,
   Loader2,
   Search,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   Filter,
   ChevronDown,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "react-toastify";
 import {
   Popover,
   PopoverTrigger,
@@ -31,186 +20,36 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import ChooseMethodProgram from "@/components/program/chooseMethodProgram";
-
-const API_URL = import.meta.env.VITE_HOST_NAME;
-
-interface Program {
-  id: number;
-  nama_program: string;
-  deskripsi_program: string;
-  pilar_program: string[];
-  kriteria_program: string;
-  waktu_mulai: string;
-  waktu_selesai: string;
-  rancangan_anggaran: number;
-  aktualisasi_anggaran: number;
-  status_program: "Belum Mulai" | "Berjalan" | "Selesai";
-  cover_image: string | null; 
-  masjid_id: number;
-  created_by: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface SortControlsProps {
-  sortBy: keyof Program;
-  sortOrder: "ASC" | "DESC";
-  onSortByChange: (val: keyof Program) => void;
-  onSortOrderToggle: () => void;
-}
-
-const ITEMS_PER_PAGE = 15;
+import ProgramSortControls from "@/components/program/programsortcontrol";
+import { getStatusBadge } from "@/components/program/programstatusbadge";
+import { STATUS_OPTIONS } from "@/types/program";
+import useProgram from "@/hooks/use-program";
 
 const Program = () => {
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [totalPrograms, setTotalPrograms] = useState(0);
-  const [programList, setProgramList] = useState<Program[]>([]);
-  const [sortBy, setSortBy] = useState<keyof Program>("created_at");
-  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [statusFilters, setStatusFilters] = useState<
-    (typeof STATUS_OPTIONS)[number][]
-  >([]);
-  const STATUS_OPTIONS = ["Belum Mulai", "Berjalan", "Selesai"];
-
-  const fetchPrograms = async (
-    page: number,
-    searchTerm: string,
-    sortField: keyof Program,
-    order: "ASC" | "DESC",
-    statuses: string[]
-  ) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const qs = new URLSearchParams({
-        page: page.toString(),
-        limit: ITEMS_PER_PAGE.toString(),
-        ...(searchTerm && { search: searchTerm }),
-        sortBy: sortField,
-        sortOrder: order,
-        ...(statuses.length > 0 && { status: statuses.join(",") }),
-      });
-
-      const res = await fetch(`${API_URL}/api/program?${qs}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const { data, total } = await res.json();
-      setProgramList(data);
-      setTotalPrograms(total);
-    } catch (e) {
-      console.error(e);
-      toast.error("Gagal memuat data program");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPrograms(currentPage, search.trim(), sortBy, sortOrder, statusFilters);
-  }, [currentPage, search, sortBy, sortOrder, statusFilters]);
-
-  const totalPages = Math.ceil(totalPrograms / ITEMS_PER_PAGE);
-
-  const handleDeleteProgram = async (programId: number): Promise<boolean> => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${API_URL}/api/program/${programId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) throw new Error("Gagal menghapus program");
-
-      const isLastItemOnPage = programList.length === 1 && currentPage > 1;
-      const nextPage = isLastItemOnPage ? currentPage - 1 : currentPage;
-      setCurrentPage(nextPage);
-      fetchPrograms(
-        currentPage,
-        search.trim(),
-        sortBy,
-        sortOrder,
-        statusFilters
-      );
-      return true;
-    } catch (error) {
-      console.error("Error deleting program:", error);
-      toast.error("Gagal menghapus program");
-      return false;
-    }
-  };
-
-  const SortControls: React.FC<SortControlsProps> = ({
+  const {
+    search,
+    setSearch,
+    isOpen, 
+    setIsOpen,
+    loading,
+    setSortBy,
+    setSortOrder,
+    fetchPrograms,
+    filterOpen,
+    setFilterOpen,
     sortBy,
+    currentPage,
+    setCurrentPage,
+    totalPrograms,
     sortOrder,
-    onSortByChange,
-    onSortOrderToggle,
-  }) => (
-    <div className="flex items-center space-x-1">
-      <Select
-        value={sortBy}
-        onValueChange={(v) => onSortByChange(v as keyof Program)}
-      >
-        <SelectTrigger className="h-8 px-2 flex items-center space-x-1 text-sm">
-          <ArrowUpDown className="w-4 h-4" />
-          <SelectValue placeholder="Sort by" />
-        </SelectTrigger>
-        <SelectContent className="w-32 py-1">
-          <SelectItem value="nama_program" className="px-2 py-1 text-sm">
-            Nama Program
-          </SelectItem>
-          <SelectItem value="waktu_mulai" className="px-2 py-1 text-sm">
-            Waktu Mulai
-          </SelectItem>
-          <SelectItem value="waktu_selesai" className="px-2 py-1 text-sm">
-            Waktu Selesai
-          </SelectItem>
-          <SelectItem value="created_at" className="px-2 py-1 text-sm">
-            Created At
-          </SelectItem>
-        </SelectContent>
-      </Select>
-
-      <button
-        onClick={onSortOrderToggle}
-        className="h-8 w-8 flex items-center justify-center border rounded text-sm"
-        aria-label="Toggle sort order"
-      >
-        {sortOrder === "ASC" ? (
-          <ArrowUp className="w-4 h-4" />
-        ) : (
-          <ArrowDown className="w-4 h-4" />
-        )}
-      </button>
-    </div>
-  );
-
-  function getStatusBadge(status: (typeof STATUS_OPTIONS)[number]) {
-    const bg = {
-      "Belum Mulai": "bg-slate-500",
-      Berjalan: "bg-[#ECA72C]",
-      Selesai: "bg-[#3A786D]",
-    }[status];
-    return (
-      <span className={`${bg} text-white rounded-full px-2 py-0.5 text-xs`}>
-        {status}
-      </span>
-    );
-  }
-
-  function toggleStatusFilter(s: (typeof STATUS_OPTIONS)[number]) {
-    setStatusFilters((fs) =>
-      fs.includes(s) ? fs.filter((x) => x !== s) : [...fs, s]
-    );
-  }
+    totalPages,
+    programList,
+    statusFilters,
+    setStatusFilters,
+    handleDeleteProgram,
+    toggleStatusFilter,
+    handleNavigate
+  } = useProgram()
 
   return (
     <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6">
@@ -284,7 +123,7 @@ const Program = () => {
             </PopoverContent>
           </Popover>
 
-          <SortControls
+          <ProgramSortControls
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSortByChange={setSortBy}
@@ -326,7 +165,7 @@ const Program = () => {
               <CardProgram
                 key={program.id}
                 program={program}
-                onClick={() => navigate(`/data-program/${program.id}`)}
+                onClick={() =>  handleNavigate(program.id)}
                 onDelete={handleDeleteProgram}
               />
             ))}

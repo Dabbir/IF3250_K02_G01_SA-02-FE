@@ -34,6 +34,15 @@ interface Aktivitas {
   updated_at: string;
 }
 
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+interface ValidationErrors {
+  [key: string]: string;
+}
+
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function DetailBeneficiary() {
@@ -53,6 +62,7 @@ export default function DetailBeneficiary() {
   const [aktivitas, setAktivitas] = useState<Aktivitas[]>([]);
   const [loadingAktivitas, setLoadingAktivitas] = useState(false);
   const [aktivitasError, setAktivitasError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ValidationErrors>({});
 
   useEffect(() => {
     if (isNewBeneficiary) {
@@ -200,24 +210,29 @@ export default function DetailBeneficiary() {
 
   const handleChange = (field: keyof Beneficiary, value: string) => {
     setEditedBeneficiary((prev) => (prev ? { ...prev, [field]: value } : null));
+    
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSaveClick = async () => {
     if (!editedBeneficiary) return;
-
-    if (!editedBeneficiary.nama_instansi) {
-      toast.error("Nama instansi harus diisi");
-      return;
-    }
-
+  
     setSaving(true);
+    setFieldErrors({}); 
+    
     try {
       const token = localStorage.getItem("token");
-
+  
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
+  
       const formData = new FormData();
       formData.append("nama_instansi", editedBeneficiary.nama_instansi);
       formData.append("nama_kontak", editedBeneficiary.nama_kontak || "");
@@ -230,13 +245,13 @@ export default function DetailBeneficiary() {
       } else if (editedBeneficiary.foto === "" && !isNewBeneficiary) {
         formData.append("remove_foto", "true");
       }
-
+  
       const url = isNewBeneficiary 
         ? `${API_URL}/api/beneficiary`
         : `${API_URL}/api/beneficiary/${id}`;
       
       const method = isNewBeneficiary ? "POST" : "PUT";
-
+  
       const response = await fetch(url, {
         method: method,
         headers: {
@@ -244,14 +259,30 @@ export default function DetailBeneficiary() {
         },
         body: formData
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to ${isNewBeneficiary ? 'create' : 'update'} beneficiary: ${response.status}`);
-      }
-
+  
       const result = await response.json();
-
+  
+      if (!response.ok) {
+        if (result.errors && Array.isArray(result.errors)) {
+          const errorObj: ValidationErrors = {};
+          result.errors.forEach((error: ValidationError) => {
+            errorObj[error.field] = error.message;
+          });
+          setFieldErrors(errorObj);
+          
+          const firstError = result.errors[0];
+          const firstErrorField = document.getElementById(firstError.field);
+          if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstErrorField.focus();
+          }
+          
+        } else {
+          toast.error(result.message || `Gagal ${isNewBeneficiary ? 'menambahkan' : 'memperbarui'} penerima manfaat!`);
+        }
+        return;
+      }
+  
       if (result.success) {
         toast.success(result.message || `Penerima manfaat berhasil ${isNewBeneficiary ? 'ditambahkan' : 'diperbarui'}!`);
         
@@ -268,7 +299,9 @@ export default function DetailBeneficiary() {
       }
     } catch (error) {
       console.error("Error saving beneficiary:", error);
-      toast.error(error instanceof Error ? error.message : `Gagal ${isNewBeneficiary ? 'menambahkan' : 'memperbarui'} penerima manfaat!`);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
     } finally {
       setSaving(false);
     }
@@ -282,6 +315,7 @@ export default function DetailBeneficiary() {
       setIsEditing(false);
       setSelectedImage(null);
       setImagePreview(null);
+      setFieldErrors({}); 
     }
   };
 
@@ -419,139 +453,191 @@ export default function DetailBeneficiary() {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <Table className="border rounded-lg overflow-hidden mb-2">
-                        <TableBody>
-                          <TableRow>
-                            <TableHead className="w-1/3">Nama Instansi</TableHead>
-                            <TableCell>
-                              {isEditing ? (
+                    <Table className="border rounded-lg overflow-hidden mb-2">
+                      <TableBody>
+                        <TableRow>
+                          <TableHead className="w-1/3">Nama Instansi</TableHead>
+                          <TableCell>
+                            {isEditing ? (
+                              <div className="space-y-1">
                                 <Input
+                                  id="nama_instansi"
                                   value={editedBeneficiary?.nama_instansi || ""}
                                   onChange={(e) => handleChange("nama_instansi", e.target.value)}
                                   placeholder="Nama instansi/lembaga"
-                                  required
+                                  className={fieldErrors.nama_instansi ? "border-red-500" : ""}
                                 />
-                              ) : (
-                                beneficiary?.nama_instansi || "N/A"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableHead>Nama Kontak</TableHead>
-                            <TableCell>
-                              {isEditing ? (
+                                {fieldErrors.nama_instansi && (
+                                  <p className="text-red-500 text-sm">{fieldErrors.nama_instansi}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span>{beneficiary?.nama_instansi || "N/A"}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableHead>Nama Kontak</TableHead>
+                          <TableCell>
+                            {isEditing ? (
+                              <div className="space-y-1">
                                 <Input
+                                  id="nama_kontak"
                                   value={editedBeneficiary?.nama_kontak || ""}
                                   onChange={(e) => handleChange("nama_kontak", e.target.value)}
                                   placeholder="Nama kontak personil"
+                                  className={fieldErrors.nama_kontak ? "border-red-500" : ""}
                                 />
-                              ) : (
-                                beneficiary?.nama_kontak || "N/A"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableHead>Email</TableHead>
-                            <TableCell>
-                              {isEditing ? (
+                                {fieldErrors.nama_kontak && (
+                                  <p className="text-red-500 text-sm">{fieldErrors.nama_kontak}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span>{beneficiary?.nama_kontak || "N/A"}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableCell>
+                            {isEditing ? (
+                              <div className="space-y-1">
                                 <Input
+                                  id="email"
                                   type="email"
                                   value={editedBeneficiary?.email || ""}
                                   onChange={(e) => handleChange("email", e.target.value)}
                                   placeholder="Email kontak"
+                                  className={fieldErrors.email ? "border-red-500" : ""}
                                 />
-                              ) : (
-                                beneficiary?.email || "N/A"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableHead>Telepon</TableHead>
-                            <TableCell>
-                              {isEditing ? (
+                                {fieldErrors.email && (
+                                  <p className="text-red-500 text-sm">{fieldErrors.email}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span>{beneficiary?.email || "N/A"}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableHead>Telepon</TableHead>
+                          <TableCell>
+                            {isEditing ? (
+                              <div className="space-y-1">
                                 <Input
+                                  id="telepon"
                                   type="tel"
                                   value={editedBeneficiary?.telepon || ""}
                                   onChange={(e) => handleChange("telepon", e.target.value)}
                                   placeholder="Nomor telepon"
+                                  className={fieldErrors.telepon ? "border-red-500" : ""}
                                 />
-                              ) : (
-                                beneficiary?.telepon || "N/A"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableHead>Alamat</TableHead>
-                            <TableCell>
-                              {isEditing ? (
+                                {fieldErrors.telepon && (
+                                  <p className="text-red-500 text-sm">{fieldErrors.telepon}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span>{beneficiary?.telepon || "N/A"}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableHead>Alamat</TableHead>
+                          <TableCell>
+                            {isEditing ? (
+                              <div className="space-y-1">
                                 <Textarea
+                                  id="alamat"
                                   value={editedBeneficiary?.alamat || ""}
                                   onChange={(e) => handleChange("alamat", e.target.value)}
                                   placeholder="Alamat lengkap"
-                                  className="min-h-[100px]"
+                                  className={`min-h-[100px] ${fieldErrors.alamat ? "border-red-500" : ""}`}
                                 />
-                              ) : (
-                                beneficiary?.alamat || "N/A"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
+                                {fieldErrors.alamat && (
+                                  <p className="text-red-500 text-sm">{fieldErrors.alamat}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="whitespace-pre-wrap">{beneficiary?.alamat || "N/A"}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
                     </div>
 
                     <div>
-                      <div className="border rounded-lg p-4 mb-4">
-                        <h3 className="font-medium text-lg mb-4">Foto Instansi/Lembaga</h3>
-                        
+                    <div className="border rounded-lg p-4 mb-4">
+                      <h3 className="font-medium text-lg mb-4">Foto Instansi/Lembaga</h3>
+                      
+                      {isEditing ? (
+                        <div className="relative border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          {(imagePreview || editedBeneficiary?.foto) ? (
+                            <div className="relative">
+                              <div className="aspect-video bg-white rounded-md overflow-hidden mb-3">
+                                <img
+                                  src={imagePreview || editedBeneficiary?.foto}
+                                  alt={editedBeneficiary?.nama_instansi}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleRemoveImage}
+                                className="absolute top-2 right-2 bg-white hover:bg-red-50 text-red-600 border border-red-200"
+                              >
+                                <X className="h-4 w-4 mr-1" /> Hapus Foto
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="text-center py-8">
+                              <Building className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                              <div className="text-sm text-gray-600 mb-4">
+                                Belum ada foto yang diunggah
+                              </div>
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept="image/jpeg, image/png, image/gif, image/webp"
+                                onChange={handleImageChange}
+                                className="hidden"
+                                id="foto-upload"
+                              />
+                              
+                              <label
+                                htmlFor="foto-upload"
+                                className="inline-flex items-center px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Pilih Foto
+                              </label>
+                            </div>
+                          )}
+                          
+                          {fieldErrors.foto && (
+                            <p className="text-red-500 text-sm mt-2">{fieldErrors.foto}</p>
+                          )}
+                          
+                          <p className="text-xs text-gray-500 mt-3 text-center">
+                            Format yang didukung: JPG, PNG, WEBP, GIF. Ukuran maksimal: 2MB
+                          </p>
+                        </div>
+                      ) : (
                         <div className="aspect-video bg-slate-100 flex items-center justify-center rounded-md overflow-hidden">
-                          {(imagePreview || (editedBeneficiary?.foto && !isEditing) || (beneficiary?.foto && !isEditing)) ? (
+                          {beneficiary?.foto ? (
                             <img
-                              src={imagePreview || editedBeneficiary?.foto || beneficiary?.foto}
-                              alt={editedBeneficiary?.nama_instansi || beneficiary?.nama_instansi}
-                              className="w-full h-full object-cover"
+                              src={beneficiary.foto}
+                              alt={beneficiary.nama_instansi}
+                              className="w-full h-full object-contain"
                             />
                           ) : (
                             <Building className="h-16 w-16 text-slate-300" />
                           )}
                         </div>
-
-                        {isEditing && (
-                          <div className="mt-4 flex flex-col items-center gap-2">
-                            <input
-                              type="file"
-                              ref={fileInputRef}
-                              accept="image/jpeg, image/png, image/gif, image/webp"
-                              onChange={handleImageChange}
-                              className="hidden"
-                              id="foto-upload"
-                            />
-                            
-                            <div className="flex gap-2">
-                              <label
-                                htmlFor="foto-upload"
-                                className="bg-[#3A786D] cursor-pointer inline-flex items-center px-4 py-2 text-white rounded-md hover:bg-opacity-90"
-                              >
-                                <Upload className="h-4 w-4 mr-2" /> Upload Foto
-                              </label>
-                              
-                              {(imagePreview || editedBeneficiary?.foto) && (
-                                <Button
-                                  variant="outline"
-                                  size="default"
-                                  onClick={handleRemoveImage}
-                                  className="text-red-500 border-red-200"
-                                >
-                                  <X className="h-4 w-4 mr-2" /> Hapus
-                                </Button>
-                              )}
-                            </div>
-                            
-                            <p className="text-xs text-gray-500 mt-2">
-                              Format: JPG, PNG, WEBP, GIF. Ukuran maksimal: 2MB
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                      )}
+                    </div>
                     </div>
                   </div>
                 </div>

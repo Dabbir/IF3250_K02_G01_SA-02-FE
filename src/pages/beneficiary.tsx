@@ -34,7 +34,7 @@ export default function BeneficiaryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [, setTotalItems] = useState(0);
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -61,7 +61,7 @@ export default function BeneficiaryPage() {
         }
 
         const data = await response.json();
-        
+
         if (data.success) {
           setBeneficiaries(data.data || []);
           setTotalPages(data.pagination?.totalPages || 1);
@@ -123,7 +123,7 @@ export default function BeneficiaryPage() {
       if (data.success) {
         setBeneficiaries(beneficiaries.filter(beneficiary => beneficiary.id !== id));
         toast.success(data.message || "Penerima manfaat berhasil dihapus");
-        
+
         if (beneficiaries.length === 1 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
         } else {
@@ -137,7 +137,7 @@ export default function BeneficiaryPage() {
                   "Authorization": `Bearer ${token}`
                 }
               });
-              
+
               if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
@@ -150,7 +150,7 @@ export default function BeneficiaryPage() {
               console.error("Error refreshing data:", error);
             }
           };
-          
+
           fetchBeneficiaries();
         }
       } else {
@@ -178,11 +178,11 @@ export default function BeneficiaryPage() {
     }));
 
     const columnWidths = [
-      { wch: 30 }, 
-      { wch: 25 }, 
-      { wch: 40 }, 
-      { wch: 20 }, 
-      { wch: 30 } 
+      { wch: 30 },
+      { wch: 25 },
+      { wch: 40 },
+      { wch: 20 },
+      { wch: 30 }
     ];
 
     const worksheet = utils.json_to_sheet(data);
@@ -194,15 +194,15 @@ export default function BeneficiaryPage() {
     writeFile(workbook, "Penerima_Manfaat.xlsx");
   };
 
-  if (loading) {
-    return (
-      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
-        <CardContent className="flex justify-center items-center h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
-        </CardContent>
-      </Card>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
+  //       <CardContent className="flex justify-center items-center h-[400px]">
+  //         <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+  //       </CardContent>
+  //     </Card>
+  //   );
+  // }
 
   if (error) {
     return (
@@ -261,7 +261,11 @@ export default function BeneficiaryPage() {
           </div>
         </div>
 
-        {beneficiaries.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+          </div>
+        ) : beneficiaries.length === 0 ? (
           <div className="text-center py-8 border rounded-lg">
             <p className="text-gray-500">Tidak ada data penerima manfaat</p>
             {search && (
@@ -279,15 +283,15 @@ export default function BeneficiaryPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {beneficiaries.map((beneficiary) => (
-              <Card 
-                key={beneficiary.id} 
+              <Card
+                key={beneficiary.id}
                 className="overflow-hidden hover:shadow-md transition cursor-pointer"
                 onClick={() => navigate(`/penerima-manfaat/${beneficiary.id}`)}
               >
                 <div className="w-full h-50 bg-slate-100 overflow-hidden">
                   {beneficiary.foto ? (
-                    <img 
-                      src={beneficiary.foto} 
+                    <img
+                      src={beneficiary.foto}
                       alt={beneficiary.nama_instansi}
                       className="w-full h-full object-cover"
                     />
@@ -303,11 +307,11 @@ export default function BeneficiaryPage() {
                       {beneficiary.nama_instansi}
                     </h3>
                   </div>
-                  
+
                   {beneficiary.nama_kontak && (
                     <p className="text-sm mt-2 text-gray-700">{beneficiary.nama_kontak}</p>
                   )}
-                  
+
                   <div className="mt-3 space-y-2">
                     {beneficiary.telepon && (
                       <div className="flex items-center text-sm text-gray-600">
@@ -336,7 +340,7 @@ export default function BeneficiaryPage() {
                       <Pencil className="h-4 w-4" />
                       <span className="ml-1 text-xs">Edit</span>
                     </Button>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -346,7 +350,7 @@ export default function BeneficiaryPage() {
                       <Share2 className="h-4 w-4" />
                       <span className="ml-1 text-xs">Share</span>
                     </Button>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -420,10 +424,10 @@ export default function BeneficiaryPage() {
             </Button>
           </div>
         )}
-        
-        <AddBeneficiary 
-          isOpen={isOpen} 
-          setIsOpen={setIsOpen} 
+
+        <AddBeneficiary
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
           onSuccess={() => {
             const fetchBeneficiaries = async () => {
               try {
@@ -435,7 +439,7 @@ export default function BeneficiaryPage() {
                     "Authorization": `Bearer ${token}`
                   }
                 });
-                
+
                 if (response.ok) {
                   const data = await response.json();
                   if (data.success) {
@@ -448,7 +452,7 @@ export default function BeneficiaryPage() {
                 console.error("Error refreshing data:", error);
               }
             };
-            
+
             fetchBeneficiaries();
           }}
         />

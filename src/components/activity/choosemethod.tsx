@@ -31,8 +31,8 @@ const ChooseMethod = ({ isOpen, setIsOpen }: ChooseMethod) => {
                 <div className="space-y-4">
                     <Card>
                         <CardContent className="p-4 flex justify-center">
-                            <Button 
-                                onClick={() => { setIsForm(true); setIsOpen(false); }} 
+                            <Button
+                                onClick={() => { setIsForm(true); setIsOpen(false); }}
                                 className="bg-[var(--green)] hover:bg-[var(--blue)] hover:scale-0.95 text-white"
                             >
                                 Form Tambah
@@ -41,8 +41,8 @@ const ChooseMethod = ({ isOpen, setIsOpen }: ChooseMethod) => {
                     </Card>
                     <Card>
                         <CardContent className="p-4 flex justify-center">
-                            <Button 
-                                onClick={() => { setIsXlsx(true); setIsOpen(false); }} 
+                            <Button
+                                onClick={() => { setIsXlsx(true); setIsOpen(false); }}
                                 className="bg-[var(--green)] hover:bg-[var(--blue)] hover:scale-0.95 text-white"
                             >
                                 Export Xlsx File
@@ -52,12 +52,12 @@ const ChooseMethod = ({ isOpen, setIsOpen }: ChooseMethod) => {
                 </div>
             </DialogContent>
             <AddActivityDialog
-            isOpen={isForm}
-            setIsOpen={setIsForm}
+                isOpen={isForm}
+                setIsOpen={setIsForm}
             />
             <ExportTemplate
-            isOpen={isXlsx}
-            setIsOpen={setIsXlsx}
+                isOpen={isXlsx}
+                setIsOpen={setIsXlsx}
             />
         </Dialog>
 

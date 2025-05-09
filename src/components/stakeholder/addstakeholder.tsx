@@ -1,26 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+
+// components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
-const API_URL = import.meta.env.VITE_HOST_NAME
+// types
+import { Stakeholder } from "@/types/stakeholder";
 
-interface Stakeholder {
-    id: string;
-    nama_stakeholder: string;
-    jenis: string;
-    telepon: string;
-    email: string;
-    foto: string;
-    masjid_id: string;
-    created_by: string;
-}
+const API_URL = import.meta.env.VITE_HOST_NAME
 
 interface AddStakeholderDialogProps {
     isOpen: boolean;
@@ -55,10 +49,10 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
         const newErrors: Record<string, string> = {};
 
         if (!newStakeholder.nama_stakeholder) {
-            newErrors.nama_stakeholder = "Nama stakeholder wajib diisi!";
+            newErrors.nama_stakeholder = "Nama pemangku kepentingan wajib diisi!";
         }
         if (!newStakeholder.jenis) {
-            newErrors.jenis = "Jenis stakeholder wajib diisi!";
+            newErrors.jenis = "Jenis pemangku kepentingan wajib diisi!";
         }
         if (!newStakeholder.telepon || newStakeholder.telepon.trim() === "") {
             newErrors.telepon = "Telepon wajib diisi!";
@@ -107,11 +101,11 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
             setIsOpen(false);
             setTimeout(() => window.location.reload(), 500)
 
-            toast.success("Stakeholder berhasil ditambahkan!")
+            toast.success("Pemangku kepentingan berhasil ditambahkan!")
 
         } catch (error) {
             console.error("Gagal menyimpan data:", error);
-            toast.error("Gagal menambahkan stakeholder!")
+            toast.error("Gagal menambahkan pemangku kepentingan!")
         } finally {
             setIsSaving(false);
         }
@@ -141,15 +135,15 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
             >
 
                 <DialogHeader>
-                    <DialogTitle className="text-center">Tambah Stakeholder</DialogTitle>
+                    <DialogTitle className="text-center">Tambah Pemangku Kepentingan</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="nama_stakeholder">Nama Stakeholder</Label>
+                        <Label htmlFor="nama_stakeholder">Nama Pemangku Kepentingan</Label>
                         <Input
                             name="nama_stakeholder"
                             id="nama_stakeholder"
-                            placeholder="Nama Stakeholder"
+                            placeholder="Nama Pemangku Kepentingan"
                             value={newStakeholder.nama_stakeholder}
                             onChange={handleInputChange}
                             className="w-full"
@@ -158,7 +152,7 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="jenis">Jenis Stakeholder</Label>
+                        <Label htmlFor="jenis">Jenis Pemangku Kepentingan</Label>
                         <Select
                             name="jenis"
                             onValueChange={(value) => handleSelectChange("jenis", value)}

@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil, Loader2, Menu, Filter } from "lucide-react";
+import { Search, ArrowUpDown, Trash2, BookOpen, Share2, Download, Pencil, Loader2, Menu, Filter, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import ChooseMethodPublication from "@/components/publikasi/choosemethodpublication";
 import * as XLSX from "xlsx";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
@@ -40,6 +40,13 @@ interface PaginationInfo {
   totalPages: number;
 }
 
+interface FilterOptions {
+  media: string[];
+  programs: Array<{ id: string; nama_program: string }>;
+  activities: Array<{ id: string; nama_aktivitas: string }>;
+  tones: string[];
+}
+
 const formatRupiah = (value: number) => {
   const valueInt = Math.round(value);
   return valueInt.toLocaleString("id-ID", { maximumFractionDigits: 0 });
@@ -56,21 +63,30 @@ export default function PublikasiPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
-  
+
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     page: 1,
     limit: ITEMS_PER_PAGE,
     totalPages: 0
   });
-  
+
   const [sortColumn, setSortColumn] = useState<string>("tanggal");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  
+
   const [toneFilters, setToneFilters] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  
+
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const [mediaFilters, setMediaFilters] = useState<string[]>([]);
+  const [programFilters, setprogramFilters] = useState<string[]>([]);
+  const [activityFilters, setActivityFilters] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [prValueMin, setPrValueMin] = useState<number | undefined>();
+  const [prValueMax, setPrValueMax] = useState<number | undefined>();
+  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -85,20 +101,20 @@ export default function PublikasiPage() {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, sortColumn, sortOrder, toneFilters]);
+  }, [currentPage, sortColumn, sortOrder, toneFilters, mediaFilters, dateFrom, dateTo, prValueMin, prValueMax]);
 
   useEffect(() => {
     if (searchTimer) {
       clearTimeout(searchTimer);
     }
-    
+
     const timer = setTimeout(() => {
-      setCurrentPage(1); 
+      setCurrentPage(1);
       fetchData();
     }, 500);
-    
+
     setSearchTimer(timer);
-    
+
     return () => {
       if (searchTimer) clearTimeout(searchTimer);
     };
@@ -113,27 +129,42 @@ export default function PublikasiPage() {
         throw new Error("Authentication token not found");
       }
 
-      let url = new URL(`${API_URL}/api/publikasi`);
+      const url = new URL(`${API_URL}/api/publication`);
       url.searchParams.append('page', currentPage.toString());
       url.searchParams.append('limit', ITEMS_PER_PAGE.toString());
-      
+
       if (search) {
         url.searchParams.append('search', search);
       }
-      
+
       const columnMapping: Record<string, string> = {
         'judul': 'judul_publikasi',
         'tanggal': 'tanggal_publikasi',
         'prValue': 'pr_value',
         'tone': 'tone'
       };
-      
+
       const backendSortColumn = columnMapping[sortColumn] || 'tanggal_publikasi';
       url.searchParams.append('sortBy', backendSortColumn);
       url.searchParams.append('sortOrder', sortOrder);
-      
+
       if (toneFilters.length > 0) {
         url.searchParams.append('toneFilters', toneFilters.join(','));
+      }
+      if (mediaFilters.length > 0) {
+        url.searchParams.append('mediaFilters', mediaFilters.join(','));
+      }
+      if (dateFrom) {
+        url.searchParams.append('dateFrom', dateFrom);
+      }
+      if (dateTo) {
+        url.searchParams.append('dateTo', dateTo);
+      }
+      if (prValueMin !== undefined) {
+        url.searchParams.append('prValueMin', prValueMin.toString());
+      }
+      if (prValueMax !== undefined) {
+        url.searchParams.append('prValueMax', prValueMax.toString());
       }
 
       const response = await fetch(url.toString(), {
@@ -143,7 +174,7 @@ export default function PublikasiPage() {
           "Authorization": `Bearer ${token}`
         }
       });
-      
+
       const result = await response.json();
 
       if (response.ok) {
@@ -170,7 +201,7 @@ export default function PublikasiPage() {
           nama_aktivitas: item.nama_aktivitas || "",
           tone: item.tone || "Netral",
         }));
-        
+
         setPublikasiList(formattedData);
         setPagination(result.pagination);
       } else {
@@ -185,8 +216,27 @@ export default function PublikasiPage() {
     }
   };
 
+  const fetchFilterOptions = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("Authentication token not found");
+    }
+    const response = await fetch(`${API_URL}/api/publication/filter-options`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+    setFilterOptions(data);
+  };
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
+
   const refreshData = async () => {
-    setCurrentPage(1); 
+    setCurrentPage(1);
     await fetchData();
   };
 
@@ -207,14 +257,14 @@ export default function PublikasiPage() {
         return [...prev, tone];
       }
     });
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const shareToWhatsApp = (item: Publikasi) => {
     event?.stopPropagation();
-    
+
     const formattedDate = formatDisplayDate(item.tanggal);
-    
+
     const shareText = `*Detail Publikasi*\n\n` +
       `*Judul:* ${item.judul}\n` +
       `*Media:* ${item.media}\n` +
@@ -237,47 +287,39 @@ export default function PublikasiPage() {
       toast.error("Tidak ada data untuk diekspor");
       return;
     }
-  
+
     try {
       const worksheetData = [
-        ["judul_publikasi", "media_publikasi", "nama_perusahaan_media", "tanggal_publikasi", "url_publikasi", "pr_value", "nama_program", "nama_aktivitas", "tone"], 
+        ["judul_publikasi", "media_publikasi", "nama_perusahaan_media", "tanggal_publikasi", "url_publikasi", "pr_value", "nama_program", "nama_aktivitas", "tone"],
         ["(HAPUS TEKS INI) IKUTI PANDUAN PENGISIAN PADA SHEETS '(PENTING!) Panduan Unggah' DAN '(PENTING!) Media & Tone'"]
       ];
-      
+
       const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-      
+
       const columnWidths = [
-        { wch: 30 }, 
-        { wch: 15 }, 
-        { wch: 20 }, 
-        { wch: 15 }, 
-        { wch: 30 }, 
-        { wch: 15 }, 
-        { wch: 20 }, 
-        { wch: 20 }, 
-        { wch: 10 } 
+        { wch: 30 },
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 30 },
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 10 }
       ];
       worksheet['!cols'] = columnWidths;
-  
+
       const mediaList = [
-        ["Media yang dapat digunakan"], 
-        ["Televisi"], 
-        ["Koran"], 
-        ["Radio"], 
-        ["Media Online"], 
-        ["Sosial Media"], 
+        ["Media yang dapat digunakan"],
+        ["Televisi"],
+        ["Koran"],
+        ["Radio"],
+        ["Media Online"],
+        ["Sosial Media"],
         ["Lainnya"]
       ];
       const wsMedia = XLSX.utils.aoa_to_sheet(mediaList);
-      
-      const toneList = [
-        ["Tone yang dapat digunakan"], 
-        ["Positif"], 
-        ["Netral"], 
-        ["Negatif"]
-      ];
-      const wsTone = XLSX.utils.aoa_to_sheet(toneList);
-      
+
       const guidanceSheet = XLSX.utils.aoa_to_sheet([
         ["Panduan Pengisian Data Publikasi dengan Mekanisme Unggah File"],
         [""],
@@ -302,13 +344,13 @@ export default function PublikasiPage() {
         [""],
         ["[CONTOH]"]
       ]);
-  
+
       XLSX.utils.sheet_add_aoa(guidanceSheet, [
         ["judul_publikasi", "media_publikasi", "nama_perusahaan_media", "tanggal_publikasi", "url_publikasi", "pr_value", "nama_program", "nama_aktivitas", "tone"],
         ["Peluncuran Program Kebersihan Masjid", "Media Online", "Republika Online", "2025-03-15", "https://republika.co.id/berita/123456", "5000000", "Program Kebersihan", "Bersih-bersih Masjid", "Positif"],
         ["Liputan Kegiatan Bakti Sosial", "Televisi", "Metro TV", "2025-03-20", "https://metrotv.com/watch/123456", "7500000", "Bakti Sosial", "Pembagian Sembako", "Positif"]
-      ], {origin: "A25"});
-  
+      ], { origin: "A25" });
+
       worksheet["!dataValidation"] = [
         {
           sqref: "B2:B100",
@@ -323,12 +365,12 @@ export default function PublikasiPage() {
           showDropDown: true,
         }
       ];
-      
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Template Publikasi");
       XLSX.utils.book_append_sheet(workbook, guidanceSheet, "(PENTING!) Panduan Unggah");
       XLSX.utils.book_append_sheet(workbook, wsMedia, "(PENTING!) Media & Tone");
-  
+
       XLSX.writeFile(workbook, "Template_Publikasi.xlsx");
       toast.success("Berhasil mengunduh template publikasi");
     } catch (error) {
@@ -354,7 +396,7 @@ export default function PublikasiPage() {
         return false;
       }
 
-      const response = await fetch(`${API_URL}/api/publikasi/${id}`, {
+      const response = await fetch(`${API_URL}/api/publication/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -387,7 +429,7 @@ export default function PublikasiPage() {
 
   const getToneBadge = (tone: string) => {
     let color = "";
-  
+
     switch (tone) {
       case "Positif":
         color = "bg-emerald-50 text-emerald-700 border border-emerald-200";
@@ -401,7 +443,7 @@ export default function PublikasiPage() {
       default:
         color = "bg-gray-100 text-gray-700 border border-gray-200";
     }
-  
+
     return (
       <Badge className={`px-3 py-1 text-xs font-medium rounded-md min-w-[90px] text-center ${color}`}>
         {tone}
@@ -409,15 +451,15 @@ export default function PublikasiPage() {
     );
   };
 
-  if (loading && currentPage === 1) {
-    return (
-      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
-        <CardContent className="flex justify-center items-center h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
-        </CardContent>
-      </Card>
-    );
-  }
+  // if (loading && currentPage === 1) {
+  //   return (
+  //     <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
+  //       <CardContent className="flex justify-center items-center h-[400px]">
+  //         <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+  //       </CardContent>
+  //     </Card>
+  //   );
+  // }
 
   if (error) {
     return (
@@ -463,45 +505,150 @@ export default function PublikasiPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="max-md:h-8 flex items-center gap-1 md:w-auto">
                   <Filter className="h-3 w-3 md:-h4 md:w-4" />
-                  <span className="max-md:text-[12px]">Filter Tone</span>
-                  {toneFilters.length > 0 && (
-                    <Badge className="ml-1 bg-[#3A786D]">{toneFilters.length}</Badge>
+                  <span className="max-md:text-[12px]">Filter</span>
+                  {(toneFilters.length > 0 || mediaFilters.length > 0 || dateFrom || dateTo || prValueMin !== undefined || prValueMax !== undefined) && (
+                    <Badge className="ml-1 bg-[#3A786D] text-white min-w-[20px] h-5 text-xs">
+                      {toneFilters.length + mediaFilters.length + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (prValueMin !== undefined ? 1 : 0) + (prValueMax !== undefined ? 1 : 0)}
+                    </Badge>
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-56 p-4">
-                <h4 className="text-[12px] font-medium mb-3">Filter berdasarkan tone</h4>
-                <div className="space-y-2">
-                  {TONE_OPTIONS.map((tone) => (
-                    <div key={tone} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`tone-${tone}`}
-                        checked={toneFilters.includes(tone)}
-                        onCheckedChange={() => toggleToneFilter(tone)}
-                      />
-                      <Label htmlFor={`tone-${tone}`} className="flex items-center">
-                        {getToneBadge(tone)}
-                      </Label>
+
+              <PopoverContent className="w-[calc(100vw-32px)] sm:w-[380px] p-0" align="end">
+                <div className="max-h-[85vh] overflow-y-auto">
+                  <div className="sticky top-0 z-10 bg-white border-b px-3 sm:px-4 py-3 flex items-center justify-between">
+                    <h3 className="font-semibold text-base">Filter Publikasi</h3>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs hover:bg-gray-100"
+                        onClick={() => {
+                          setToneFilters([]);
+                          setMediaFilters([]);
+                          setDateFrom("");
+                          setDateTo("");
+                          setPrValueMin(undefined);
+                          setPrValueMax(undefined);
+                        }}
+                      >
+                        Reset
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-gray-100"
+                        onClick={() => setFilterOpen(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
-                </div>
-                <div className="flex justify-between mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setToneFilters([])}
-                    disabled={toneFilters.length === 0}
-                    className="text-[12px]"
-                  >
-                    Clear All
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setFilterOpen(false)}
-                    className="bg-[#3A786D] text-[12px]"
-                  >
-                    Apply
-                  </Button>
+                  </div>
+
+                  <div className="p-3 sm:p-4 space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm text-gray-900">Tone</h4>
+                      <div className="grid grid-cols-3 gap-1 sm:gap-2">
+                        {TONE_OPTIONS.map((tone) => (
+                          <div key={tone} className="flex items-center space-x-1 py-1.5 px-1 sm:px-2 rounded hover:bg-gray-50">
+                            <Checkbox
+                              id={`tone-${tone}`}
+                              checked={toneFilters.includes(tone)}
+                              onCheckedChange={() => toggleToneFilter(tone)}
+                              className="data-[state=checked]:bg-[#3A786D] data-[state=checked]:border-[#3A786D] h-3.5 w-3.5"
+                            />
+                            <Label htmlFor={`tone-${tone}`} className="cursor-pointer text-xs sm:text-sm">
+                              {getToneBadge(tone)}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm text-gray-900">Media</h4>
+                      <div className="grid grid-cols-2 gap-x-1 gap-y-1 sm:gap-x-2">
+                        {filterOptions?.media.map((media) => (
+                          <div key={media} className="flex items-center space-x-1.5 py-1.5 px-1 sm:px-2 rounded hover:bg-gray-50">
+                            <Checkbox
+                              checked={mediaFilters.includes(media)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setMediaFilters([...mediaFilters, media]);
+                                } else {
+                                  setMediaFilters(mediaFilters.filter(m => m !== media));
+                                }
+                              }}
+                              className="data-[state=checked]:bg-[#3A786D] data-[state=checked]:border-[#3A786D] h-3.5 w-3.5"
+                            />
+                            <Label className="text-xs sm:text-sm cursor-pointer leading-none truncate">{media}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm text-gray-900">Tanggal & PR Value</h4>
+                      <div className="space-y-3 border rounded-md p-2 sm:p-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label htmlFor="dateFrom" className="text-xs text-gray-600 mb-1 block">Dari</Label>
+                            <Input
+                              id="dateFrom"
+                              type="date"
+                              value={dateFrom}
+                              onChange={(e) => setDateFrom(e.target.value)}
+                              className="h-8 text-xs sm:text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="dateTo" className="text-xs text-gray-600 mb-1 block">Sampai</Label>
+                            <Input
+                              id="dateTo"
+                              type="date"
+                              value={dateTo}
+                              onChange={(e) => setDateTo(e.target.value)}
+                              className="h-8 text-xs sm:text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label htmlFor="prValueMin" className="text-xs text-gray-600 mb-1 block">PR Min</Label>
+                            <Input
+                              id="prValueMin"
+                              type="number"
+                              value={prValueMin || ''}
+                              onChange={(e) => setPrValueMin(e.target.value ? Number(e.target.value) : undefined)}
+                              placeholder="0"
+                              className="h-8 text-xs sm:text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="prValueMax" className="text-xs text-gray-600 mb-1 block">PR Max</Label>
+                            <Input
+                              id="prValueMax"
+                              type="number"
+                              value={prValueMax || ''}
+                              onChange={(e) => setPrValueMax(e.target.value ? Number(e.target.value) : undefined)}
+                              placeholder="999999999"
+                              className="h-8 text-xs sm:text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="sticky bottom-0 z-10 bg-white border-t px-3 sm:px-4 py-3">
+                    <Button
+                      className="w-full bg-[#3A786D] hover:bg-[#2d5f56] text-white h-9 text-sm font-medium"
+                      onClick={() => setFilterOpen(false)}
+                    >
+                      Terapkan Filter
+                    </Button>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
@@ -525,10 +672,14 @@ export default function PublikasiPage() {
           </div>
         </div>
 
-        {publikasiList.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+          </div>
+        ) : publikasiList.length === 0 ? (
           <div className="text-center py-8 border rounded-lg">
             <p className="text-gray-500">No publications found</p>
-            {(toneFilters.length > 0 || search) && (
+            {(toneFilters.length > 0 || search || mediaFilters.length > 0 || programFilters.length > 0 || activityFilters.length > 0 || dateFrom || dateTo || prValueMin !== undefined || prValueMax !== undefined) && (
               <div className="mt-2">
                 <Button
                   variant="outline"
@@ -536,6 +687,13 @@ export default function PublikasiPage() {
                   onClick={() => {
                     setToneFilters([]);
                     setSearch("");
+                    setMediaFilters([]);
+                    setprogramFilters([]);
+                    setActivityFilters([]);
+                    setDateFrom("");
+                    setDateTo("");
+                    setPrValueMin(undefined);
+                    setPrValueMax(undefined);
                   }}
                 >
                   Clear All Filters
@@ -631,9 +789,9 @@ export default function PublikasiPage() {
 
                 <div>
                   <span className="block text-gray-500 text-xs">Link</span>
-                  <a 
-                    href={item.link} 
-                    target="_blank" 
+                  <a
+                    href={item.link}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 underline text-sm truncate block"
                     onClick={(e) => e.stopPropagation()}
@@ -649,7 +807,7 @@ export default function PublikasiPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead 
+                  <TableHead
                     className="pl-7 w-[200px] cursor-pointer"
                     onClick={() => handleSortChange("judul")}
                   >
@@ -660,7 +818,7 @@ export default function PublikasiPage() {
                       )}
                     </div>
                   </TableHead>
-                  <TableHead 
+                  <TableHead
                     className="w-[120px] text-center cursor-pointer"
                     onClick={() => handleSortChange("tanggal")}
                   >
@@ -671,13 +829,13 @@ export default function PublikasiPage() {
                       )}
                     </div>
                   </TableHead>
-                  <TableHead 
+                  <TableHead
                     className="w-[180px]">
                     <div className="flex items-center">
                       Link
                     </div>
                   </TableHead>
-                  <TableHead 
+                  <TableHead
                     className="w-[150px] cursor-pointer"
                     onClick={() => handleSortChange("prValue")}
                   >
@@ -688,7 +846,7 @@ export default function PublikasiPage() {
                       )}
                     </div>
                   </TableHead>
-                  <TableHead 
+                  <TableHead
                     className="w-[120px] text-center cursor-pointer"
                     onClick={() => handleSortChange("tone")}
                   >
@@ -800,12 +958,12 @@ export default function PublikasiPage() {
               const pageButtons = [];
               const maxVisiblePages = 5;
               let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-              let endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
-              
+              const endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
+
               if (endPage - startPage + 1 < maxVisiblePages) {
                 startPage = Math.max(1, endPage - maxVisiblePages + 1);
               }
-              
+
               if (startPage > 1) {
                 pageButtons.push(
                   <Button
@@ -816,7 +974,7 @@ export default function PublikasiPage() {
                     1
                   </Button>
                 );
-                
+
                 if (startPage > 2) {
                   pageButtons.push(
                     <span key="ellipsis1" className="flex items-center justify-center">
@@ -825,23 +983,22 @@ export default function PublikasiPage() {
                   );
                 }
               }
-              
+
               for (let i = startPage; i <= endPage; i++) {
                 pageButtons.push(
                   <Button
                     key={i}
                     onClick={() => setCurrentPage(i)}
-                    className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${
-                      currentPage === i
-                        ? "bg-[#3A786D] text-white"
-                        : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                    }`}
+                    className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${currentPage === i
+                      ? "bg-[#3A786D] text-white"
+                      : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
+                      }`}
                   >
                     {i}
                   </Button>
                 );
               }
-              
+
               if (endPage < pagination.totalPages) {
                 if (endPage < pagination.totalPages - 1) {
                   pageButtons.push(
@@ -850,7 +1007,7 @@ export default function PublikasiPage() {
                     </span>
                   );
                 }
-                
+
                 pageButtons.push(
                   <Button
                     key="last"
@@ -861,7 +1018,7 @@ export default function PublikasiPage() {
                   </Button>
                 );
               }
-              
+
               return pageButtons;
             })()}
             <Button
@@ -873,7 +1030,7 @@ export default function PublikasiPage() {
             </Button>
           </div>
         )}
-        
+
         <ChooseMethodPublication
           isOpen={isOpen}
           setIsOpen={setIsOpen}

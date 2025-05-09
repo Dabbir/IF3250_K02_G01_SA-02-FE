@@ -74,10 +74,12 @@ const GoogleCallback = () => {
               navigate('/login');
             }
           } catch (error) {
+            console.error("Error:", error);
             toast.error("Terjadi kesalahan. Silakan coba lagi.");
             navigate('/login');
           }
       } catch (error) {
+        console.error("Error:", error);
         toast.error("Login gagal: Token tidak valid");
         navigate('/login');
       } finally {
@@ -86,7 +88,7 @@ const GoogleCallback = () => {
     };
 
     processToken();
-  }, [location, navigate]);
+  }, [location, navigate, API_URL]);
 
   return (
     <div className="flex h-screen flex-col items-center justify-center bg-gray-50">

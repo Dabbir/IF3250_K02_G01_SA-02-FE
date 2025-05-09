@@ -1,4 +1,3 @@
-// src/pages/AuthCallback.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -8,26 +7,26 @@ const AuthCallback = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   useEffect(() => {
     const handleCallback = async () => {
       try {
         const params = new URLSearchParams(location.search);
         const token = params.get('token');
-        
+
         if (!token) {
           throw new Error('Token tidak ditemukan');
         }
-        
+
         localStorage.setItem('token', token);
-        
+
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         navigate('/dashboard', { replace: true });
       } catch (err) {
         console.error('Error handling auth callback:', err);
         setError(err instanceof Error ? err.message : 'Otentikasi gagal');
-        
+
         setTimeout(() => {
           navigate('/login', { replace: true });
         }, 3000);
@@ -35,10 +34,10 @@ const AuthCallback = () => {
         setLoading(false);
       }
     };
-    
+
     handleCallback();
   }, [location, navigate]);
-  
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -47,7 +46,7 @@ const AuthCallback = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -58,7 +57,7 @@ const AuthCallback = () => {
       </div>
     );
   }
-  
+
   return null;
 };
 
