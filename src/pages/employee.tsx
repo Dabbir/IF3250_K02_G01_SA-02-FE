@@ -12,8 +12,6 @@ import { Search, Users, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-toastify";
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
@@ -91,9 +89,9 @@ const Employee = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [masjidName, setMasjidName] = useState("");
     const [isOpen, setIsOpen] = useState(false);
-    const [isEditMode, setIsEditMode] = useState(false);
+    const [, setIsEditMode] = useState(false);
     const [employeeList, setEmployeeList] = useState<Employee[]>([]);
-    const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+    const [] = useState(window.innerWidth < 768);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [totalEmployees, setTotalEmployees] = useState(0);
@@ -356,19 +354,6 @@ const Employee = () => {
         setIsOpen(open);
     };
 
-    const handleEdit = (employee: Employee) => {
-        setNewEmployee({
-          id: employee.id,
-          nama: employee.nama,
-          email: employee.email,
-          telepon: employee.telepon,
-          alamat: employee.alamat,
-          masjid_id: employee.masjid_id,
-          foto: employee.foto
-        });
-        setIsEditMode(true);
-        setIsOpen(true);
-    };
 
     const handleDelete = async (id: string): Promise<boolean> => {
         try {
@@ -470,7 +455,6 @@ const Employee = () => {
                 throw new Error(errorData.message || "Failed to save employee");
             }
     
-            const data = await response.json();
     
             toast.success("Karyawan berhasil ditambahkan");
             setIsOpen(false);

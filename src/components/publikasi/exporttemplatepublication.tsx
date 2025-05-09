@@ -365,7 +365,7 @@ const ExportTemplatePublication = ({ isOpen, setIsOpen, onSuccess }: ExportTempl
             let successCount = 0;
             for (const item of formattedData) {
                 try {
-                    const response = await fetch(`${API_URL}/api/publikasi`, {
+                    const response = await fetch(`${API_URL}/api/publication`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
