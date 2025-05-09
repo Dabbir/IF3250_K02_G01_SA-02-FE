@@ -5,16 +5,13 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Trash2 } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Trash2 } from "lucide-react"
 import type { StakeholderActivity } from "@/types/activity"
 
 interface StakeholderSectionProps {
     stakeholders: StakeholderActivity[]
     isEditing: boolean
-    onAdd: () => void
     onRemove: (index: number) => void
-    onUpdate: (index: number, field: keyof StakeholderActivity, value: string) => void
     allStakeholders: StakeholderActivity[]
     filteredStakeholders: StakeholderActivity[]
     showStakeholderDropdown: boolean
@@ -28,9 +25,7 @@ interface StakeholderSectionProps {
 export default function StakeholderSection({
     stakeholders,
     isEditing,
-    onAdd,
     onRemove,
-    onUpdate,
     allStakeholders,
     filteredStakeholders,
     showStakeholderDropdown,
@@ -43,20 +38,17 @@ export default function StakeholderSection({
     return (
         <div className="mt-8">
             <div className="flex-col space-y-4 items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Stakeholder</h2>
+                <h2 className="text-lg font-medium">Pemangku Kepentingan</h2>
                 {isEditing && (
                     <div className="relative" onBlur={onDropdownBlur}>
                         <div className="flex items-center gap-2">
                             <Input
-                                placeholder="Cari stakeholder..."
+                                placeholder="Cari dan pilih pemangku kepentingan..."
                                 value={stakeholderSearch}
                                 onChange={(e) => onSearchChange(e.target.value)}
                                 onFocus={() => setShowStakeholderDropdown(true)}
-                                className="w-64"
+                                className="w-full md:w-100"
                             />
-                            <Button variant="outline" size="sm" onClick={onAdd} className="flex items-center">
-                                <Plus className="h-4 w-4 mr-2" /> Tambah Baru
-                            </Button>
                         </div>
 
                         {showStakeholderDropdown && (
@@ -117,62 +109,19 @@ export default function StakeholderSection({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor={`stakeholder-name-${index}`}>Nama Stakeholder</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`stakeholder-name-${index}`}
-                                        value={stakeholder.nama_stakeholder}
-                                        onChange={(e) => onUpdate(index, "nama_stakeholder", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{stakeholder.nama_stakeholder || "N/A"}</p>
-                                )}
+                                <p>{stakeholder.nama_stakeholder || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`stakeholder-type-${index}`}>Jenis</Label>
-                                {isEditing ? (
-                                    <Select
-                                        value={stakeholder.jenis}
-                                        onValueChange={(value) =>
-                                            onUpdate(index, "jenis", value as "Individu" | "Organisasi" | "Perusahaan")
-                                        }
-                                    >
-                                        <SelectTrigger id={`stakeholder-type-${index}`}>
-                                            <SelectValue placeholder="Pilih jenis" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Individu">Individu</SelectItem>
-                                            <SelectItem value="Organisasi">Organisasi</SelectItem>
-                                            <SelectItem value="Perusahaan">Perusahaan</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                ) : (
-                                    <p>{stakeholder.jenis || "N/A"}</p>
-                                )}
+                                <p>{stakeholder.jenis || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`stakeholder-phone-${index}`}>No Telepon</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`stakeholder-phone-${index}`}
-                                        value={stakeholder.telepon}
-                                        onChange={(e) => onUpdate(index, "telepon", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{stakeholder.telepon || "N/A"}</p>
-                                )}
+                                <p>{stakeholder.telepon || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`stakeholder-email-${index}`}>Email</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`stakeholder-email-${index}`}
-                                        type="email"
-                                        value={stakeholder.email}
-                                        onChange={(e) => onUpdate(index, "email", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{stakeholder.email || "N/A"}</p>
-                                )}
+                                <p>{stakeholder.email || "N/A"}</p>
                             </div>
                         </div>
                     </div>

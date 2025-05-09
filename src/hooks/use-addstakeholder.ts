@@ -15,7 +15,6 @@ const initialStakeholder: Stakeholder = {
     jenis: "",
     telepon: "",
     email: "",
-    foto: "",
     masjid_id: "",
     created_by: "",
 }

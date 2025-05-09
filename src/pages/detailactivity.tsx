@@ -43,15 +43,9 @@ export default function DetailKegiatan() {
         handleRemoveImage,
         handleAddImages,
         handleSaveClick,
-        addStakeholder,
         removeStakeholder,
-        updateStakeholder,
-        addBeneficiary,
         removeBeneficiary,
-        updateBeneficiary,
-        addKaryawan,
         removeKaryawan,
-        updateKaryawan,
         allStakeholders,
         filteredStakeholders,
         showStakeholderDropdown,
@@ -130,9 +124,7 @@ export default function DetailKegiatan() {
                         <StakeholderSection
                             stakeholders={stakeholders}
                             isEditing={isEditing}
-                            onAdd={addStakeholder}
                             onRemove={removeStakeholder}
-                            onUpdate={updateStakeholder}
                             allStakeholders={allStakeholders}
                             filteredStakeholders={filteredStakeholders}
                             showStakeholderDropdown={showStakeholderDropdown}
@@ -147,9 +139,7 @@ export default function DetailKegiatan() {
                         <BeneficiarySection
                             beneficiaries={beneficiaries}
                             isEditing={isEditing}
-                            onAdd={addBeneficiary}
                             onRemove={removeBeneficiary}
-                            onUpdate={updateBeneficiary}
                             allBeneficiaries={allBeneficiaries}
                             filteredBeneficiaries={filteredBeneficiaries}
                             showBeneficiaryDropdown={showBeneficiaryDropdown}
@@ -164,9 +154,7 @@ export default function DetailKegiatan() {
                         <EmployeeSection
                             karyawan={karyawan}
                             isEditing={isEditing}
-                            onAdd={addKaryawan}
                             onRemove={removeKaryawan}
-                            onUpdate={updateKaryawan}
                             allKaryawan={allKaryawan}
                             filteredKaryawan={filteredKaryawan}
                             showKaryawanDropdown={showKaryawanDropdown}

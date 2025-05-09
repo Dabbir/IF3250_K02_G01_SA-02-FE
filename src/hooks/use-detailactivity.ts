@@ -1,34 +1,12 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState, useEffect } from "react"
 import { toast } from "react-toastify"
 import type { DetailedKegiatan, Program, ImageData, StakeholderActivity, BeneficiaryActivity, EmployeeActivity } from "@/types/activity"
 
 const API_URL = import.meta.env.VITE_HOST_NAME
-
-const emptyStakeholder: StakeholderActivity = {
-    nama_stakeholder: "",
-    jenis: "Individu",
-    telepon: "",
-    email: "",
-}
-
-const emptyBeneficiary: BeneficiaryActivity = {
-    nama_instansi: "",
-    nama_kontak: "",
-    telepon: "",
-    email: "",
-    alamat: "",
-}
-
-const emptyKaryawan: EmployeeActivity = {
-    nama: "",
-    email: "",
-    telepon: "",
-    alamat: "",
-}
 
 export default function useDetailActivity(id: string | undefined) {
     const [kegiatan, setKegiatan] = useState<DetailedKegiatan | null>(null)
@@ -96,7 +74,7 @@ export default function useDetailActivity(id: string | undefined) {
                 })
 
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch activity: ${response.status}`)
+                    throw new Error(`Gagal memuat detail aktivitas: ${response.status}`)
                 }
 
                 const data = await response.json()
@@ -105,24 +83,10 @@ export default function useDetailActivity(id: string | undefined) {
                     setKegiatan(data.activity)
                     setEditedKegiatan(data.activity)
                     setDokumentasiList(getDokumentasiList(data.activity?.dokumentasi))
+                    setStakeholders(data.stakeholder ?? []);
+                    setBeneficiaries(data.beneficiary ?? []);
+                    setKaryawan(data.employee ?? []);
 
-                    if (data.activity.stakeholder) {
-                        setStakeholders(data.activity.stakeholder)
-                    } else {
-                        setStakeholders([])
-                    }
-
-                    if (data.activity.beneficiary) {
-                        setBeneficiaries(data.activity.beneficiary)
-                    } else {
-                        setBeneficiaries([])
-                    }
-
-                    if (data.activity.employee) {
-                        setKaryawan(data.activity.employee)
-                    } else {
-                        setKaryawan([])
-                    }
                 } else {
                     throw new Error(data.message || "Failed to fetch activity")
                 }
@@ -184,55 +148,103 @@ export default function useDetailActivity(id: string | undefined) {
         }
     }
 
-    const fetchAllBeneficiaries = async () => {
+    const fetchAllBeneficiaries = React.useCallback(async (page = 1, limit = 10) => {
         try {
-            const token = localStorage.getItem("token")
-            const response = await fetch(`${API_URL}/api/beneficiary/getAll/`, {
+            const token = localStorage.getItem("token");
+
+            const params = new URLSearchParams();
+            params.append("page", page.toString());
+            params.append("limit", limit.toString());
+            if (beneficiarySearch) {
+                params.append("nama_instansi", beneficiarySearch);
+            }
+
+            const response = await fetch(`${API_URL}/api/beneficiary?${params.toString()}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-            })
+            });
 
-            if (!response.ok) throw new Error("Gagal mengambil data penerima manfaat")
+            if (!response.ok) throw new Error("Gagal mengambil data penerima manfaat");
 
-            const data = await response.json()
+            const data = await response.json();
             if (data.success) {
-                setAllBeneficiaries(data.beneficiaries || [])
+                setAllBeneficiaries(data.data || []);
             }
         } catch (error) {
-            console.error(error)
+            console.error(error);
         }
-    }
+    }, [beneficiarySearch]);
 
-    const fetchAllKaryawan = async () => {
+    const fetchAllKaryawan = React.useCallback(async (page = 1, limit = 9, sortBy = "created_at", sortOrder = "DESC") => {
         try {
-            const token = localStorage.getItem("token")
-            const response = await fetch(`${API_URL}/api/employee/getAll/`, {
+            const token = localStorage.getItem("token");
+
+            const params = new URLSearchParams();
+            params.append("page", page.toString());
+            params.append("limit", limit.toString());
+            params.append("sortBy", sortBy);
+            params.append("sortOrder", sortOrder);
+            if (karyawanSearch) {
+                params.append("search", karyawanSearch);
+            }
+
+            const response = await fetch(`${API_URL}/api/employee?${params.toString()}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-            })
+            });
 
-            if (!response.ok) throw new Error("Gagal mengambil data karyawan")
+            if (!response.ok) throw new Error("Gagal mengambil data karyawan");
 
-            const data = await response.json()
+            const data = await response.json();
             if (data.success) {
-                setAllKaryawan(data.employees || [])
+                setAllKaryawan(data.data || []);
             }
         } catch (error) {
-            console.error(error)
+            console.error(error);
         }
-    }
+    }, [karyawanSearch]);
+
+    const [debouncedSearchBeneficiary, setDebouncedSearchBeneficiary] = useState(beneficiarySearch);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchBeneficiary(beneficiarySearch);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [beneficiarySearch]);
+
+    useEffect(() => {
+        fetchAllBeneficiaries(1, 10);
+    }, [debouncedSearchBeneficiary, fetchAllBeneficiaries]);
+
+    const [debouncedSearchKaryawan, setDebouncedSearchKaryawan] = useState(karyawanSearch);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchKaryawan(karyawanSearch);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [karyawanSearch]);
+
+    useEffect(() => {
+        fetchAllKaryawan();
+    }, [debouncedSearchKaryawan, fetchAllKaryawan]);
 
     const handleEditClick = () => {
         setIsEditing(true)
         fetchPrograms()
         fetchAllStakeholders()
-        fetchAllBeneficiaries()
+        // fetchAllBeneficiaries()
         fetchAllKaryawan()
         setPrevDokumentasi(dokumentasiList)
         setImages([])
@@ -291,52 +303,16 @@ export default function useDetailActivity(id: string | undefined) {
         setDokumentasiList((prev) => [...prev, ...newImages.map((image) => image.url)])
     }
 
-    const addStakeholder = () => {
-        setStakeholders((prev) => [...prev, { ...emptyStakeholder }])
-    }
-
     const removeStakeholder = (index: number) => {
         setStakeholders((prev) => prev.filter((_, i) => i !== index))
-    }
-
-    const updateStakeholder = (index: number, field: keyof StakeholderActivity, value: string) => {
-        setStakeholders((prev) => {
-            const updated = [...prev]
-            updated[index] = { ...updated[index], [field]: value }
-            return updated
-        })
-    }
-
-    const addBeneficiary = () => {
-        setBeneficiaries((prev) => [...prev, { ...emptyBeneficiary }])
     }
 
     const removeBeneficiary = (index: number) => {
         setBeneficiaries((prev) => prev.filter((_, i) => i !== index))
     }
 
-    const updateBeneficiary = (index: number, field: keyof BeneficiaryActivity, value: string) => {
-        setBeneficiaries((prev) => {
-            const updated = [...prev]
-            updated[index] = { ...updated[index], [field]: value }
-            return updated
-        })
-    }
-
-    const addKaryawan = () => {
-        setKaryawan((prev) => [...prev, { ...emptyKaryawan }])
-    }
-
     const removeKaryawan = (index: number) => {
         setKaryawan((prev) => prev.filter((_, i) => i !== index))
-    }
-
-    const updateKaryawan = (index: number, field: keyof EmployeeActivity, value: string) => {
-        setKaryawan((prev) => {
-            const updated = [...prev]
-            updated[index] = { ...updated[index], [field]: value }
-            return updated
-        })
     }
 
     const handleStakeholderSearchChange = (value: string) => {
@@ -362,22 +338,33 @@ export default function useDetailActivity(id: string | undefined) {
     }
 
     const handleSelectStakeholder = (stakeholder: StakeholderActivity) => {
-        setStakeholders((prev) => [...prev, stakeholder])
-        setStakeholderSearch("")
-        setShowStakeholderDropdown(false)
-    }
+        setStakeholders((prev) => {
+            if (prev.find((s) => s.id === stakeholder.id)) return prev;
+            return [...prev, stakeholder];
+        });
+        setStakeholderSearch("");
+        setShowStakeholderDropdown(false);
+    };
+
 
     const handleSelectBeneficiary = (beneficiary: BeneficiaryActivity) => {
-        setBeneficiaries((prev) => [...prev, beneficiary])
-        setBeneficiarySearch("")
-        setShowBeneficiaryDropdown(false)
-    }
+        setBeneficiaries((prev) => {
+            if (prev.find((b) => b.id === beneficiary.id)) return prev;
+            return [...prev, beneficiary];
+        });
+        setBeneficiarySearch("");
+        setShowBeneficiaryDropdown(false);
+    };
+
 
     const handleSelectKaryawan = (karyawan: EmployeeActivity) => {
-        setKaryawan((prev) => [...prev, karyawan])
-        setKaryawanSearch("")
-        setShowKaryawanDropdown(false)
-    }
+        setKaryawan((prev) => {
+            if (prev.find((k) => k.id === karyawan.id)) return prev;
+            return [...prev, karyawan];
+        });
+        setKaryawanSearch("");
+        setShowKaryawanDropdown(false);
+    };
 
     const handleStakeholderDropdownBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node)) {
@@ -430,9 +417,9 @@ export default function useDetailActivity(id: string | undefined) {
                 formData.append(`dokumentasi`, image.file)
             })
 
-            formData.append("stakeholders", JSON.stringify(stakeholders))
-            formData.append("penerima_manfaat", JSON.stringify(beneficiaries))
-            formData.append("karyawan", JSON.stringify(karyawan))
+            formData.append("stakeholders", JSON.stringify(stakeholders.map((s) => s.id)))
+            formData.append("beneficiaries", JSON.stringify(beneficiaries.map((b) => b.id)))
+            formData.append("employees", JSON.stringify(karyawan.map((k) => k.id)))
 
             const response = await fetch(`${API_URL}/api/activity/update/${id}`, {
                 method: "PUT",
@@ -449,18 +436,9 @@ export default function useDetailActivity(id: string | undefined) {
 
             const data = await response.json()
 
+            setTimeout(() => window.location.reload(), 500)
+
             if (data.success) {
-                setKegiatan((prev) =>
-                    prev
-                        ? {
-                            ...prev,
-                            ...data.data,
-                            stakeholders: stakeholders,
-                            penerima_manfaat: beneficiaries,
-                            karyawan: karyawan,
-                        }
-                        : data.data,
-                )
                 setIsEditing(false)
                 setImages([])
                 setDeletedImages([])
@@ -511,15 +489,9 @@ export default function useDetailActivity(id: string | undefined) {
         handleRemoveImage,
         handleAddImages,
         handleSaveClick,
-        addStakeholder,
         removeStakeholder,
-        updateStakeholder,
-        addBeneficiary,
         removeBeneficiary,
-        updateBeneficiary,
-        addKaryawan,
         removeKaryawan,
-        updateKaryawan,
         handleStakeholderSearchChange,
         handleBeneficiarySearchChange,
         handleKaryawanSearchChange,

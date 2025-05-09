@@ -5,16 +5,13 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import type { EmployeeActivity } from "@/types/activity"
 
 interface EmployeeSectionProps {
     karyawan: EmployeeActivity[]
     isEditing: boolean
-    onAdd: () => void
     onRemove: (index: number) => void
-    onUpdate: (index: number, field: keyof EmployeeActivity, value: string) => void
     allKaryawan: EmployeeActivity[]
     filteredKaryawan: EmployeeActivity[]
     showKaryawanDropdown: boolean
@@ -28,9 +25,7 @@ interface EmployeeSectionProps {
 export default function EmployeeSection({
     karyawan,
     isEditing,
-    onAdd,
     onRemove,
-    onUpdate,
     allKaryawan,
     filteredKaryawan,
     showKaryawanDropdown,
@@ -48,15 +43,12 @@ export default function EmployeeSection({
                     <div className="relative" onBlur={onDropdownBlur}>
                         <div className="flex items-center gap-2">
                             <Input
-                                placeholder="Cari karyawan..."
+                                placeholder="Cari dan pilih karyawan..."
                                 value={karyawanSearch}
                                 onChange={(e) => onSearchChange(e.target.value)}
                                 onFocus={() => setShowKaryawanDropdown(true)}
-                                className="w-64"
+                                className="w-full md:w-100"
                             />
-                            <Button variant="outline" size="sm" onClick={onAdd} className="flex items-center">
-                                <Plus className="h-4 w-4 mr-2" /> Tambah Baru
-                            </Button>
                         </div>
 
                         {showKaryawanDropdown && (
@@ -106,52 +98,19 @@ export default function EmployeeSection({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor={`employee-name-${index}`}>Nama</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`employee-name-${index}`}
-                                        value={employee.nama}
-                                        onChange={(e) => onUpdate(index, "nama", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{employee.nama || "N/A"}</p>
-                                )}
+                                <p>{employee.nama || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`employee-email-${index}`}>Email</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`employee-email-${index}`}
-                                        type="email"
-                                        value={employee.email}
-                                        onChange={(e) => onUpdate(index, "email", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{employee.email || "N/A"}</p>
-                                )}
+                                <p>{employee.email || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`employee-phone-${index}`}>Telepon</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`employee-phone-${index}`}
-                                        value={employee.telepon}
-                                        onChange={(e) => onUpdate(index, "telepon", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{employee.telepon || "N/A"}</p>
-                                )}
+                                <p>{employee.telepon || "N/A"}</p>
                             </div>
                             <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor={`employee-address-${index}`}>Alamat</Label>
-                                {isEditing ? (
-                                    <Textarea
-                                        id={`employee-address-${index}`}
-                                        value={employee.alamat}
-                                        onChange={(e) => onUpdate(index, "alamat", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{employee.alamat || "N/A"}</p>
-                                )}
+                                <p>{employee.alamat || "N/A"}</p>
                             </div>
                         </div>
                     </div>

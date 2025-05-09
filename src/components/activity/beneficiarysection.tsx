@@ -5,16 +5,13 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import type { BeneficiaryActivity } from "@/types/activity"
 
 interface BeneficiarySectionProps {
     beneficiaries: BeneficiaryActivity[]
     isEditing: boolean
-    onAdd: () => void
     onRemove: (index: number) => void
-    onUpdate: (index: number, field: keyof BeneficiaryActivity, value: string) => void
     allBeneficiaries: BeneficiaryActivity[]
     filteredBeneficiaries: BeneficiaryActivity[]
     showBeneficiaryDropdown: boolean
@@ -28,9 +25,7 @@ interface BeneficiarySectionProps {
 export default function BeneficiarySection({
     beneficiaries,
     isEditing,
-    onAdd,
     onRemove,
-    onUpdate,
     allBeneficiaries,
     filteredBeneficiaries,
     showBeneficiaryDropdown,
@@ -48,15 +43,12 @@ export default function BeneficiarySection({
                     <div className="relative" onBlur={onDropdownBlur}>
                         <div className="flex items-center gap-2">
                             <Input
-                                placeholder="Cari penerima manfaat..."
+                                placeholder="Cari dan pilih penerima manfaat..."
                                 value={beneficiarySearch}
                                 onChange={(e) => onSearchChange(e.target.value)}
                                 onFocus={() => setShowBeneficiaryDropdown(true)}
-                                className="w-64"
+                                className="w-full md:w-100"
                             />
-                            <Button variant="outline" size="sm" onClick={onAdd} className="flex items-center">
-                                <Plus className="h-4 w-4 mr-2" /> Tambah Baru
-                            </Button>
                         </div>
 
                         {showBeneficiaryDropdown && (
@@ -106,64 +98,23 @@ export default function BeneficiarySection({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor={`beneficiary-institution-${index}`}>Nama Instansi/Lembaga</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`beneficiary-institution-${index}`}
-                                        value={beneficiary.nama_instansi}
-                                        onChange={(e) => onUpdate(index, "nama_instansi", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{beneficiary.nama_instansi || "N/A"}</p>
-                                )}
+                                <p>{beneficiary.nama_instansi || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`beneficiary-contact-${index}`}>Nama Kontak Personil</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`beneficiary-contact-${index}`}
-                                        value={beneficiary.nama_kontak}
-                                        onChange={(e) => onUpdate(index, "nama_kontak", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{beneficiary.nama_kontak || "N/A"}</p>
-                                )}
+                                <p>{beneficiary.nama_kontak || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`beneficiary-phone-${index}`}>No Telepon</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`beneficiary-phone-${index}`}
-                                        value={beneficiary.telepon}
-                                        onChange={(e) => onUpdate(index, "telepon", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{beneficiary.telepon || "N/A"}</p>
-                                )}
+                                <p>{beneficiary.telepon || "N/A"}</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`beneficiary-email-${index}`}>Email</Label>
-                                {isEditing ? (
-                                    <Input
-                                        id={`beneficiary-email-${index}`}
-                                        type="email"
-                                        value={beneficiary.email}
-                                        onChange={(e) => onUpdate(index, "email", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{beneficiary.email || "N/A"}</p>
-                                )}
+                                <p>{beneficiary.email || "N/A"}</p>
                             </div>
                             <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor={`beneficiary-address-${index}`}>Alamat</Label>
-                                {isEditing ? (
-                                    <Textarea
-                                        id={`beneficiary-address-${index}`}
-                                        value={beneficiary.alamat}
-                                        onChange={(e) => onUpdate(index, "alamat", e.target.value)}
-                                    />
-                                ) : (
-                                    <p>{beneficiary.alamat || "N/A"}</p>
-                                )}
+                                <p>{beneficiary.alamat || "N/A"}</p>
                             </div>
                         </div>
                     </div>
