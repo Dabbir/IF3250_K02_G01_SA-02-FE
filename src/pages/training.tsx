@@ -13,7 +13,7 @@ import AddTraining from "@/components/training/addTraining";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Training } from "@/lib/training";
+import { Training } from "@/types/training";
 
 interface userData {
   id: number;

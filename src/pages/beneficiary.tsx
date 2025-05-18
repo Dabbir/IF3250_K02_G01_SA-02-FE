@@ -1,171 +1,47 @@
-"use client"
+"use client";
 
-import { utils, writeFile } from 'xlsx';
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Building, Pencil, Trash2, Loader2, Share2, Phone, Mail, HandCoins, Download } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom";
+import { Search, HandCoins, Download, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+import { utils, writeFile } from 'xlsx';
+
+// Components
+import useBeneficiary from "@/hooks/use-beneficiary";
+import ErrorState from "@/components/error/error";
+import Pagination from "@/components/pagination/pagination";
+import BeneficiaryGrid from "@/components/beneficiary/beneficiarygrid";
 import AddBeneficiary from "@/components/beneficiary/addbeneficiary";
-
-interface Beneficiary {
-  id: string;
-  nama_instansi: string;
-  nama_kontak: string;
-  alamat: string;
-  telepon: string;
-  email: string;
-  foto: string;
-  created_at: string;
-}
-
-const ITEMS_PER_PAGE = 10;
-const API_URL = import.meta.env.VITE_HOST_NAME;
+import { ConfirmDeleteDialog } from "@/components/dialog/deletedialog";
 
 export default function BeneficiaryPage() {
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [, setTotalItems] = useState(0);
-  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchBeneficiaries = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          throw new Error("Authentication token not found");
-        }
-
-        const response = await fetch(`${API_URL}/api/beneficiary?page=${currentPage}&limit=${ITEMS_PER_PAGE}&nama_instansi=${search}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch beneficiaries: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-          setBeneficiaries(data.data || []);
-          setTotalPages(data.pagination?.totalPages || 1);
-          setTotalItems(data.pagination?.total || 0);
-        } else {
-          throw new Error(data.message || "Failed to fetch beneficiaries");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        toast.error("Penerima manfaat gagal dimuat!");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBeneficiaries();
-  }, [currentPage, search]);
-
-  const handleShareToWhatsApp = (beneficiary: Beneficiary, e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    const shareText = `*Detail Penerima Manfaat*\n\n` +
-      `*Nama Instansi:* ${beneficiary.nama_instansi}\n` +
-      `*Nama Kontak:* ${beneficiary.nama_kontak || 'Tidak Tersedia'}\n` +
-      `*Alamat:* ${beneficiary.alamat || 'Tidak Tersedia'}\n` +
-      `*Telepon:* ${beneficiary.telepon || 'Tidak Tersedia'}\n` +
-      `*Email:* ${beneficiary.email || 'Tidak Tersedia'}\n`;
-
-    const encodedText = encodeURIComponent(shareText);
-    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
-
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const handleDeleteBeneficiary = async (id: string | undefined) => {
-    if (!id) return;
-
-    try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
-
-      const response = await fetch(`${API_URL}/api/beneficiary/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete beneficiary: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setBeneficiaries(beneficiaries.filter(beneficiary => beneficiary.id !== id));
-        toast.success(data.message || "Penerima manfaat berhasil dihapus");
-
-        if (beneficiaries.length === 1 && currentPage > 1) {
-          setCurrentPage(currentPage - 1);
-        } else {
-          const fetchBeneficiaries = async () => {
-            try {
-              const token = localStorage.getItem("token");
-              const response = await fetch(`${API_URL}/api/beneficiary?page=${currentPage}&limit=${ITEMS_PER_PAGE}&nama_instansi=${search}`, {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${token}`
-                }
-              });
-
-              if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                  setBeneficiaries(data.data || []);
-                  setTotalPages(data.pagination?.totalPages || 1);
-                  setTotalItems(data.pagination?.total || 0);
-                }
-              }
-            } catch (error) {
-              console.error("Error refreshing data:", error);
-            }
-          };
-
-          fetchBeneficiaries();
-        }
-      } else {
-        throw new Error(data.message || "Failed to delete beneficiary");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete beneficiary");
-    } finally {
-      setShowDeleteDialog(false);
-    }
-  };
+  const {
+    loading,
+    error,
+    search,
+    setSearch,
+    currentPage,
+    setCurrentPage,
+    beneficiaries,
+    pagination,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    selectedBeneficiary,
+    handleShareBeneficiary,
+    handleDeleteBeneficiary,
+    handleNavigate,
+    handleDeleteClick,
+    refreshData,
+    clearSearch,
+  } = useBeneficiary();
 
   const exportXlsx = () => {
     if (beneficiaries.length === 0) {
-      alert("Tidak ada data untuk diekspor.");
+      toast.error("Tidak ada data untuk diekspor.");
       return;
     }
 
@@ -192,33 +68,16 @@ export default function BeneficiaryPage() {
     utils.book_append_sheet(workbook, worksheet, "Penerima Manfaat");
 
     writeFile(workbook, "Penerima_Manfaat.xlsx");
+    toast.success("Data penerima manfaat berhasil diekspor!");
   };
-
-  // if (loading) {
-  //   return (
-  //     <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
-  //       <CardContent className="flex justify-center items-center h-[400px]">
-  //         <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
 
   if (error) {
     return (
-      <Card className="mx-auto mt-6 max-w-[70rem] p-3 md:p-6">
-        <CardContent className="flex justify-center items-center h-[400px]">
-          <div className="text-center">
-            <p className="text-red-500 mb-4">{error}</p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="bg-[#3A786D] text-white"
-            >
-              Try Again
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ErrorState
+        error={error}
+        title="Penerima Manfaat"
+        Icon={HandCoins}
+      />
     );
   }
 
@@ -273,7 +132,7 @@ export default function BeneficiaryPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSearch("")}
+                  onClick={clearSearch}
                 >
                   Hapus Filter
                 </Button>
@@ -281,180 +140,35 @@ export default function BeneficiaryPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {beneficiaries.map((beneficiary) => (
-              <Card
-                key={beneficiary.id}
-                className="overflow-hidden hover:shadow-md transition cursor-pointer"
-                onClick={() => navigate(`/penerima-manfaat/${beneficiary.id}`)}
-              >
-                <div className="w-full h-50 bg-slate-100 overflow-hidden">
-                  {beneficiary.foto ? (
-                    <img
-                      src={beneficiary.foto}
-                      alt={beneficiary.nama_instansi}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center">
-                      <Building className="h-16 w-16 text-slate-300" />
-                    </div>
-                  )}
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-semibold text-[var(--blue)] truncate pr-2 text-base">
-                      {beneficiary.nama_instansi}
-                    </h3>
-                  </div>
-
-                  {beneficiary.nama_kontak && (
-                    <p className="text-sm mt-2 text-gray-700">{beneficiary.nama_kontak}</p>
-                  )}
-
-                  <div className="mt-3 space-y-2">
-                    {beneficiary.telepon && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Phone className="h-3.5 w-3.5 mr-2" />
-                        <span className="truncate">{beneficiary.telepon}</span>
-                      </div>
-                    )}
-                    {beneficiary.email && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Mail className="h-3.5 w-3.5 mr-2" />
-                        <span className="truncate">{beneficiary.email}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex mt-4 pt-3 border-t border-gray-100 justify-between">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/penerima-manfaat/${beneficiary.id}`);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      <span className="ml-1 text-xs">Edit</span>
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-green-500 hover:text-green-700 hover:bg-green-50 p-1"
-                      onClick={(e) => handleShareToWhatsApp(beneficiary, e)}
-                    >
-                      <Share2 className="h-4 w-4" />
-                      <span className="ml-1 text-xs">Share</span>
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBeneficiary(beneficiary);
-                        setShowDeleteDialog(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="ml-1 text-xs">Hapus</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <BeneficiaryGrid
+            beneficiaries={beneficiaries}
+            onNavigate={handleNavigate}
+            onShare={handleShareBeneficiary}
+            onDelete={handleDeleteClick}
+          />
         )}
 
-        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Hapus Penerima Manfaat</DialogTitle>
-              <DialogDescription>
-                Apakah Anda yakin ingin menghapus penerima manfaat "{selectedBeneficiary?.nama_instansi}"?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex justify-between sm:justify-between mt-4">
-              <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                Batal
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => handleDeleteBeneficiary(selectedBeneficiary?.id)}
-              >
-                Hapus
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ConfirmDeleteDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          selectedItem={selectedBeneficiary}
+          itemName="penerima manfaat"
+          itemLabelKey="nama_instansi"
+          onDelete={handleDeleteBeneficiary}
+          title="Hapus Penerima Manfaat"
+          descriptionPrefix="Apakah Anda yakin ingin menghapus penerima manfaat"
+        />
 
-        {totalPages > 1 && (
-          <div className="flex flex-wrap justify-center mt-4 gap-2">
-            <Button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
-              className="bg-[#3A786D] text-white h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm"
-            >
-              Previous
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <Button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm ${currentPage === i + 1
-                  ? "bg-[#3A786D] text-white"
-                  : "bg-white text-black border-[#3A786D] border hover:bg-[#3A786D] hover:text-white"
-                  }`}
-              >
-                {i + 1}
-              </Button>
-            ))}
-            <Button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
-              className="bg-[#3A786D] text-white h-8 px-3 text-xs md:h-10 md:px-4 md:text-sm"
-            >
-              Next
-            </Button>
-          </div>
-        )}
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={pagination.totalPages} 
+          onPageChange={setCurrentPage} 
+        />
 
         <AddBeneficiary
           isOpen={isOpen}
           setIsOpen={setIsOpen}
-          onSuccess={() => {
-            const fetchBeneficiaries = async () => {
-              try {
-                const token = localStorage.getItem("token");
-                const response = await fetch(`${API_URL}/api/beneficiary?page=${currentPage}&limit=${ITEMS_PER_PAGE}&nama_instansi=${search}`, {
-                  method: "GET",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                  }
-                });
-
-                if (response.ok) {
-                  const data = await response.json();
-                  if (data.success) {
-                    setBeneficiaries(data.data || []);
-                    setTotalPages(data.pagination?.totalPages || 1);
-                    setTotalItems(data.pagination?.total || 0);
-                  }
-                }
-              } catch (error) {
-                console.error("Error refreshing data:", error);
-              }
-            };
-
-            fetchBeneficiaries();
-          }}
+          onSuccess={refreshData}
         />
       </CardContent>
     </Card>

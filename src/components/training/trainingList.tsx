@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, MapPin, Users, Pencil, Trash2, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { Training } from "@/lib/training";
+import { Training } from "@/types/training";
 import { formatDateTimeToWIB } from "@/utils/dateUtils";
 import TrainingDeleteDialog from "./trainingDeleteDialog";
 import { useState } from "react";

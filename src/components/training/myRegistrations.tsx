@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Calendar, MapPin, Clock, ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
-import { Training } from "@/lib/training";
+import { Training } from "@/types/training";
 import { formatDateTimeToWIB } from "@/utils/dateUtils";
 import { useNavigate } from "react-router-dom";
 

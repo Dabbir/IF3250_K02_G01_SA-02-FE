@@ -11,7 +11,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { toast } from "react-toastify";
-import { Training } from "@/lib/training";
+import { Training } from "@/types/training";
 import { Save, Loader2 } from "lucide-react";
 
 interface TrainingEditFormProps {

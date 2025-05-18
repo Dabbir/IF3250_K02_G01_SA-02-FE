@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Clock, MapPin, Users, Search, Loader2, BookOpen, GraduationCap, ChevronDown, History} from "lucide-react";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/ui/badge";
-import { Training, TrainingAvailability } from "@/lib/training";
+import { Training, TrainingAvailability } from "@/types/training";
 import { formatDateTimeToWIB } from "@/utils/dateUtils";
 import RegisterTrainingDialog from "@/components/training/registerTrainingDialog";
 

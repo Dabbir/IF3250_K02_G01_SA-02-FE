@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, Mail, Phone, Check, X, Clock, Download } from "lucide-react";
 import { toast } from "react-toastify";
-import { Participant } from "@/lib/training";
+import { Participant } from "@/types/training";
 import { formatDate } from "@/utils/dateUtils";
 import ParticipantUpdateDialog from "./participantUpdateDialog";
 import {
