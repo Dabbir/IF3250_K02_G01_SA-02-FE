@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, MapPin, Clock, ArrowLeft } from "lucide-react";
+import { Loader2, Calendar, MapPin, Clock} from "lucide-react";
 import { toast } from "react-toastify";
-import { Training } from "@/lib/training";
 import { formatDateTimeToWIB } from "@/utils/dateUtils";
 import { useNavigate } from "react-router-dom";
 
@@ -29,7 +28,7 @@ interface Registration {
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
-const MyRegistrations: React.FC<MyRegistrationsProps> = ({ userId }) => {
+const MyRegistrations: React.FC<MyRegistrationsProps> = ({ }) => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

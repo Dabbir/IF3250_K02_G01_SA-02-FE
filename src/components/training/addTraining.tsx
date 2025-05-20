@@ -19,7 +19,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { toast } from "react-toastify";
-import { TrainingForm } from "@/lib/training";
+import { TrainingForm } from "@/types/training";
 
 interface AddTrainingProps {
   isOpen: boolean;

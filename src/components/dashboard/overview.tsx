@@ -59,7 +59,7 @@ const DashboardOverview: React.FC = () => {
         });
         const programsData = await programsResponse.json();
 
-        const activitiesResponse = await fetch(`${API_URL}/api/activity/getactivity/`, {
+        const activitiesResponse = await fetch(`${API_URL}/api/activity/getreport/`, {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`

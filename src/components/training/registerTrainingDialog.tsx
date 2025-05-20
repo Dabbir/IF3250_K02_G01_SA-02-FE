@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
-import { Training, TrainingAvailability } from "@/lib/training";
+import { Training, TrainingAvailability } from "@/types/training";
 import { Loader2 } from "lucide-react";
 import { formatDateTimeToWIB } from "@/utils/dateUtils";
 

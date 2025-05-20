@@ -8,7 +8,7 @@ import {
 } from "../ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import AddPublicationDialog from "./addpublicationdialog";
-import ExportTemplatePublication from "./exporttemplatepublication";
+import ExportTemplatePublication from "../publication/exporttemplatepublication";
 
 interface ChooseMethodProps {
     isOpen: boolean;

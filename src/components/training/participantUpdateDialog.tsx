@@ -18,7 +18,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { toast } from "react-toastify";
-import { Participant } from "@/lib/training";
+import { Participant } from "@/types/training";
 import { Loader2 } from "lucide-react";
 
 interface ParticipantUpdateDialogProps {

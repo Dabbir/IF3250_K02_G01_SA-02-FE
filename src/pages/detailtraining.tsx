@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Clock, MapPin, Users, Calendar, Info, Loader2, GraduationCap } from "lucide-react";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/ui/badge";
-import { Training, TrainingAvailability } from "@/lib/training";
+import { Training, TrainingAvailability } from "@/types/training";
 import TrainingEditForm from "@/components/training/trainingEditForm";
 import ParticipantList from "@/components/training/participantList";
 import { formatDateTimeToWIB } from "@/utils/dateUtils";

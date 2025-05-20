@@ -23,14 +23,13 @@ interface AddStakeholderDialogProps {
 
 export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakeholderDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
-
+    
     const [newStakeholder, setNewStakeholder] = useState<Stakeholder>({
         id: "",
         nama_stakeholder: "",
         jenis: "",
         telepon: "",
         email: "",
-        foto: "",
         masjid_id: "",
         created_by: "",
     });
@@ -119,7 +118,6 @@ export default function AddStakeholderDialog({ isOpen, setIsOpen }: AddStakehold
                 jenis: "",
                 telepon: "",
                 email: "",
-                foto: "",
                 masjid_id: "",
                 created_by: "",
             });

@@ -375,7 +375,7 @@ export default function useEmployee() {
                 throw new Error(errorData.message || "Failed to save employee");
             }
     
-            const data = await response.json();
+            // const data = await response.json();
     
             toast.success("Karyawan berhasil ditambahkan");
             setIsOpen(false);

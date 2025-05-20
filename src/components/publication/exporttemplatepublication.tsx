@@ -82,7 +82,7 @@ const ExportTemplatePublication = ({ isOpen, setIsOpen, onSuccess }: ExportTempl
                 return;
             }
 
-            const response = await fetch(`${API_URL}/api/activity/getactivity/`, {
+            const response = await fetch(`${API_URL}/api/activity/getreport/`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
