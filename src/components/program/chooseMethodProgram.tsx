@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import AddProgramDialog from "./addprogramdialog";
-import ExportTemplateProgram from "./exporttemplateprogram";
+import AddProgramDialog from "./addProgramDialog";
+import ExportTemplateProgram from "./exportTemplateProgram";
 
 interface ChooseMethodProgramProps {
   isOpen: boolean;

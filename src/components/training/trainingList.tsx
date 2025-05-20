@@ -33,20 +33,20 @@ const TrainingList: React.FC<TrainingListProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<Training | null>(null);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Upcoming":
-        return "bg-blue-100 text-blue-800";
-      case "Ongoing":
-        return "bg-green-100 text-green-800";
-      case "Completed":
-        return "bg-purple-100 text-purple-800";
-      case "Cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case "Upcoming":
+  //       return "bg-blue-100 text-blue-800";
+  //     case "Ongoing":
+  //       return "bg-green-100 text-green-800";
+  //     case "Completed":
+  //       return "bg-purple-100 text-purple-800";
+  //     case "Cancelled":
+  //       return "bg-red-100 text-red-800";
+  //     default:
+  //       return "bg-gray-100 text-gray-800";
+  //   }
+  // };
 
   const getStatusBadge = (status: string) => {
     switch (status) {

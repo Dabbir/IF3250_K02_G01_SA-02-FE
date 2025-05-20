@@ -32,7 +32,7 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [_, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {

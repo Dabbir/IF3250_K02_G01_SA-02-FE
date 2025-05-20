@@ -17,7 +17,7 @@ const API_URL = import.meta.env.VITE_HOST_NAME;
 
 export default function PublicTrainingPage() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, _] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);

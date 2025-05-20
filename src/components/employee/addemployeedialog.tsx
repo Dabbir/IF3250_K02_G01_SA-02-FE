@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-const API_URL = import.meta.env.VITE_HOST_NAME;
+// const API_URL = import.meta.env.VITE_HOST_NAME;
 
 interface Employee {
     id: string;
