@@ -91,6 +91,7 @@ const Login = () => {
             <div className="mb-4 md:mb-6">
               <label className="block text-sm font-cooper mb-2 text-gray-700">Alamat Email</label>
               <input
+                data-cy="email-input"
                 className={`w-full p-3 border ${emailError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
                 value={email}
                 onChange={(e) => {
@@ -106,6 +107,7 @@ const Login = () => {
               <label className="block text-sm font-cooper mb-2 text-gray-700">Kata Sandi</label>
               <div className="relative">
                 <input
+                  data-cy="password-input"
                   className={`w-full p-3 border ${passwordError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-400 pr-10`}
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -131,6 +133,7 @@ const Login = () => {
             </div>
 
             <button
+              data-cy="login-button"
               type="submit"
               className="w-full text-white py-3 rounded-lg transition-all duration-300 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 transform hover:scale-[1.02] hover:shadow-lg">
               Masuk
@@ -144,6 +147,7 @@ const Login = () => {
           </div>
 
           <button
+            data-cy="google-login-button"
             onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md animate-[fade-in-up_0.6s_ease-out_forwards_600ms]"
           >
