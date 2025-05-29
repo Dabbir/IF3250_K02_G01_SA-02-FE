@@ -46,7 +46,7 @@ export default function KegiatanPage() {
     totalPages,
     setCurrentPage,
   } = useActivity()
-
+  
   const [isOpen, setIsOpen] = useState(false)
   const { isMobileView } = useResponsive()
 
@@ -148,7 +148,7 @@ export default function KegiatanPage() {
           itemLabelKey="nama_aktivitas"
           onDelete={handleDeleteActivity}
           title="Hapus Kegiatan"
-          descriptionPrefix="Apakah Anda yakin ingin menghapus kegiatan"
+          descriptionPrefix="Apakah Anda yakin ingin menghapus"
         />
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />

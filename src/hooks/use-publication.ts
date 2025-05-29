@@ -15,6 +15,10 @@ export default function usePublication() {
   const [error, setError] = useState<string | null>(null);
   const [publikasiList, setPublikasiList] = useState<Publikasi[]>([]);
   
+  // Delete dialog states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedPublication, setSelectedPublication] = useState<Publikasi | null>(null);
+  
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     page: 1,
@@ -199,43 +203,50 @@ export default function usePublication() {
     shareToWhatsApp(item);
   };
 
-  const deletePublikasi = async (id: string): Promise<boolean> => {
+
+
+  const handleDeletePublication = async (id: string | undefined) => {
+    if (!id) return;
+
     try {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        toast.error("Token tidak ditemukan, silakan login kembali");
-        return false;
+        throw new Error("Authentication token not found");
       }
 
       const response = await fetch(`${API_URL}/api/publication/${id}`, {
         method: "DELETE",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Gagal menghapus publikasi.");
+        throw new Error(`Failed to delete publication: ${response.status}`);
       }
 
-      return true;
-    } catch (error) {
-      console.error("Error deleting publikasi:", error);
-      return false;
+      const data = await response.json();
+
+      if (data.success) {
+        setPublikasiList(publikasiList.filter((publikasi) => publikasi.id !== id));
+        toast.success("Publikasi berhasil dihapus!");
+      } else {
+        throw new Error(data.message || "Failed to delete publication");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete publication");
+    } finally {
+      setShowDeleteDialog(false);
     }
   };
 
-  const handleDeletePublication = async (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus publikasi ini?")) {
-      const deleted = await deletePublikasi(id);
-      if (deleted) {
-        await refreshData();
-        toast.success("Publikasi berhasil dihapus!");
-      } else {
-        toast.error("Gagal menghapus publikasi. Silakan coba lagi.");
-      }
+  const handleDeleteClick = (id: string) => {
+    const publikasi = publikasiList.find(p => p.id === id);
+    if (publikasi) {
+      setSelectedPublication(publikasi);
+      setShowDeleteDialog(true);
     }
   };
 
@@ -295,9 +306,15 @@ export default function usePublication() {
     setFilterOpen,
     clearAllFilters,
     
+    // Delete dialog
+    showDeleteDialog,
+    setShowDeleteDialog,
+    selectedPublication,
+    
     // Actions
     handleSharePublication,
     handleDeletePublication,
+    handleDeleteClick,
     handleNavigate,
     refreshData,
   };
