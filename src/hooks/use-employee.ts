@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import type { Employee, userData } from "@/types/employee"
+import type { Employee, userData, ValidationErrors, Kegiatan } from "@/types/employee"
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 const ITEMS_PER_PAGE = 9;
@@ -25,6 +25,19 @@ export default function useEmployee() {
     const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    const { id } = useParams<{ id: string }>();
+
+    const [saving, setSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [employee, setEmployee] = useState<Employee | null>(null);
+    const [editedEmployee, setEditedEmployee] = useState<Employee | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [deletePhoto, setDeletePhoto] = useState(false);
+    const [kegiatanLoading, setKegiatanLoading] = useState(true);
+    const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
+    const [errors, setErrors] = useState<ValidationErrors>({});
+
     const [user, setUser] = useState<userData>({
         id: 0,
         masjid_id: 0,
@@ -309,6 +322,127 @@ export default function useEmployee() {
         }
     };
 
+    const handleSaveClick = async () => {
+        if (!validateForm()) return;
+        setSaving(true);
+        
+        try {
+            const token = localStorage.getItem("token");
+
+            const formData = new FormData();
+            formData.append("nama", editedEmployee!.nama || "");
+            formData.append("email", editedEmployee!.email || "");
+            formData.append("telepon", editedEmployee!.telepon || "");
+            formData.append("alamat", editedEmployee!.alamat || "");
+
+            if (deletePhoto) {
+                formData.append("deletePhoto", "true");
+            }
+            
+            if (selectedFile) {
+                formData.append("foto", selectedFile);
+            }
+
+            console.log("Isi FormData:");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
+
+            const response = await fetch(`${API_URL}/api/employee/${id}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to update employee");
+            }
+
+            const updatedData = await fetch(`${API_URL}/api/employee/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await updatedData.json();
+            console.log("data hasil update", data);
+            const updatedEmployee = data.data;
+
+            if (updatedEmployee.masjid_id) {
+                try {
+                    const masjidResponse = await fetch(`${API_URL}/api/masjid/${updatedEmployee.masjid_id}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    
+                    if (masjidResponse.ok) {
+                        const masjidData = await masjidResponse.json();
+
+                        if (masjidData.success && masjidData.data) {
+                            updatedEmployee.masjid_nama = masjidData.data.nama_masjid;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching masjid details:", error);
+                }
+            }
+
+            setEmployee(updatedEmployee);
+            setSelectedFile(null);
+            setPreviewUrl(null);
+            setIsEditing(false);
+            setDeletePhoto(false);
+            toast.success("Data karyawan berhasil diperbarui");
+        } catch (error) {
+            console.error("Error updating employee:", error);
+            toast.error("Gagal memperbarui data karyawan");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const validateForm = (): boolean => {
+        if (!editedEmployee) return false;
+        
+        const newErrors: ValidationErrors = {};
+    
+        if (!editedEmployee.nama || editedEmployee.nama.trim() === "") {
+            newErrors.nama = "Nama wajib diisi";
+            }
+
+        if (!editedEmployee.email || editedEmployee.email.trim() === "") {
+            newErrors.email = "Email wajib diisi";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedEmployee.email)) {
+            newErrors.email = "Format email tidak valid";
+        }
+
+        if (!editedEmployee.telepon || editedEmployee.telepon.trim() === "") {
+            newErrors.telepon = "Telepon wajib diisi";
+        } else if (!/^\d+$/.test(editedEmployee.telepon)) {
+            newErrors.telepon = "Telepon harus berupa angka";
+        } else if ( editedEmployee.telepon.length < 10 || editedEmployee.telepon.length > 15) {
+            newErrors.telepon = "Nomor telepon harus berupa angka (10-15 digit)";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }
+
+    const getInitials = (name: string) => {
+        return name
+          .split(' ')
+          .map(part => part[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2);
+    };
+
+
     const handleDeleteEmployee = async () => {
         if (!deletingEmployee) return;
         
@@ -331,9 +465,59 @@ export default function useEmployee() {
         }
     };
 
+    const handleChange = (field: keyof Employee, value: string | number) => {
+        setEditedEmployee((prev) => ({ ...prev!, [field]: value }));
+
+        if (errors[field as keyof ValidationErrors]) {
+            setErrors(prev => ({ ...prev, [field]: undefined }));
+        }
+    };
+
+    const handleEditClick = () => {
+        setIsEditing(true);
+        setErrors({});
+    };
+
+    const handleCancel = () => {
+        setEditedEmployee(employee);
+        setIsEditing(false);
+        setDeletePhoto(false);
+        setErrors({});
+    };
+
     const confirmDeleteEmployee = (employee: Employee) => {
         setDeletingEmployee(employee);
         setShowDeleteDialog(true);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const maxSize = 5 * 1024 * 1024;
+
+            if (file.size > maxSize) {
+                toast.error("Ukuran foto tidak boleh lebih dari 5MB");
+                return;
+            }
+            setSelectedFile(file);
+
+            const reader = new FileReader();
+
+            reader.onloadend = () => {
+                setPreviewUrl(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+
+    }
+
+    const handleDeletePhoto = () => {
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setDeletePhoto(true);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     };
 
     const handleSubmit = async () => {
@@ -391,8 +575,37 @@ export default function useEmployee() {
         }
     }
 
+    const handleNavigateBack = () => {
+        navigate(`/karyawan`)
+    }
+
+    const handleNavigateKegiatanEmployee = (idKegiatan: string | undefined) => {
+        if (idKegiatan) {
+            navigate(`/karyawan/${idKegiatan}`)
+        }
+    }
+
     return {
         loading,
+        setLoading,
+        saving,
+        setSaving,
+        isEditing,
+        setIsEditing,
+        employee, 
+        setEmployee, 
+        editedEmployee, 
+        setEditedEmployee,
+        previewUrl,
+        setPreviewUrl,
+        deletePhoto,
+        setDeletePhoto,
+        kegiatanLoading,
+        setKegiatanLoading,
+        kegiatanList,
+        setKegiatanList,
+        errors,
+        setErrors,
         search,
         setSearch,
         isOpen,
@@ -409,6 +622,8 @@ export default function useEmployee() {
         setSortOrder,
         isDeleting,
         handleNavigate,
+        handleNavigateBack,
+        handleNavigateKegiatanEmployee,
         showDeleteDialog,
         setShowDeleteDialog,
         currentPage,
@@ -420,7 +635,17 @@ export default function useEmployee() {
         confirmDeleteEmployee,
         handleSubmit,
         selectedFile,
-        setSelectedFile
+        setSelectedFile,
+        fileInputRef,
+        id,
+        handleFileChange,
+        handleDeletePhoto,
+        handleChange,
+        handleEditClick,
+        handleCancel,
+        handleSaveClick,
+        validateForm,
+        getInitials
     }
 
 }

@@ -23,3 +23,19 @@ export interface SortControlsProps {
     onSortByChange: (val: string) => void;
     onSortOrderToggle: () => void;
 }
+
+export interface ValidationErrors {
+    nama?: string;
+    email?: string;
+    telepon?: string;
+}
+
+export interface Kegiatan {
+    idKegiatan: string;
+    namaKegiatan: string;
+    tanggalMulai: string;
+    tanggalSelesai: string;
+    status: string;
+    biayaImplementasi: string;
+    deskripsi: string;
+}

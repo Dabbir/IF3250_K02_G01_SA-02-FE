@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect} from 'react';
 import { ArrowLeft, Pencil, Save, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -8,53 +7,43 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+import type { Kegiatan } from "@/types/employee"
+import useEmployee from "@/hooks/use-employee";
+
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
-interface Employee {
-    id: string;
-    nama: string;
-    telepon: string;
-    alamat: string;
-    email: string;
-    foto: string;
-    masjid_id: string;
-    masjid_nama?:string;
-    created_by: string;
-    created_at: string;
-    updated_at: string;
-}
-
-interface Kegiatan {
-    idKegiatan: string;
-    namaKegiatan: string;
-    tanggalMulai: string;
-    tanggalSelesai: string;
-    status: string;
-    biayaImplementasi: string;
-    deskripsi: string;
-}
-
-interface ValidationErrors {
-    nama?: string;
-    email?: string;
-    telepon?: string;
-}
-
 const DetailEmployee = () => {
-    const { id } = useParams<{ id: string }>();
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [employee, setEmployee] = useState<Employee | null>(null);
-    const [editedEmployee, setEditedEmployee] = useState<Employee | null>(null);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [deletePhoto, setDeletePhoto] = useState(false);
-    const [kegiatanLoading, setKegiatanLoading] = useState(true);
-    const [kegiatanList, setKegiatanList] = useState<Kegiatan[]>([]);
-    const [errors, setErrors] = useState<ValidationErrors>({});
-    const navigate = useNavigate();
+    const {
+        id,
+        loading,
+        setLoading,
+        saving,
+        isEditing,
+        employee, 
+        setEmployee, 
+        editedEmployee, 
+        setEditedEmployee,
+        selectedFile, 
+        setSelectedFile,
+        previewUrl,
+        setPreviewUrl,
+        deletePhoto,
+        kegiatanLoading,
+        setKegiatanLoading,
+        kegiatanList,
+        setKegiatanList,
+        errors,
+        handleNavigateBack,
+        handleNavigateKegiatanEmployee,
+        fileInputRef,
+        handleFileChange,
+        handleDeletePhoto,
+        handleChange,
+        handleEditClick,
+        handleCancel,
+        handleSaveClick,
+        getInitials
+    } = useEmployee()
 
     useEffect(() => {
         const fetchEmployee = async () => {
@@ -162,183 +151,13 @@ const DetailEmployee = () => {
         }
     }, [id]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const maxSize = 5 * 1024 * 1024;
-
-            if (file.size > maxSize) {
-                toast.error("Ukuran foto tidak boleh lebih dari 5MB");
-                return;
-            }
-            setSelectedFile(file);
-
-            const reader = new FileReader();
-
-            reader.onloadend = () => {
-                setPreviewUrl(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-
-    }
-
-    const handleDeletePhoto = () => {
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        setDeletePhoto(true);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-    };
-
-    const handleChange = (field: keyof Employee, value: string | number) => {
-        setEditedEmployee((prev) => ({ ...prev!, [field]: value }));
-
-        if (errors[field as keyof ValidationErrors]) {
-            setErrors(prev => ({ ...prev, [field]: undefined }));
-        }
-    };
-
-    const handleEditClick = () => {
-        setIsEditing(true);
-        setErrors({});
-    };
-
-    const handleCancel = () => {
-        setEditedEmployee(employee);
-        setIsEditing(false);
-        setDeletePhoto(false);
-        setErrors({});
-    };
-
-    const handleSaveClick = async () => {
-        if (!validateForm()) return;
-        setSaving(true);
-        
-        try {
-            const token = localStorage.getItem("token");
-
-            const formData = new FormData();
-            formData.append("nama", editedEmployee!.nama || "");
-            formData.append("email", editedEmployee!.email || "");
-            formData.append("telepon", editedEmployee!.telepon || "");
-            formData.append("alamat", editedEmployee!.alamat || "");
-
-            if (deletePhoto) {
-                formData.append("deletePhoto", "true");
-            }
-            
-            if (selectedFile) {
-                formData.append("foto", selectedFile);
-            }
-
-            console.log("Isi FormData:");
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}:`, value);
-            }
-
-            const response = await fetch(`${API_URL}/api/employee/${id}`, {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to update employee");
-            }
-
-            const updatedData = await fetch(`${API_URL}/api/employee/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const data = await updatedData.json();
-            console.log("data hasil update", data);
-            const updatedEmployee = data.data;
-
-            if (updatedEmployee.masjid_id) {
-                try {
-                    const masjidResponse = await fetch(`${API_URL}/api/masjid/${updatedEmployee.masjid_id}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    });
-                    
-                    if (masjidResponse.ok) {
-                        const masjidData = await masjidResponse.json();
-
-                        if (masjidData.success && masjidData.data) {
-                            updatedEmployee.masjid_nama = masjidData.data.nama_masjid;
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error fetching masjid details:", error);
-                }
-            }
-
-            setEmployee(updatedEmployee);
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            setIsEditing(false);
-            setDeletePhoto(false);
-            toast.success("Data karyawan berhasil diperbarui");
-        } catch (error) {
-            console.error("Error updating employee:", error);
-            toast.error("Gagal memperbarui data karyawan");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const validateForm = (): boolean => {
-        if (!editedEmployee) return false;
-        
-        const newErrors: ValidationErrors = {};
-    
-        if (!editedEmployee.nama || editedEmployee.nama.trim() === "") {
-            newErrors.nama = "Nama wajib diisi";
-            }
-
-        if (!editedEmployee.email || editedEmployee.email.trim() === "") {
-            newErrors.email = "Email wajib diisi";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedEmployee.email)) {
-            newErrors.email = "Format email tidak valid";
-        }
-
-        if (!editedEmployee.telepon || editedEmployee.telepon.trim() === "") {
-            newErrors.telepon = "Telepon wajib diisi";
-        } else if (!/^\d+$/.test(editedEmployee.telepon)) {
-            newErrors.telepon = "Telepon harus berupa angka";
-        } else if ( editedEmployee.telepon.length < 10 || editedEmployee.telepon.length > 15) {
-            newErrors.telepon = "Nomor telepon harus berupa angka (10-15 digit)";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }
-
-    const getInitials = (name: string) => {
-        return name
-          .split(' ')
-          .map(part => part[0])
-          .join('')
-          .toUpperCase()
-          .substring(0, 2);
-    };
-
     return (
         <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6 ">
             <CardHeader>
                     <div className="flex items-center space-x-2">
                         <ArrowLeft 
                         className="h-6 w-6 text-slate-700 hover:cursor-pointer" 
-                        onClick={() => { navigate(`/karyawan`); }}
+                        onClick={() => handleNavigateBack() }
                         />
                         <h2 className="text-xl font-medium text-[var(--blue)]">Detail Karyawan</h2>
                     </div>
@@ -598,9 +417,7 @@ const DetailEmployee = () => {
                                     <TableRow
                                         key={index}
                                         className="border-b cursor-pointer hover:bg-gray-100 transition"
-                                        onClick={() => {
-                                            navigate(`/kegiatan/${item.idKegiatan}`);
-                                        }}
+                                        onClick={() => handleNavigateKegiatanEmployee(item.idKegiatan)}
                                     >
                                         <TableCell className="pl-7 truncate max-w-[180px]">{item.namaKegiatan}</TableCell>
                                         <TableCell className="text-center truncate">{item.tanggalMulai}</TableCell>
