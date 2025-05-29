@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X, User } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   Dialog,
@@ -48,7 +48,8 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
     submitting,
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [_, setSelectedFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [errors, setErrors] = useState<{
         nama?: string;
         email?: string;
@@ -75,6 +76,15 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                 return;
             }
             setSelectedFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
         }
     };
 
@@ -118,15 +128,15 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="max-w-md md:max-w-xl">
+            <DialogContent className="w-[95vw] max-w-md md:max-w-xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-lg md:text-xl">
                         Tambah Karyawan
                     </DialogTitle>
                 </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="nama">
+                    <div className="grid gap-3 md:gap-4 py-2 md:py-4">
+                        <div className="grid gap-1 md:gap-2">
+                            <Label htmlFor="nama" className="text-sm font-medium">
                                 Nama<span className="text-red-500 ml-0.5">*</span>
                             </Label>
                             <Input
@@ -135,14 +145,15 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                                 placeholder="Nama Karyawan"
                                 value={newEmployee.nama || ""}
                                 onChange={handleInputChange}
+                                className="text-sm md:text-base"
                             />
                             {errors.nama && (
-                            <p className="text-red-500 text-sm">{errors.nama}</p>
+                            <p className="text-red-500 text-xs md:text-sm">{errors.nama}</p>
                             )}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">
+                        <div className="grid gap-1 md:gap-2">
+                            <Label htmlFor="email" className="text-sm font-medium">
                                 Email<span className="text-red-500 ml-0.5">*</span>
                             </Label>
                             <Input
@@ -152,14 +163,15 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                                 placeholder="Email"
                                 value={newEmployee.email || ""}
                                 onChange={handleInputChange}
+                                className="text-sm md:text-base"
                             />
                             {errors.email && (
-                                <p className="text-red-500 text-sm">{errors.email}</p>
+                                <p className="text-red-500 text-xs md:text-sm">{errors.email}</p>
                             )}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="telepon">
+                        <div className="grid gap-1 md:gap-2">
+                            <Label htmlFor="telepon" className="text-sm font-medium">
                                 Telepon<span className="text-red-500 ml-0.5">*</span>
                             </Label>
                             <Input
@@ -170,14 +182,15 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                                 onChange={handleInputChange}
                                 inputMode="numeric"
                                 pattern="[0-9]*"
+                                className="text-sm md:text-base"
                             />
                             {errors.telepon && (
-                                <p className="text-red-500 text-sm">{errors.telepon}</p>
+                                <p className="text-red-500 text-xs md:text-sm">{errors.telepon}</p>
                             )}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="alamat">Alamat</Label>
+                        <div className="grid gap-1 md:gap-2">
+                            <Label htmlFor="alamat" className="text-sm font-medium">Alamat</Label>
                             <Textarea
                             id="alamat"
                             name="alamat"
@@ -185,48 +198,79 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
                             rows={3}
                             value={newEmployee.alamat || ""}
                             onChange={handleInputChange}
+                            className="text-sm md:text-base resize-none"
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="foto">Foto Profil</Label>
-                            <Input
-                            id="foto"
-                            name="foto"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            ref={fileInputRef}
-                            />
-
-                            {selectedFile && (
-                            <p className="text-sm text-green-600">
-                                File dipilih: {selectedFile.name}
-                            </p>
-                            )}
-
-                            {newEmployee.foto && !selectedFile && (
-                            <div className="flex items-center gap-2">
-                                <img
-                                src={newEmployee.foto}
-                                alt="Current profile"
-                                className="w-10 h-10 rounded-full object-cover"
-                                />
-                                <p className="text-sm text-gray-600">Foto profil saat ini</p>
+                        <div className="grid gap-1 md:gap-2">
+                            <Label className="text-sm font-medium">
+                                Foto Profil (Opsional)
+                            </Label>
+                            
+                            <div className="relative border border-gray-200 rounded-lg p-3 md:p-4 bg-gray-50">
+                                {imagePreview || newEmployee.foto ? (
+                                    <div className="relative">
+                                        <div className="aspect-video bg-white rounded-md overflow-hidden mb-2 md:mb-3">
+                                            <img
+                                                src={imagePreview || newEmployee.foto}
+                                                alt="Preview"
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleRemoveImage}
+                                            className="absolute top-1 right-1 md:top-2 md:right-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 h-8 w-8 md:h-auto md:w-auto p-1 md:p-2"
+                                        >
+                                            <X className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                                            <span className="hidden md:inline">Hapus Foto</span>
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-6 md:py-8">
+                                        <User className="h-10 w-10 md:h-12 md:w-12 text-gray-400 mx-auto mb-2 md:mb-3" />
+                                        <div className="text-xs md:text-sm text-gray-600 mb-3 md:mb-4">
+                                            Belum ada foto yang diunggah
+                                        </div>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            accept="image/jpeg, image/png, image/gif, image/webp"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="foto-upload"
+                                        />
+                                        
+                                        <label
+                                            htmlFor="foto-upload"
+                                            className="inline-flex items-center px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
+                                        >
+                                            <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                                            Pilih Foto
+                                        </label>
+                                    </div>
+                                )}
+                                
+                                <p className="text-xs text-gray-500 mt-2 md:mt-3 text-center leading-tight">
+                                    Format yang didukung: JPG, PNG, WEBP, GIF.<br className="md:hidden" />
+                                    <span className="md:inline"> Ukuran maksimal: 2MB</span>
+                                </p>
                             </div>
-                            )}
                         </div>
                     </div>
-                    <DialogFooter>
+                    <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 pt-4">
                         <Button
                             variant="outline"
                             onClick={() => setIsOpen(false)}
                             disabled={submitting}
+                            className="w-full sm:w-auto"
                         >
                             Batal
                         </Button>
                         <Button
-                            className="bg-[#3A786D] text-white"
+                            className="bg-[#3A786D] text-white w-full sm:w-auto"
                             onClick={handleFormSubmit}
                             disabled={submitting}
                         >
