@@ -38,7 +38,7 @@ export default function ProfileImageSection({
         <div className="flex flex-col md:flex-row items-center md:items-start space-y-4">
             <div className="flex flex-col md:flex-row items-center relative gap-4">
                 <div className="w-28 h-28 sm:w-36 sm:h-36">
-                    <Avatar className="w-full h-full rounded-full bg-slate-200">
+                    <Avatar className="w-full h-full rounded-full bg-slate-200" data-cy="profile-image">
                         <AvatarImage
                             src={previewImage ? previewImage : shouldDeleteImage ? "" : profileImage || ""}
                             alt="User Profile"
@@ -67,18 +67,20 @@ export default function ProfileImageSection({
                 {isEditing && (
                     <div className="flex flex-row md:flex-col space-x-4 md:space-x-0 md:space-y-6 mt-2 md:mt-4 justify-center md:justify-start">
                         <Button
+                            data-cy="image-upload-button"
                             variant="outline"
                             size="sm"
                             className="border-[var(--green)] text-[var(--green)] justify-start"
                             onClick={handleImageUpload}
                             disabled={!isEditing}
                         >
-                            <ImageIcon className="text-[var(--green)] h-4 w-4 mr-2" />
+                            <ImageIcon className="text-[var(--green)] h-4 w-4 mr-2" data-cy="image-upload-button"/>
                             Ubah
                         </Button>
                         <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                             <DialogTrigger asChild>
                                 <Button
+                                    data-cy="delete-photo-button"
                                     variant="outline"
                                     size="sm"
                                     className="border-[var(--green)] text-[var(--green)] justify-start"
