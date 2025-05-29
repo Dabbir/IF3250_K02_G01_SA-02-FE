@@ -37,6 +37,8 @@ interface EmployeeDialogProps {
     setNewEmployee: React.Dispatch<React.SetStateAction<Partial<Employee>>>;
     onSubmit: () => Promise<void>;
     submitting: boolean;
+    selectedFile: File | null;
+    setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
 }
 
 const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
@@ -46,9 +48,10 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
     setNewEmployee,
     onSubmit,
     submitting,
+    selectedFile,
+    setSelectedFile
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [errors, setErrors] = useState<{
         nama?: string;
         email?: string;

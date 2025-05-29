@@ -360,8 +360,6 @@ export default function useEmployee() {
                 formData.append("foto", selectedFile);
             }
 
-            console.log("isi formData", formData);
-
             const response = await fetch(`${API_URL}/api/employee`, {
                 method: "POST",
                 headers: {
@@ -374,8 +372,6 @@ export default function useEmployee() {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Failed to save employee");
             }
-    
-            // const data = await response.json();
     
             toast.success("Karyawan berhasil ditambahkan");
             setIsOpen(false);
@@ -422,7 +418,9 @@ export default function useEmployee() {
         handleOpenChange,
         handleDeleteEmployee,
         confirmDeleteEmployee,
-        handleSubmit
+        handleSubmit,
+        selectedFile,
+        setSelectedFile
     }
 
 }

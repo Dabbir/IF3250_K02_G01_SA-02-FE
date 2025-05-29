@@ -38,7 +38,9 @@ const Employee = () => {
         handleOpenChange,
         handleDeleteEmployee,
         confirmDeleteEmployee,
-        handleSubmit
+        handleSubmit,
+        selectedFile,
+        setSelectedFile
     } = useEmployee()
 
     return (
@@ -151,6 +153,8 @@ const Employee = () => {
                     setNewEmployee={setNewEmployee}
                     onSubmit={handleSubmit}
                     submitting={submitting}
+                    selectedFile={selectedFile}
+                    setSelectedFile={setSelectedFile}
                 />
 
                 <EmployeeDeleteDialog
