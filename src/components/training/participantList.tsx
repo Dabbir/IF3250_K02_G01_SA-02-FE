@@ -143,8 +143,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
     import('xlsx').then(XLSX => {
       const worksheet = XLSX.utils.json_to_sheet(participants.map(participant => ({
         "Nama Peserta": participant.nama_peserta || "",
-        "Email": participant.email || "",
-        "No. Telepon": participant.no_telepon || "",
+        "Kontak": participant.email || "",
         "Status": participant.status_pendaftaran,
         "Catatan": participant.catatan || "",
         "Tanggal Pendaftaran": participant.created_at ? formatDate(new Date(participant.created_at)) : ""
@@ -265,10 +264,11 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead className="w-[250px]">Nama Peserta</TableHead>
-                  <TableHead>Kontak</TableHead>
-                  <TableHead className="w-[120px]">Status</TableHead>
-                  <TableHead className="w-[150px]">Tanggal Daftar</TableHead>
-                  <TableHead className="text-right w-[120px]">Aksi</TableHead>
+                  <TableHead className="w-[10px]">Kontak</TableHead>
+                  <TableHead className="w-[80px]">Status</TableHead>
+                  <TableHead className="w-[80px]">Tanggal Daftar</TableHead>
+                  <TableHead className="w-[100px]">Catatan</TableHead>
+                  <TableHead className="w-[120px]">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -297,8 +297,11 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ trainingId }) => {
                     <TableCell>
                       {participant.created_at ? formatDate(new Date(participant.created_at)) : "-"}
                     </TableCell>
+                    <TableCell>
+                      {participant.catatan ? (participant.catatan) : "-"}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex space-x-1 justify-end">
+                      <div className="flex space-x-1">
                         {participant.status_pendaftaran === "Pending" && (
                           <>
                             <Button

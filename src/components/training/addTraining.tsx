@@ -43,6 +43,7 @@ const INITIAL_FORM: TrainingForm = {
 const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess, masjidNameParam, masjidId }) => {
   const [formData, setFormData] = useState<TrainingForm>({...INITIAL_FORM, masjid_id: masjidId});
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const API_URL = import.meta.env.VITE_HOST_NAME;
 
   useEffect(() => {
@@ -51,6 +52,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
         ...INITIAL_FORM,
         masjid_id: masjidId
       });
+      setErrors({});
     }
   }, [isOpen, masjidId]);
 
@@ -62,6 +64,10 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
       ...prev,
       [name]: name === "kuota" ? parseInt(value) || 0 : value,
     }));
+    
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -69,34 +75,50 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
       ...prev,
       [name]: value,
     }));
+    
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const validateForm = (): boolean => {
-    if (!formData.nama_pelatihan) {
-      toast.error("Nama pelatihan harus diisi");
-      return false;
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.nama_pelatihan.trim()) {
+      newErrors.nama_pelatihan = "Nama pelatihan harus diisi";
     }
+
+    if (formData.nama_pelatihan.length > 100) {
+      newErrors.nama_pelatihan = "Panjang maksimal nama pelatihan adalah 100 karakter";
+    }
+    
     if (!formData.waktu_mulai) {
-      toast.error("Waktu mulai harus diisi");
-      return false;
+      newErrors.waktu_mulai = "Waktu mulai harus diisi";
     }
+    
     if (!formData.waktu_akhir) {
-      toast.error("Waktu selesai harus diisi");
-      return false;
+      newErrors.waktu_akhir = "Waktu selesai harus diisi";
     }
-    if (new Date(formData.waktu_akhir) <= new Date(formData.waktu_mulai)) {
-      toast.error("Waktu selesai harus setelah waktu mulai");
-      return false;
+    
+    if (formData.waktu_mulai && formData.waktu_akhir && new Date(formData.waktu_akhir) <= new Date(formData.waktu_mulai)) {
+      newErrors.waktu_mulai = "Waktu mulai sebelum waktu selesai";
+      newErrors.waktu_akhir = "Waktu selesai setelah waktu mulai";
     }
-    if (!formData.lokasi) {
-      toast.error("Lokasi harus diisi");
-      return false;
+    
+    if (!formData.lokasi.trim()) {
+      newErrors.lokasi = "Lokasi harus diisi";
     }
+    
     if (!formData.kuota || formData.kuota < 1) {
-      toast.error("Kuota harus lebih dari 0");
-      return false;
+      newErrors.kuota = "Kuota harus lebih dari 0";
     }
-    return true;
+    
+    if (!formData.status) {
+      newErrors.status = "Status harus dipilih";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -155,7 +177,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2" noValidate>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
               <Label htmlFor="nama_pelatihan">Nama Pelatihan <span className="text-red-500">*</span></Label>
@@ -167,6 +189,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
                 onChange={handleChange}
                 required
               />
+              {errors.nama_pelatihan && <p className="text-red-500 text-[12px]">{errors.nama_pelatihan}</p>}
             </div>
 
             <div className="grid gap-2">
@@ -192,6 +215,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
                   onChange={handleChange}
                   required
                 />
+                {errors.waktu_mulai && <p className="text-red-500 text-[12px]">{errors.waktu_mulai}</p>}
               </div>
 
               <div className="grid gap-2">
@@ -204,6 +228,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
                   onChange={handleChange}
                   required
                 />
+                {errors.waktu_akhir && <p className="text-red-500 text-[12px]">{errors.waktu_akhir}</p>}
               </div>
             </div>
 
@@ -217,6 +242,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
                 onChange={handleChange}
                 required
               />
+              {errors.lokasi && <p className="text-red-500 text-[12px]">{errors.lokasi}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -232,6 +258,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
                   onChange={handleChange}
                   required
                 />
+                {errors.kuota && <p className="text-red-500 text-[12px]">{errors.kuota}</p>}
               </div>
 
               <div className="grid gap-2">
@@ -250,6 +277,7 @@ const AddTraining: React.FC<AddTrainingProps> = ({ isOpen, setIsOpen, onSuccess,
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.status && <p className="text-red-500 text-[12px]">{errors.status}</p>}
               </div>
             </div>
 

@@ -171,7 +171,7 @@ const MyRegistrationsTable = () => {
                     className={registration.status_pendaftaran === 'Rejected' ? 'opacity-60 bg-gray-50' : ''}
                   >
                     <TableCell className="font-medium">
-                      {registration.nama_pelatihan}
+                      {registration.nama_pelatihan.length > 35 ? `${registration.nama_pelatihan.substring(0, 35)}...`: registration.nama_pelatihan}
                       <div className="text-xs text-gray-500 md:hidden">
                         {registration.nama_masjid}
                       </div>

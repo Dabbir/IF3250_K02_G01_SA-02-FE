@@ -123,12 +123,25 @@ const TrainingList: React.FC<TrainingListProps> = ({
         {trainings.map((training) => (
           <Card 
             key={training.id} 
-            className="overflow-hidden hover:shadow-md transition cursor-pointer p-0"
+            className="overflow-hidden hover:shadow-md transition cursor-pointer p-0 flex flex-col h-full"
             onClick={() => navigate(`/pelatihan/${training.id}`)}
           >
-            <div className="w-full p-4 bg-gradient-to-r from-[#3A786D] to-[#4A9B8F] text-white">
+            <div className="w-full p-4 bg-gradient-to-r from-[#3A786D] to-[#4A9B8F] text-white flex flex-col h-full">
               <h3 className="font-semibold truncate text-lg mb-1">
-                {training.nama_pelatihan}
+                <h3 
+                  className="font-bold text-lg md:hidden"
+                > 
+                  {training.nama_pelatihan.length > 25
+                  ? `${training.nama_pelatihan.substring(0, 25)}...`
+                  : training.nama_pelatihan}
+                </h3>
+                <h3 
+                  className="font-bold text-lg hidden md:block"
+                > 
+                  {training.nama_pelatihan.length > 35
+                  ? `${training.nama_pelatihan.substring(0, 35)}...`
+                  : training.nama_pelatihan}
+                </h3>
               </h3>
               {getStatusBadge(training.status)}
             </div>

@@ -276,101 +276,132 @@ export default function PublicTrainingPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {trainings.map((training) => (
-                <Card key={training.id} className="overflow-hidden hover:shadow-lg transition p-0">
-                  <div className="p-4 bg-gradient-to-r from-[#3A786D] to-[#4A9B8F] text-white">
-                    <h3 className="font-bold text-lg">{training.nama_pelatihan}</h3>
+                <Card key={training.id} className="overflow-hidden hover:shadow-lg transition p-0 flex flex-col w-full h-full">
+                  <div className="p-4 bg-gradient-to-r from-[#3A786D] to-[#4A9B8F] text-white flex flex-col w-full h-full">
+                    <h3 
+                      className="font-bold text-lg lg:hidden"
+                    > 
+                      {training.nama_pelatihan.length > 25
+                      ? `${training.nama_pelatihan.substring(0, 25)}...`
+                      : training.nama_pelatihan}
+                    </h3>
+                    <h3 
+                      className="font-bold text-lg hidden lg:block xl:hidden"
+                    > 
+                      {training.nama_pelatihan.length > 20
+                      ? `${training.nama_pelatihan.substring(0, 20)}...`
+                      : training.nama_pelatihan}
+                    </h3>
+                    <h3 
+                      className="font-bold text-lg hidden xl:block"
+                    > 
+                      {training.nama_pelatihan.length > 35
+                      ? `${training.nama_pelatihan.substring(0, 35)}...`
+                      : training.nama_pelatihan}
+                    </h3>
                     <div className="mt-1">
                       {getStatusBadge(training.status)}
                     </div>
                   </div>
                   
-                  <CardContent className="px-4">
-                    <div className="space-y-3 mb-4 text-sm">
-                      {training.deskripsi && (
-                        <>
-                          <p className="text-gray-700 mb-3 md:hidden">
-                            {training.deskripsi.length > 100
-                              ? `${training.deskripsi.substring(0, 83)}...`
-                              : training.deskripsi}
-                          </p>
-                          <p className="text-gray-700 mb-3 hidden md:block">
-                            {training.deskripsi.length > 100
-                              ? `${training.deskripsi.substring(0, 74)}...`
-                              : training.deskripsi}
-                          </p>
-                        </>
-                      )}
-                      
-                      <div className="flex items-start">
-                        <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
-                        <div>
-                          <div className="font-medium text-gray-700">Waktu Mulai</div>
-                          <div className="text-gray-600">{formatDateTimeToWIB(new Date(training.waktu_mulai))}</div>
-                        </div>
-                      </div>
-                   
-                      <div className="flex items-start">
-                        <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
-                        <div>
-                          <div className="font-medium text-gray-700">Waktu Akhir</div>
-                          <div className="text-gray-600">{formatDateTimeToWIB(new Date(training.waktu_akhir))}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start">
-                        <Clock className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
-                        <div>
-                          <div className="font-medium text-gray-700">Durasi</div>
-                          <div className="text-gray-600">
-                            {(() => {
-                              const start = new Date(training.waktu_mulai).getTime();
-                              const end = new Date(training.waktu_akhir).getTime();
-                              const durationInHours = (end - start) / (1000 * 60 * 60);
-
-                              if (durationInHours < 24) {
-                                return `${Math.round(durationInHours)} jam`;
-                              } else {
-                                const durationInDays = durationInHours / 24;
-                                return `${Math.round(durationInDays)} hari`;
-                              }
-                            })()}
-                          </div>
-                        </div>
+                  <CardContent className="px-4 flex-1 flex flex-col">
+                    <div className="flex-1">
+                      <div className="h-12 mb-4">
+                        {training.deskripsi ? (
+                          <>
+                            <p className="text-gray-700 text-sm md:hidden xl:hidden line-clamp-2">
+                              {training.deskripsi.length > 83
+                                ? `${training.deskripsi.substring(0, 83)}...`
+                                : training.deskripsi}
+                            </p>
+                            <p className="text-gray-700 text-sm hidden md:block xl:hidden line-clamp-2">
+                              {training.deskripsi.length > 74
+                                ? `${training.deskripsi.substring(0, 74)}...`
+                                : training.deskripsi}
+                            </p>
+                            <p className="text-gray-700 text-sm md:hidden xl:block line-clamp-2">
+                              {training.deskripsi.length > 100
+                                ? `${training.deskripsi.substring(0, 100)}...`
+                                : training.deskripsi}
+                            </p>
+                          </>
+                        ) : (<p className="text-gray-400 text-sm">Tidak ada deskripsi program</p>)}
                       </div>
                       
-                      <div className="flex items-start">
-                        <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
-                        <div>
-                          <div className="font-medium text-gray-700">Lokasi</div>
-                          <div className="text-gray-600">{training.lokasi}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start">
-                        <Users className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
-                        <div>
-                          <div className="font-medium text-gray-700">Kuota</div>
-                          <div className="text-gray-600">{training.kuota} Orang</div>
-                        </div>
-                      </div>
-                      
-                      {training.nama_masjid && (
+                      <div className="space-y-3 text-sm">
                         <div className="flex items-start">
-                          <div className="h-4 w-4 mr-2 mt-0.5 text-gray-500">🕌</div>
+                          <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
                           <div>
-                            <div className="font-medium text-gray-700">Masjid</div>
-                            <div className="text-gray-600">{training.nama_masjid}</div>
+                            <div className="font-medium text-gray-700">Waktu Mulai</div>
+                            <div className="text-gray-600">{formatDateTimeToWIB(new Date(training.waktu_mulai))}</div>
                           </div>
                         </div>
-                      )}
+                    
+                        <div className="flex items-start">
+                          <Calendar className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-gray-700">Waktu Akhir</div>
+                            <div className="text-gray-600">{formatDateTimeToWIB(new Date(training.waktu_akhir))}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start">
+                          <Clock className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-gray-700">Durasi</div>
+                            <div className="text-gray-600">
+                              {(() => {
+                                const start = new Date(training.waktu_mulai).getTime();
+                                const end = new Date(training.waktu_akhir).getTime();
+                                const durationInHours = (end - start) / (1000 * 60 * 60);
+
+                                if (durationInHours < 24) {
+                                  return `${Math.round(durationInHours)} jam`;
+                                } else {
+                                  const durationInDays = durationInHours / 24;
+                                  return `${Math.round(durationInDays)} hari`;
+                                }
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-gray-700">Lokasi</div>
+                            <div className="text-gray-600">{training.lokasi}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <Users className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-gray-700">Kuota</div>
+                            <div className="text-gray-600">{training.kuota} Orang</div>
+                          </div>
+                        </div>
+                        
+                        {training.nama_masjid && (
+                          <div className="flex items-start">
+                            <div className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0">🕌</div>
+                            <div>
+                              <div className="font-medium text-gray-700">Masjid</div>
+                              <div className="text-gray-600">{training.nama_masjid}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
-                    <Button 
-                      className="w-full bg-[#3A786D] hover:bg-[#2c5d54] mt-2" 
-                      onClick={() => handleOpenRegisterDialog(training)}
-                    >
-                      Daftar Sekarang
-                    </Button>
+                    <div className="my-4">
+                      <Button 
+                        className="w-full bg-[#3A786D] hover:bg-[#2c5d54]" 
+                        onClick={() => handleOpenRegisterDialog(training)}
+                      >
+                        Daftar Sekarang
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

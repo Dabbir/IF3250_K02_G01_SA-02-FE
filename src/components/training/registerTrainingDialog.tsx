@@ -32,10 +32,26 @@ const RegisterTrainingDialog: React.FC<RegisterTrainingDialogProps> = ({
 }) => {
   const [catatan, setCatatan] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const API_URL = import.meta.env.VITE_HOST_NAME;
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    if (catatan.length > 35) {
+      newErrors.catatan = `Catatan tidak boleh lebih dari 35 karakter`;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
     
     try {
       setLoading(true);
@@ -120,7 +136,7 @@ const RegisterTrainingDialog: React.FC<RegisterTrainingDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid gap-2">
-            <Label htmlFor="catatan">Catatan (Opsional)</Label>
+            <Label htmlFor="catatan">Catatan (Opsional, maksimal 35 karakter)</Label>
             <Textarea
               id="catatan"
               placeholder="Tambahkan catatan atau alasan pendaftaran Anda"
@@ -128,6 +144,16 @@ const RegisterTrainingDialog: React.FC<RegisterTrainingDialogProps> = ({
               onChange={(e) => setCatatan(e.target.value)}
               rows={4}
             />
+            <div className="flex justify-between items-center">
+              <div>
+                {errors.catatan && (
+                  <p className="text-red-500 text-xs">{errors.catatan}</p>
+                )}
+              </div>
+              <p className={`text-xs ${catatan.length > 35 ? 'text-red-500' : 'text-gray-500'}`}>
+                {catatan.length}/35 karakter
+              </p>
+            </div>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
