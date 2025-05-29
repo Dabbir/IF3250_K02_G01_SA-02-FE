@@ -35,6 +35,7 @@ export default function ProfileForm({
                         Nama Depan
                     </label>
                     <Input
+                        data-cy="namaDepan-input"
                         id="namaDepan"
                         name="namaDepan"
                         value={userData.namaDepan}
@@ -51,6 +52,7 @@ export default function ProfileForm({
                         Nama Belakang
                     </label>
                     <Input
+                        data-cy="namaBelakang-input"
                         id="namaBelakang"
                         name="namaBelakang"
                         value={userData.namaBelakang}
@@ -65,6 +67,7 @@ export default function ProfileForm({
                         Email
                     </label>
                     <Input
+                        data-cy="email-input"
                         id="email"
                         name="email"
                         value={userData.email}
@@ -83,6 +86,7 @@ export default function ProfileForm({
                         Alasan Bergabung
                     </label>
                     <Textarea
+                        data-cy="alasanBergabung-textarea"
                         id="alasanBergabung"
                         name="alasanBergabung"
                         value={userData.alasanBergabung}
@@ -103,6 +107,7 @@ export default function ProfileForm({
                         Bio
                     </label>
                     <Textarea
+                        data-cy="bio-textarea"
                         id="bio"
                         name="bio"
                         value={userData.bio}
