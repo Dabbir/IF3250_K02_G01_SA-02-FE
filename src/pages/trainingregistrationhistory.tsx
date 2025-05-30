@@ -26,7 +26,7 @@ interface Registration {
 
 const API_URL = import.meta.env.VITE_HOST_NAME;
 
-const MyRegistrationsTable = () => {
+const TrainingRegistrationTable = () => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,4 +191,4 @@ const MyRegistrationsTable = () => {
   );
 };
 
-export default MyRegistrationsTable;
+export default TrainingRegistrationTable;

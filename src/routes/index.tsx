@@ -29,7 +29,7 @@ import DetailTraining from "@/pages/detailtraining.tsx";
 import PublicTraining from "@/pages/trainingpublic.tsx";
 import Training from "@/pages/training.tsx";
 import LaporanProgram from "@/pages/reportProgram.tsx";
-import MyRegistrationsTable from "@/pages/trainingregistrationhistory.tsx";
+import TrainingRegistrationTable from "@/pages/trainingregistrationhistory.tsx";
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -98,7 +98,7 @@ const AppRoutes = () => (
         <Route path="/pelatihan" element={<Training />} />
         <Route path="/pelatihan/:id" element={<DetailTraining />} />
         <Route path="/pelatihan-umum" element={<PublicTraining />} />
-        <Route path="/riwayat-pendaftaran" element={<MyRegistrationsTable/>} />
+        <Route path="/riwayat-pendaftaran" element={<TrainingRegistrationTable/>} />
       </Route>
     </Routes>
   </BrowserRouter>
