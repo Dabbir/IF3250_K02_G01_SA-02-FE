@@ -1,10 +1,11 @@
 "use client"
 
-import React from "react"
+import React, { useRef } from "react"
 
 import { useState, useEffect } from "react"
 import { toast } from "react-toastify"
 import type { DetailedKegiatan, Program, ImageData, StakeholderActivity, BeneficiaryActivity, EmployeeActivity } from "@/types/activity"
+import { Toaster } from "sonner"
 
 const API_URL = import.meta.env.VITE_HOST_NAME
 
@@ -397,8 +398,76 @@ export default function useDetailActivity(id: string | undefined) {
         }
     }
 
+    // ERRORS HANDLING
+    const formRef = useRef<HTMLDivElement>(null)
+    const errorRefs = useRef<Record<string, HTMLElement | null>>({})
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {}
+        let firstErrorField: string | null = null
+
+        // Clear previous error refs
+        errorRefs.current = {}
+
+        if (!editedKegiatan?.nama_aktivitas) {
+            newErrors.nama_aktivitas = "Nama kegiatan wajib diisi!"
+            firstErrorField = firstErrorField || "nama_aktivitas"
+        }
+
+        if (!editedKegiatan?.nama_program || !programs.some((p) => p.nama_program === editedKegiatan.nama_program)) {
+            newErrors.nama_program = "Pilih program dari daftar!"
+            firstErrorField = firstErrorField || "nama_program"
+        }
+
+        if (!editedKegiatan?.tanggal_mulai || !editedKegiatan.tanggal_selesai) {
+            newErrors.tanggal = "Tanggal mulai dan selesai wajib diisi!"
+            firstErrorField = firstErrorField || "tanggal"
+        }
+
+        if (editedKegiatan?.tanggal_mulai && editedKegiatan.tanggal_selesai) {
+            const start = new Date(editedKegiatan.tanggal_mulai);
+            const end = new Date(editedKegiatan.tanggal_selesai);
+            if (start > end) {
+                newErrors.tanggal = "Tanggal selesai harus setelah tanggal mulai!";
+                firstErrorField = firstErrorField || "tanggal";
+            }
+        }
+
+        if (!editedKegiatan?.status) {
+            newErrors.status = "Status wajib dipilih"
+            firstErrorField = firstErrorField || "status"
+        }
+
+        if (!editedKegiatan?.biaya_implementasi || editedKegiatan.biaya_implementasi < 0) {
+            newErrors.biaya_implementasi = "Biaya implementasi harus lebih dari 0!"
+            firstErrorField = firstErrorField || "biaya_implementasi"
+        }
+
+        if (!editedKegiatan?.deskripsi || editedKegiatan.deskripsi.length < 10) {
+            newErrors.deskripsi = "Deskripsi minimal 10 karakter!"
+            firstErrorField = firstErrorField || "deskripsi"
+        }
+
+        setFormErrors(newErrors)
+
+        setTimeout(() => {
+            if (firstErrorField && errorRefs.current[firstErrorField]) {
+                errorRefs.current[firstErrorField]?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                })
+            }
+        }, 100)
+
+        return Object.keys(newErrors).length === 0
+    }
+
     const handleSaveClick = async () => {
-        if (!editedKegiatan || !id) return
+        if (!validateForm() || !id || !editedKegiatan) {
+            toast.error("Form tidak valid, silakan periksa kembali!")
+            return
+        } 
 
         setSaving(true)
         try {
@@ -469,6 +538,8 @@ export default function useDetailActivity(id: string | undefined) {
 
     return {
         kegiatan,
+        formErrors,
+        formRef,
         loading,
         saving,
         error,

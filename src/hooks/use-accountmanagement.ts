@@ -215,6 +215,7 @@ export default function useUserProfile() {
         setNewProfileImage(null)
         setPreviewImage(null)
         setShouldDeleteImage(false)
+        setErrorsForm({})
     }, [originalUserData])
 
     const handleImageUpload = () => {

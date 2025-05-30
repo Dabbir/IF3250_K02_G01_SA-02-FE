@@ -156,6 +156,15 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
             firstErrorField = firstErrorField || "tanggal"
         }
 
+        if (newKegiatan.tanggal_mulai && newKegiatan.tanggal_selesai) {
+            const start = new Date(newKegiatan.tanggal_mulai);
+            const end = new Date(newKegiatan.tanggal_selesai);
+            if (start > end) {
+                newErrors.tanggal = "Tanggal selesai harus setelah tanggal mulai!";
+                firstErrorField = firstErrorField || "tanggal";
+            }
+        }
+
         if (!newKegiatan.status) {
             newErrors.status = "Status wajib dipilih"
             firstErrorField = firstErrorField || "status"
@@ -358,6 +367,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                         type="date"
                                         value={newKegiatan.tanggal_mulai}
                                         onChange={handleInputChange}
+                                        max={newKegiatan.tanggal_selesai || undefined}
                                         className="w-full"
                                     />
                                 </div>
@@ -369,6 +379,7 @@ export default function AddActivityDialog({ isOpen, setIsOpen }: AddKegiatanDial
                                         type="date"
                                         value={newKegiatan.tanggal_selesai}
                                         onChange={handleInputChange}
+                                        min={newKegiatan.tanggal_mulai || undefined}
                                         className="w-full"
                                     />
                                 </div>

@@ -96,11 +96,11 @@ export default function AddProgramDialog({
 
   useEffect(() => {
     if (!data.waktu_mulai || !data.waktu_selesai) return;
-  
-    const now   = new Date();
+
+    const now = new Date();
     const start = new Date(data.waktu_mulai);
-    const end   = new Date(data.waktu_selesai);
-  
+    const end = new Date(data.waktu_selesai);
+
     let autoStatus: Status;
     if (start > now) {
       autoStatus = "Belum Mulai";
@@ -109,7 +109,7 @@ export default function AddProgramDialog({
     } else {
       autoStatus = "Berjalan";
     }
-  
+
     setData((d) => ({ ...d, status_program: autoStatus }));
   }, [data.waktu_mulai, data.waktu_selesai]);
 
@@ -267,10 +267,11 @@ export default function AddProgramDialog({
                 onChange={(e) =>
                   setData((d) => ({ ...d, waktu_mulai: e.target.value }))
                 }
+                max={data.waktu_selesai ? data.waktu_selesai : undefined}
               />
               {errors.waktu_mulai && (
-              <p className="text-red-500 text-sm">{errors.waktu_mulai}</p>
-            )}
+                <p className="text-red-500 text-sm">{errors.waktu_mulai}</p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label>
@@ -282,10 +283,11 @@ export default function AddProgramDialog({
                 onChange={(e) =>
                   setData((d) => ({ ...d, waktu_selesai: e.target.value }))
                 }
+                min={data.waktu_mulai ? data.waktu_mulai : undefined}
               />
               {errors.waktu_selesai && (
-              <p className="text-red-500 text-sm">{errors.waktu_selesai}</p>
-            )}
+                <p className="text-red-500 text-sm">{errors.waktu_selesai}</p>
+              )}
             </div>
           </div>
 

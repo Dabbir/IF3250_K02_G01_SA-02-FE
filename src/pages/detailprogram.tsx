@@ -398,33 +398,18 @@ const DetailProgram = () => {
                                     )}
                                 </div>
                                 <div className="flex justify-end mt-6">
-                                    {!isEditing ? (
-                                        <Button className='h-10' variant="outline" onClick={handleEditClick}>
-                                            <Pencil className="h-4 w-4 mr-2" /> Ubah
+                                    <div className="flex justify-end space-x-2 mt-4 md:mt-6">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleEditClick}
+                                            disabled={isEditing}
+                                            className="border-[var(--green)] text-[var(--green)] px-4 md:px-6 py-1 md:py-2 w-full max-w-[120px] md:max-w-[140px] transition-transform duration-200 hover:scale-95 text-xs md:text-sm h-8 md:h-10"
+                                        >
+                                            <Pencil className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                                            Edit
                                         </Button>
-                                    ) : (
-                                        <div className="flex space-x-2">
-                                            <Button variant="outline" size="sm" onClick={handleCancel}>
-                                                Batal
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleSaveClick}
-                                                disabled={saving}
-                                            >
-                                                {saving ? (
-                                                    <>
-                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Save className="h-4 w-4 mr-2" /> Simpan
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-center mt-4 space-x-2">
@@ -530,6 +515,7 @@ const DetailProgram = () => {
                                                 type="date"
                                                 value={editedProgram?.waktu_mulai}
                                                 onChange={(e) => handleChange("waktu_mulai", e.target.value)}
+                                                max={editedProgram?.waktu_selesai || undefined}
                                                 className="w-full md:w-auto"
                                             />
                                         ) : (
@@ -545,6 +531,7 @@ const DetailProgram = () => {
                                                 type="date"
                                                 value={editedProgram?.waktu_selesai}
                                                 onChange={(e) => handleChange("waktu_selesai", e.target.value)}
+                                                min={editedProgram?.waktu_mulai || undefined}
                                                 className="w-full md:w-auto"
                                             />
                                         ) : (
@@ -587,6 +574,37 @@ const DetailProgram = () => {
                                 </TableRow>
                             </TableBody>
                         </Table>
+
+                        {isEditing && (
+                            <div className="flex justify-center space-x-2 mt-4 md:mt-6">
+                                <Button
+                                    data-cy="cancel-button"
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleCancel}
+                                    className="border-[var(--green)] text-[var(--green)] px-4 md:px-6 py-1 md:py-2 w-full max-w-[120px] md:max-w-[140px] transition-transform duration-200 hover:scale-95 text-xs md:text-sm h-8 md:h-10"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    data-cy="save-button"
+                                    type="submit"
+                                    disabled={saving}
+                                    onClick={handleSaveClick}
+                                    className="bg-[var(--green)] hover:bg-[var(--blue)] text-white px-4 md:px-6 py-1 md:py-2 w-full max-w-[120px] md:max-w-[140px] transition-transform duration-200 hover:scale-95 text-xs md:text-sm h-8 md:h-10"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <Loader2 className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4 animate-spin" />
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        "Simpan"
+                                    )}
+                                </Button>
+                            </div>
+                        )}
+
 
                         <div className="my-6 space-y-3">
                             <h1 className="text-2xl">Kegiatan Program</h1>

@@ -33,6 +33,21 @@ export default function DetailTable({
         <Table className="border rounded-lg overflow-hidden mb-2">
             <TableBody>
                 <TableRow>
+                    <TableHead>Nama Kegiatan</TableHead>
+                    <TableCell>
+                        {isEditing ? (
+                            <Input
+                                type="text"
+                                value={editedKegiatan?.nama_aktivitas || ""}
+                                onChange={(e) => onChange("nama_aktivitas", e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                            />
+                        ) : (
+                            kegiatan.nama_aktivitas || "N/A"
+                        )}
+                    </TableCell>
+                </TableRow>
+                <TableRow>
                     <TableHead>Program Terafiliasi</TableHead>
                     <TableCell>
                         {isEditing ? (
@@ -55,10 +70,11 @@ export default function DetailTable({
                                 type="date"
                                 value={
                                     editedKegiatan?.tanggal_mulai
-                                        ? new Date(editedKegiatan.tanggal_mulai).toISOString().split("T")[0]
+                                        ? new Date(editedKegiatan.tanggal_mulai).toLocaleDateString("en-CA")
                                         : ""
                                 }
                                 onChange={(e) => onChange("tanggal_mulai", e.target.value)}
+                                max={editedKegiatan?.tanggal_selesai || undefined}
                             />
                         ) : kegiatan.tanggal_mulai ? (
                             formatDisplayDate(kegiatan.tanggal_mulai)
@@ -75,10 +91,11 @@ export default function DetailTable({
                                 type="date"
                                 value={
                                     editedKegiatan?.tanggal_selesai
-                                        ? new Date(editedKegiatan.tanggal_selesai).toISOString().split("T")[0]
+                                        ? new Date(editedKegiatan.tanggal_selesai).toLocaleDateString("en-CA")
                                         : ""
                                 }
                                 onChange={(e) => onChange("tanggal_selesai", e.target.value)}
+                                min={editedKegiatan?.tanggal_mulai || undefined}
                             />
                         ) : kegiatan.tanggal_selesai ? (
                             formatDisplayDate(kegiatan.tanggal_selesai)

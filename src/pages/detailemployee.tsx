@@ -1,4 +1,4 @@
-import { useEffect} from 'react';
+import { useEffect } from 'react';
 import { ArrowLeft, Pencil, Save, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -19,11 +19,11 @@ const DetailEmployee = () => {
         setLoading,
         saving,
         isEditing,
-        employee, 
-        setEmployee, 
-        editedEmployee, 
+        employee,
+        setEmployee,
+        editedEmployee,
         setEditedEmployee,
-        selectedFile, 
+        selectedFile,
         setSelectedFile,
         previewUrl,
         setPreviewUrl,
@@ -58,10 +58,10 @@ const DetailEmployee = () => {
                         "Content-Type": "application/json",
                     },
                 });
-        
+
                 const data = await response.json();
                 console.log("data", data);
-        
+
                 if (!response.ok) throw new Error(data.message || "Gagal memuat data karyawan");
                 const empData = data.data;
 
@@ -73,7 +73,7 @@ const DetailEmployee = () => {
                                 "Content-Type": "application/json",
                             },
                         });
-                        
+
                         if (masjidResponse.ok) {
                             const masjidData = await masjidResponse.json();
 
@@ -94,7 +94,7 @@ const DetailEmployee = () => {
             } finally {
                 setLoading(false);
             }
-        };        
+        };
 
         fetchEmployee();
     }, [id]);
@@ -136,7 +136,7 @@ const DetailEmployee = () => {
                 }));
                 console.log("List kegiatan")
                 console.log(listKegiatan);
-        
+
                 setKegiatanList(listKegiatan);
             } catch (error) {
                 console.error("Error fetching kegiatan:", error);
@@ -154,13 +154,13 @@ const DetailEmployee = () => {
     return (
         <Card className="mx-auto mt-4 max-w-[95%] md:max-w-[95%] p-2 md:p-6 ">
             <CardHeader>
-                    <div className="flex items-center space-x-2">
-                        <ArrowLeft 
-                        className="h-6 w-6 text-slate-700 hover:cursor-pointer" 
-                        onClick={() => handleNavigateBack() }
-                        />
-                        <h2 className="text-xl font-medium text-[var(--blue)]">Detail Karyawan</h2>
-                    </div>
+                <div className="flex items-center space-x-2">
+                    <ArrowLeft
+                        className="h-6 w-6 text-slate-700 hover:cursor-pointer"
+                        onClick={() => handleNavigateBack()}
+                    />
+                    <h2 className="text-xl font-medium text-[var(--blue)]">Detail Karyawan</h2>
+                </div>
             </CardHeader>
 
             <CardContent>
@@ -168,36 +168,19 @@ const DetailEmployee = () => {
                     <div className="flex justify-center items-center h-40">
                         <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
                     </div>
-                ) : employee? (
+                ) : employee ? (
                     <>
-                        <div className="flex justify-end mt-6">
-                            {!isEditing ? (
-                                <Button className='h-10' variant="outline" onClick={handleEditClick}>
-                                    <Pencil className="h-4 w-4 mr-2" /> Ubah
-                                </Button>
-                            ) : (
-                                <div className="flex space-x-2">
-                                    <Button variant="outline" size="sm" onClick={handleCancel}>
-                                        Batal
-                                    </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={handleSaveClick}
-                                        disabled={saving}
-                                    >
-                                        {saving ? (
-                                            <>
-                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save className="h-4 w-4 mr-2" /> Simpan
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            )}
+                        <div className="flex justify-end space-x-2 mt-4 md:mt-6">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleEditClick}
+                                disabled={isEditing}
+                                className="border-[var(--green)] text-[var(--green)] px-4 md:px-6 py-1 md:py-2 w-full max-w-[120px] md:max-w-[140px] transition-transform duration-200 hover:scale-95 text-xs md:text-sm h-8 md:h-10"
+                            >
+                                <Pencil className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                                Edit
+                            </Button>
                         </div>
 
                         <div className="flex justify-center items-center">
@@ -205,15 +188,15 @@ const DetailEmployee = () => {
                                 <div className="flex flex-col gap-4 mt-2 items-center">
                                     {previewUrl ? (
                                         <div className="relative">
-                                            <img 
-                                                src={previewUrl} 
-                                                alt="Preview" 
-                                                className="w-32 h-32 rounded-full object-cover" 
+                                            <img
+                                                src={previewUrl}
+                                                alt="Preview"
+                                                className="w-32 h-32 rounded-full object-cover"
                                             />
                                             <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
                                                     className="h-5 w-5 text-red-500 hover:text-red-600"
                                                     onClick={() => {
                                                         setSelectedFile(null);
@@ -230,34 +213,34 @@ const DetailEmployee = () => {
                                     ) : !deletePhoto && employee.foto ? (
                                         <Avatar className="h-32 w-32">
                                             <AvatarImage
-                                            src={employee.foto}
-                                            alt={employee.nama}
-                                            className="w-full h-full object-cover"
+                                                src={employee.foto}
+                                                alt={employee.nama}
+                                                className="w-full h-full object-cover"
                                             />
                                             <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
-                                            {getInitials(employee.nama)}
+                                                {getInitials(employee.nama)}
                                             </AvatarFallback>
                                         </Avatar>
                                     ) : null}
 
                                     <div className="flex flex-col items-center gap-2">
                                         {!previewUrl && !deletePhoto && employee.foto && (
-                                        <Button
-                                            size="sm"
-                                            type="button"
-                                            className="w-[110px] h-[32px] bg-red-600 hover:bg-red-700 text-white"
-                                            onClick={handleDeletePhoto}
-                                        >
-                                            Hapus Foto
-                                        </Button>
+                                            <Button
+                                                size="sm"
+                                                type="button"
+                                                className="w-[110px] h-[32px] bg-red-600 hover:bg-red-700 text-white"
+                                                onClick={handleDeletePhoto}
+                                            >
+                                                Hapus Foto
+                                            </Button>
                                         )}
 
                                         <Button
                                             size="sm"
                                             type="button"
-                                            className="w-[110px] h-[32px] bg-blue-600 hover:bg-blue-700 text-white"
+                                            className="w-[110px] h-[32px] bg-[var(--green)] hover:bg-[var(--blue)] text-white"
                                             onClick={() => fileInputRef.current?.click()}
-                                            >
+                                        >
                                             Pilih Foto
                                         </Button>
 
@@ -285,15 +268,15 @@ const DetailEmployee = () => {
                             ) : (
                                 <div className="shrink-0">
                                     <Avatar className="h-32 w-32">
-                                        <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover'/>
+                                        <AvatarImage src={employee.foto} alt={employee.nama} className='w-full h-full object-cover' />
                                         <AvatarFallback className="text-lg bg-slate-200 text-slate-700">
                                             {getInitials(employee.nama)}
                                         </AvatarFallback>
                                     </Avatar>
-                                </div> 
+                                </div>
                             )}
-                        </div> 
-                        
+                        </div>
+
                         <Table className="border border-t-0 border-l-0 border-r-0 last:border-b-0 my-6 w-full">
                             <TableBody>
                                 <TableRow className="flex flex-col md:table-row">
@@ -392,6 +375,36 @@ const DetailEmployee = () => {
                     </div>
                 )}
 
+                {isEditing && (
+                    <div className="flex justify-center space-x-2 mt-4 md:mt-6">
+                        <Button
+                            data-cy="cancel-button"
+                            type="button"
+                            variant="outline"
+                            onClick={handleCancel}
+                            className="border-[var(--green)] text-[var(--green)] px-4 md:px-6 py-1 md:py-2 w-full max-w-[120px] md:max-w-[140px] transition-transform duration-200 hover:scale-95 text-xs md:text-sm h-8 md:h-10"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            data-cy="save-button"
+                            type="submit"
+                            disabled={saving}
+                            onClick={handleSaveClick}
+                            className="bg-[var(--green)] hover:bg-[var(--blue)] text-white px-4 md:px-6 py-1 md:py-2 w-full max-w-[120px] md:max-w-[140px] transition-transform duration-200 hover:scale-95 text-xs md:text-sm h-8 md:h-10"
+                        >
+                            {saving ? (
+                                <>
+                                    <Loader2 className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4 animate-spin" />
+                                    Menyimpan...
+                                </>
+                            ) : (
+                                "Simpan"
+                            )}
+                        </Button>
+                    </div>
+                )}
+
                 <div className="my-6 space-y-3">
                     <h1 className="text-2xl">Kegiatan Karyawan</h1>
                     {kegiatanLoading ? (
@@ -423,9 +436,8 @@ const DetailEmployee = () => {
                                         <TableCell className="text-center truncate">{item.tanggalMulai}</TableCell>
                                         <TableCell className="text-center truncate">{item.tanggalSelesai}</TableCell>
                                         <TableCell className="text-center truncate">
-                                            <span className={`px-2 py-1 rounded-full text-xs ${
-                                                item.status === "Finished" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                                            }`}>
+                                            <span className={`px-2 py-1 rounded-full text-xs ${item.status === "Finished" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                                                }`}>
                                                 {item.status}
                                             </span>
                                         </TableCell>
