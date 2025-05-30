@@ -50,7 +50,6 @@ const EmployeeDialog: React.FC<EmployeeDialogProps> = ({
     setSelectedFile
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [_, setSelectedFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [errors, setErrors] = useState<{
         nama?: string;
