@@ -63,9 +63,9 @@ const AppRoutes = () => (
       />
 
 
-      <Route path="/auth/callback" element={<GoogleCallback />} />
+      <Route path="/auth/google/callback" element={<GoogleCallback />} />
       
-      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/google/callback" element={<AuthCallback />} />
       
       <Route
         path="/"
